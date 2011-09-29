@@ -1,0 +1,5 @@
+*.class
+CloudStackAndroidClient/bin
+CloudStackAndroidClientTest/bin
+classes.dex
+resources.ap_
