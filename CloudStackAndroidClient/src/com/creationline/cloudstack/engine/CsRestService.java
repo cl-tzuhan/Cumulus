@@ -26,6 +26,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 
+import com.creationline.cloudstack.util.ClLog;
+
 public class CsRestService extends IntentService {
 	
 	public static final String MSG_ID = "com.creationline.engine.CALL_ID";
@@ -75,15 +77,17 @@ public class CsRestService extends IntentService {
 	 * @param url url to send an http GET to
 	 */
 	private void doRestCall(final String url) {
+		final String TAG = "CsRestService.doRestCall()";
 		
         HttpClient httpclient = new DefaultHttpClient();
         try {
-            final HttpGet httpget = new HttpGet(url);
+            final HttpGet httpGet = new HttpGet(url);
+            //final HttpPost httpPost = new HttpPost(url);
 
-            System.out.println("CsRestService.doRestCall(): executing request " + httpget.getURI());
+            System.out.println("CsRestService.doRestCall(): executing request " + httpGet.getURI());
 
             // Create a response handler
-            HttpResponse response =  httpclient.execute(httpget);
+            HttpResponse response =  httpclient.execute(httpGet);
             final int statusCode = response.getStatusLine().getStatusCode();
             final HttpEntity entity = response.getEntity();
             final InputStream responseBody = entity.getContent();
@@ -100,10 +104,10 @@ public class CsRestService extends IntentService {
             System.out.println("----------------------------------------");
 
         } catch (ClientProtocolException e) {
-        	System.out.println("CsRestService.doRestCall(): got ClientProtocolException! [" + e.toString() +"]");
+        	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
 			e.printStackTrace();
 		} catch (IOException e) {
-			System.out.println("CsRestService.doRestCall(): got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			e.printStackTrace();
 		} finally {
             // When HttpClient instance is no longer needed,
@@ -120,6 +124,8 @@ public class CsRestService extends IntentService {
 	 * @param url 
 	 */
 	private void callUserApi(final String url) {
+		final String TAG = "CsRestService.callUserApi()";
+		
 		// Host
 		String host = "http://192.168.3.11:8080/client/api";
 		
@@ -142,7 +148,7 @@ public class CsRestService extends IntentService {
 				return;
 			}
 
-			System.out.println("CsRestService.callUserApi(): Constructing API call to host = '" + host + "' with API command = '" + apiUrl + "' using apiKey = '" + apiKey + "' and secretKey = '" + secretKey + "'");
+			ClLog.d(TAG, "constructing API call to host = '" + host + "' with API command = '" + apiUrl + "' using apiKey = '" + apiKey + "' and secretKey = '" + secretKey + "'");
 			
 			// Step 1: Make sure your APIKey is toLowerCased and URL encoded
 			String encodedApiKey = URLEncoder.encode(apiKey.toLowerCase(), "UTF-8"); //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
@@ -160,7 +166,7 @@ public class CsRestService extends IntentService {
 				sortedParams.add(param + "=" + value);
 			}
 			Collections.sort(sortedParams);
-			System.out.println("CsRestService.callUserApi(): Sorted Parameters: " + sortedParams);
+			ClLog.d(TAG, "sorted Parameters: " + sortedParams);
 			
 			// Step 3: Construct the sorted URL and sign and URL encode the sorted URL with your secret key
 			String sortedUrl = null;
@@ -173,14 +179,15 @@ public class CsRestService extends IntentService {
 					sortedUrl = sortedUrl + "&" + param;
 				}
 			}
-			System.out.println("CsRestService.callUserApi(): sorted URL : " + sortedUrl);
+			ClLog.d(TAG, "sorted URL: " + sortedUrl);
 			final String encodedSignature = signRequest(sortedUrl, secretKey);
 			
 			// Step 4: Construct the final URL we want to send to the CloudStack Management Server
 			// Final result should look like:
 			// http(s)://://client/api?&apiKey=&signature=
 			final String finalUrl = host + "?" + apiUrl + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
-			System.out.println("CsRestService.callUserApi(): final URL: " + finalUrl);
+			ClLog.d(TAG, "final URL: " + finalUrl);
+//			System.out.println("CsRestService.callUserApi(): final URL: " + finalUrl);
 			
 			// Step 5: Perform a HTTP GET on this URL to execute the command
 			doRestCall(finalUrl);
@@ -203,6 +210,8 @@ public class CsRestService extends IntentService {
 	 * @return requested signed with specified key
 	 */
 	public static String signRequest(final String request, final String key) {
+		final String TAG = "CsRestService.signRequest()";
+		
 		try {
 			Mac mac = Mac.getInstance("HmacSHA1");
 			SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(), "HmacSHA1");	
@@ -212,7 +221,7 @@ public class CsRestService extends IntentService {
 			 //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
 			return URLEncoder.encode(Base64.encodeToString(encryptedBytes, Base64.NO_WRAP), "UTF-8"); //use NO_WRAP so no extraneous CR/LFs are added onto the end of the base64-ed string
 		} catch (Exception ex) {
-			System.out.println(ex);
+			ClLog.e(TAG, "got Exception! [" + ex.toString() +"]");
 		}
 		return null;
 	}
@@ -224,7 +233,7 @@ public class CsRestService extends IntentService {
 	 * @param is InputStream with data to read out
 	 * @return all the data in specified InputStream
 	 */
-	private StringBuilder inputStreamToString(final InputStream is) {
+	public StringBuilder inputStreamToString(final InputStream is) {
 	    String line = "";
 	    StringBuilder total = new StringBuilder();
 	    
