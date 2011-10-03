@@ -16,7 +16,10 @@
         
         <service android:name="com.creationline.cloudstack.engine.CsRestService" />
 
+	    <provider android:name="com.creationline.cloudstack.engine.CsRestContentProvider" android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
+    
     </application>
+    
     
      <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
