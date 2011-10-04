@@ -28,9 +28,9 @@ public class CsRestContentProvider extends ContentProvider {
 	
 	private static final String AUTHORITY = "com.creationline.cloudstack.engine.csrestcontentprovider";
 	
+	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
 	private SQLiteDatabaseHelper sqlDbHelper;
-	private static final String DB_NAME = "CsRestTransaction.db";
 	private static final int DB_VERSION = 1;
 	private static final String TABLE_NAME = "transactions";
 	
