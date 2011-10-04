@@ -77,9 +77,25 @@ public class CsRestContentProvider extends ContentProvider {
 	
 
 	@Override
-	public int delete(Uri arg0, String arg1, String[] arg2) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+		int numDeleted = 0;
+		
+		try {
+			sqlDb = sqlDbHelper.getWritableDatabase();
+			
+			selection = transformIdToSelectionClause(uri, selection);
+			
+			numDeleted = sqlDb.delete(TABLE_NAME, selection, selectionArgs);
+			
+			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was deleted
+		} catch (SQLiteException e) {
+			ClLog.e(TAG, "delete(): getWritableDatabase() failed!");
+			e.printStackTrace();
+		} finally {
+			sqlDb.close();
+		}
+		
+		return numDeleted;
 	}
 
 	@Override
@@ -103,9 +119,9 @@ public class CsRestContentProvider extends ContentProvider {
 			
 			//create full uri appended with newly added row id for return
 			returnUri = ContentUris.appendId(Transactions.CONTENT_URI.buildUpon(), rowId).build();
-			getContext().getContentResolver().notifyChange(returnUri, null);  //signal observers that something was added
+			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was added
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "getWritableDatabase() failed!");
+			ClLog.e(TAG, "insert(): getWritableDatabase() failed!");
 			e.printStackTrace();
 		} finally {
 			sqlDb.close();
@@ -127,18 +143,7 @@ public class CsRestContentProvider extends ContentProvider {
 		try {
 			sqlDb = sqlDbHelper.getReadableDatabase();
 			
-			try {
-				final long specifiedId = ContentUris.parseId(uri);
-				if(specifiedId>-1) {
-					//narrow query to specific row if id specified in uri
-					//(any supplied selection (WHERE) clause will then apply only to that row (which is not of much use :P))
-					final String idSelection = ID_EQUALS+specifiedId;
-					selection = (selection==null)? idSelection : idSelection+" AND "+selection;
-				}
-			} catch (NumberFormatException e) {
-				//if we got this exception, then uri did not have an id as the last segment;
-				//just process the rest of the query without it.
-			}
+			selection = transformIdToSelectionClause(uri, selection);  //process any trailing id specifiers in the uri
 			
 			SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 			queryBuilder.setTables(TABLE_NAME);
@@ -147,7 +152,7 @@ public class CsRestContentProvider extends ContentProvider {
 			c.setNotificationUri(getContext().getContentResolver(), uri);  //register to watch for content uri changes
 			c.moveToFirst();  //hack?: for whatever reason, calling moveToFirst() here allows you to close sqlDb w/out affecting the output of the cursor in the calling method (if you don't, the calling method gets a cursor with no data)
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "getReadableDatabase() failed!");
+			ClLog.e(TAG, "query(): getReadableDatabase() failed!");
 			e.printStackTrace();
 		} finally {
 			sqlDb.close();
@@ -156,11 +161,47 @@ public class CsRestContentProvider extends ContentProvider {
 		return c;
 	}
 
+	private String transformIdToSelectionClause(Uri uri, String selection) {
+		//If the content uri contains a trailing id number, this method will
+		//create and return a sql WHERE clause that will isolate that record/id.
+		//If the uri contains no trailing id number, the WHERE clause is
+		//returned unchanged.
+		
+		try {
+			final long specifiedId = ContentUris.parseId(uri);
+			if(specifiedId>-1) {
+				//narrow query to specific row if id specified in uri
+				//(any supplied selection (WHERE) clause will then apply only to that row (which is not of much use :P))
+				final String idSelection = ID_EQUALS+specifiedId;
+				selection = (selection==null)? idSelection : idSelection+" AND "+selection;
+			}
+		} catch (NumberFormatException e) {
+			//if we got this exception, then uri did not have an id as the last segment so we do nothing
+		}
+		return selection;
+	}
+
 	@Override
 	public int update(Uri uri, ContentValues values, String selection,
 			String[] selectionArgs) {
-		// TODO Auto-generated method stub
-		return 0;
+		int numRowsUpdated = 0;
+		
+		try {
+			sqlDb = sqlDbHelper.getWritableDatabase();
+			
+			selection = transformIdToSelectionClause(uri, selection);  //process any trailing id specifiers in the uri
+			
+			numRowsUpdated = sqlDb.update(TABLE_NAME, values, selection, selectionArgs);  //update existing rows using passed in data
+			
+			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was updated
+		} catch (SQLiteException e) {
+			ClLog.e(TAG, "update(): getWritableDatabase() failed!");
+			e.printStackTrace();
+		} finally {
+			sqlDb.close();
+		}
+		
+		return numRowsUpdated;
 	}
 
 }
