@@ -3,3 +3,4 @@ CloudStackAndroidClient/bin
 CloudStackAndroidClientTest/bin
 classes.dex
 resources.ap_
+.DS_Store
