@@ -1,11 +1,11 @@
 package com.creationline.cloudstack.util;
 
 public class Version {
-	// MAJOR_VER and MINOR_VER can be edited by hand.  REVISION_NO and REVISION_ID will be updated
-	// automatically every time the source is committed to Bazaar.
+	// MAJOR_VER and MINOR_VER can be edited by hand.
+	// BUILD_NO will be incremented automatically every time the source is committed to Bazaar.
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
-    public static final int BUILD_NO = 56;  //this must be on its own line (updated by incrementVersion.py automatically)
+    public static final int BUILD_NO = 57;  //this must be on its own line (updated by incrementVersion.py automatically)
 	
     @Override
 	public String toString() {
