@@ -4,3 +4,4 @@ CloudStackAndroidClientTest/bin
 classes.dex
 resources.ap_
 .DS_Store
+CloudStackAndroidClient/src/com/creationline/cloudstack/util/Revision.java
