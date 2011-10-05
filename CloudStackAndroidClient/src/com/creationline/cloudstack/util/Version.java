@@ -5,8 +5,8 @@ public class Version {
 	// automatically every time the source is committed to Bazaar.
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
-	public static final int REVISION_NO = -1;  //this must be on its own line (updated by incrementVersion.py automatically)
-    public static final String REVISION_ID = "xxxx";  //this must be on its own line (updated by incrementVersion.py automatically)
+	public static final int REVISION_NO = 10;  //this must be on its own line (updated by incrementVersion.py automatically)
+    public static final String REVISION_ID = "tzuhan@creationline.com-20111005063141-x4yte8ubldad7dd0";  //this must be on its own line (updated by incrementVersion.py automatically)
 
     @Override
 	public String toString() {
