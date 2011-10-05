@@ -6,7 +6,7 @@ public class Version {
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
 	public static final int REVISION_NO = -1;  //this must be on its own line (updated by incrementVersion.py automatically)
-    public static final String REVISION_ID = "x";  //this must be on its own line (updated by incrementVersion.py automatically)
+    public static final String REVISION_ID = "xx";  //this must be on its own line (updated by incrementVersion.py automatically)
 
     @Override
 	public String toString() {
