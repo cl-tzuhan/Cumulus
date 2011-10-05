@@ -5,12 +5,18 @@ public class Version {
 	// automatically every time the source is committed to Bazaar.
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
-	public static final int REVISION_NO = 16;  //this must be on its own line (updated by incrementVersion.py automatically)
-    public static final String REVISION_ID = "tzuhan@creationline.com-20111005080350-61f2whlmtsgymhdb";  //this must be on its own line (updated by incrementVersion.py automatically)
-
+    public static final int BUILD_NO = 15;  //this must be on its own line (updated by incrementVersion.py automatically)
+	
     @Override
 	public String toString() {
-		return MAJOR_VER+"."+MINOR_VER+"."+REVISION_NO+"  ["+REVISION_ID+"]";
+    	String returnStr = MAJOR_VER+"."+MINOR_VER+"."+BUILD_NO;
+    	try {
+    		Class revisionClass = Class.forName("Revision");
+    		returnStr += "  ("+revisionClass.toString()+")";
+    	} catch(ClassNotFoundException e) {
+    		;  //if Revision.java is not present, don't include revision info with version info
+    	}
+		return returnStr;
 	}
 
 }
