@@ -33,7 +33,7 @@ updatedRevnoLine = "	public static final int REVISION_NO = "+str(revno)+";"
 updatedRevidLine = "    public static final String REVISION_ID = \""+str(revid)+"\";"
 warningComment = "  //this must be on its own line (updated by incrementRevision.py automatically)\n"
 
-#open and read in file with version data
+#open and read in file with revision data
 with open(revisionFilePath, "r") as revisionFile:
     originalData = revisionFile.readlines()
 revisionFile.closed
@@ -47,7 +47,7 @@ for line in originalData:
 	line = updatedRevidLine+warningComment
     newData.append(line)
 
-#overwrite version file with new data
+#overwrite revision file with new data
 print "##Updated Revision.java:\n"
 with open(revisionFilePath, "w") as revisionFile:
     for line in newData:
