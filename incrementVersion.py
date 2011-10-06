@@ -12,7 +12,6 @@ import re
 #path of Version.java file
 versionFilePath = "CloudStackAndroidClient/src/com/creationline/cloudstack/util/Version.java"
 
-#create new revision no/id declarations with latest revision info
 buildnoDeclaration = "    public static final int BUILD_NO = "
 warningComment = "  //this must be on its own line (updated by incrementVersion.py automatically)\n"
 
