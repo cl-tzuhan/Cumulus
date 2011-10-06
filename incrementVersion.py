@@ -5,7 +5,7 @@
 #This script must be placed in the base directory of the trunk/branch to work.
 #This script should be automatically hooked up to the Bazaar start_commit hook with
 #start_commit_hook.py so it can automatically update CloudStackAndroidClient's version
-#info upon each commit. 
+#info upon each commit.
 
 import re
 
