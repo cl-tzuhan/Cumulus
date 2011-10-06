@@ -5,7 +5,7 @@ public class Version {
 	// BUILD_NO will be incremented automatically every time the source is committed to Bazaar.
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
-    public static final int BUILD_NO = 92;  //this must be on its own line (updated by incrementVersion.py automatically)
+    public static final int BUILD_NO = 93;  //this must be on its own line (updated by incrementVersion.py automatically)
 	
     @Override
 	public String toString() {
