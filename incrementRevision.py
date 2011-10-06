@@ -25,7 +25,7 @@ except IndexError, err:
     print "  >incrementVersion.py {revision_no} {revision_id} "
     sys.exit(2)
 
-#path of Version.java file
+#path of Revision.java file
 revisionFilePath = "CloudStackAndroidClient/src/com/creationline/cloudstack/util/Revision.java"
 
 #create new revision no/id declarations with latest revision info
