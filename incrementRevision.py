@@ -8,7 +8,7 @@
 #in the base directory of the trunk/branch to work.
 #This script should be automatically hooked up to the Bazaar pre_commit hook with 
 #pre_commit_hook.py so it can automatically update CloudStackAndroidClient's version
-#info to the latest upon each commit. 
+#info to the latest upon each commit.
 
 import re
 import sys
