@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.test.AndroidTestCase;
 
 public class CsRestContentProviderTest extends AndroidTestCase {
+	///Note: Running these tests will wipe out any existing transaction!!
+	//       If you have data you want to keep around in the db, back it up before running these unit tests.
 
 	protected void setUp() throws Exception {
 		super.setUp();
