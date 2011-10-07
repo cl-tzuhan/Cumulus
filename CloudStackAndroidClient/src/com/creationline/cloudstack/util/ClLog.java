@@ -6,36 +6,44 @@ import android.util.Log;
 public class ClLog {
 	///Just like Log, but only logs messages depending on the set LOG_LEVEL
 
-	public static final int LOG_LEVEL = android.util.Log.WARN;  //show log statements at this level or more detailed
+	//use the same log level definitions as android.util.Log to make things easy
+	//(had to re-define as we couldn't inherit from Log)
+	public static final int VERBOSE = android.util.Log.VERBOSE;
+	public static final int DEBUG = android.util.Log.DEBUG;
+	public static final int INFO = android.util.Log.INFO;
+	public static final int WARN = android.util.Log.WARN;
+	public static final int ERROR = android.util.Log.ERROR;
 
+	//show log statements at this level or more detailed
+	public static final int LOG_LEVEL = WARN;  // release builds should be level WARN
 	
 	static public void v(String tag, String msg) {
-		if(LOG_LEVEL<=android.util.Log.VERBOSE) {
+		if(LOG_LEVEL<=VERBOSE) {
 			Log.v(tag, msg);
 		}
 	}
 	
 	static public void d(String tag, String msg) {
-		if(LOG_LEVEL<=android.util.Log.DEBUG) {
+		if(LOG_LEVEL<=DEBUG) {
 			Log.d(tag, msg);
 		}
 	}
 	
 	static public void i(String tag, String msg) {
-		if(LOG_LEVEL<=android.util.Log.INFO) {
+		if(LOG_LEVEL<=INFO) {
 			Log.i(tag, msg);
 		}
 	}
 
 	static public void w(String tag, String msg) {
-		if(LOG_LEVEL<=android.util.Log.WARN) {
+		if(LOG_LEVEL<=WARN) {
 			Log.w(tag, msg);
 		}
 	}
 	
 	
 	static public void e(String tag, String msg) {
-		if(LOG_LEVEL<=android.util.Log.ERROR) {
+		if(LOG_LEVEL<=ERROR) {
 			Log.e(tag, msg);
 		}
 	}
