@@ -1,9 +1,5 @@
 package com.creationline.cloudstack.engine;
 
-import java.util.ArrayList;
-
-import com.creationline.cloudstack.engine.CsRestContentProvider.Transactions;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -38,23 +34,26 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		deleteDb();
 
 		final String testData1_request = "This is a sample request";
+		final String testData1_request_dateTime = "This is a sample request dateTime";
 		final String testData1_status = "This is a sample status";
 		final String testData1_reply = "This is a sample reply";
-		final String testData1_request_dateTime = "This is a sample request dateTime";
+		final String testData1_reply_dateTime = "This is a sample reply dateTime";
 		
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(CsRestContentProvider.Transactions.REQUEST, testData1_request);
+		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData1_request_dateTime);
 		contentValues.put(CsRestContentProvider.Transactions.STATUS, testData1_status);
 		contentValues.put(CsRestContentProvider.Transactions.REPLY, testData1_reply);
-		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData1_request_dateTime);
+		contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, testData1_reply_dateTime);
 		
 		Uri uriOfNewRow = getContext().getContentResolver().insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
 		assertNotNull("insert of data failed!!", uriOfNewRow);
 		
 		String columns[] = new String[] {CsRestContentProvider.Transactions.REQUEST,
+										 CsRestContentProvider.Transactions.REQUEST_DATETIME,
 										 CsRestContentProvider.Transactions.STATUS,
 										 CsRestContentProvider.Transactions.REPLY,
-										 CsRestContentProvider.Transactions.REQUEST_DATETIME};
+										 CsRestContentProvider.Transactions.REPLY_DATETIME};
 		final ContentResolver cr = getContext().getContentResolver();
 		Cursor resultOfQueryForSingleRecord = cr.query(uriOfNewRow, columns, null, null, null);
 		resultOfQueryForSingleRecord.moveToFirst();
@@ -62,9 +61,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		assertEquals(columns.length, resultOfQueryForSingleRecord.getColumnCount());
 		//check to see the returned data is the what was saved
 		assertEquals(testData1_request, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST)));
+		assertEquals(testData1_request_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
 		assertEquals(testData1_status, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.STATUS)));
 		assertEquals(testData1_reply, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REPLY)));
-		assertEquals(testData1_request_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
+		assertEquals(testData1_reply_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REPLY_DATETIME)));
 		resultOfQueryForSingleRecord.close();
 		
 		Cursor resultOfQueryForAllRecords = cr.query(CsRestContentProvider.Transactions.CONTENT_URI, null, null, null, null);
@@ -77,23 +77,26 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		deleteDb();
 
 		final String testData1_request = "This is a sample request";
+		final String testData1_request_dateTime = "This is a sample request dateTime";
 		final String testData1_status = "This is a sample status";
 		final String testData1_reply = "This is a sample reply";
-		final String testData1_request_dateTime = "This is a sample request dateTime";
+		final String testData1_reply_dateTime = "This is a sample reply dateTime";
 		
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(CsRestContentProvider.Transactions.REQUEST, testData1_request);
+		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData1_request_dateTime);
 		contentValues.put(CsRestContentProvider.Transactions.STATUS, testData1_status);
 		contentValues.put(CsRestContentProvider.Transactions.REPLY, testData1_reply);
-		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData1_request_dateTime);
+		contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, testData1_reply_dateTime);
 		
 		Uri uriOfNewRow = getContext().getContentResolver().insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
 		assertNotNull("insert of data failed!!", uriOfNewRow);
 		
 		String columns[] = new String[] {CsRestContentProvider.Transactions.REQUEST,
+										 CsRestContentProvider.Transactions.REQUEST_DATETIME,
 										 CsRestContentProvider.Transactions.STATUS,
 										 CsRestContentProvider.Transactions.REPLY,
-										 CsRestContentProvider.Transactions.REQUEST_DATETIME};
+										 CsRestContentProvider.Transactions.REPLY_DATETIME};
 		final ContentResolver cr = getContext().getContentResolver();
 		Cursor resultOfQueryForSingleRecord = cr.query(CsRestContentProvider.Transactions.CONTENT_URI, 
 														   columns,
@@ -105,9 +108,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		assertEquals(columns.length, resultOfQueryForSingleRecord.getColumnCount());
 		//check to see the returned data is the what was saved
 		assertEquals(testData1_request, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST)));
+		assertEquals(testData1_request_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
 		assertEquals(testData1_status, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.STATUS)));
 		assertEquals(testData1_reply, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REPLY)));
-		assertEquals(testData1_request_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
+		assertEquals(testData1_reply_dateTime, resultOfQueryForSingleRecord.getString(resultOfQueryForSingleRecord.getColumnIndex(CsRestContentProvider.Transactions.REPLY_DATETIME)));
 		resultOfQueryForSingleRecord.close();
 		
 		Cursor resultOfQueryForAllRecords = cr.query(CsRestContentProvider.Transactions.CONTENT_URI, null, null, null, null);
@@ -140,9 +144,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		Uri[] addedUris = new Uri[TEST_SIZE];
 
 		final String testData_request = "dummy request data ";
+		final String testData_request_dateTime = "dummy request_dateTime data ";
 		final String testData_status = "dummy status data ";
 		final String testData_reply = "dummy reply data ";
-		final String testData_request_dateTime = "dummy request_dateTime data ";
+		final String testData_reply_dateTime = "dummy reply_dateTime data ";
 		
 		ContentResolver cr = getContext().getContentResolver();
 		
@@ -150,9 +155,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		for(int i=1; i<TEST_SIZE; i++) {
 			ContentValues contentValues = new ContentValues();
 			contentValues.put(CsRestContentProvider.Transactions.REQUEST, testData_request+i);
+			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+i);
 			contentValues.put(CsRestContentProvider.Transactions.STATUS, testData_status+i);
 			contentValues.put(CsRestContentProvider.Transactions.REPLY, testData_reply+i);
-			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+i);
+			contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, testData_reply_dateTime+i);
 
 			addedUris[i] = cr.insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
 		}
@@ -171,9 +177,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 			for(int i=1; !c.isAfterLast(); i++) {
 				//check to see that only the request & reply fields are updated, and all other fields remain unaffected
 				assertEquals(testData_request+UPDATED, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST)));
+				assertEquals(testData_request_dateTime+i, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
 				assertEquals(testData_status+i, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.STATUS)));
 				assertEquals(testData_reply+UPDATED, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REPLY)));
-				assertEquals(testData_request_dateTime+i, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
+				assertEquals(testData_reply_dateTime+i, c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REPLY_DATETIME)));
 				
 				c.moveToNext();
 			}
@@ -264,9 +271,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		Uri[] addedUris = new Uri[TOTAL_DATA_SET_SIZE];
 
 		final String testData_request = "dummy request data ";
+		final String testData_request_dateTime = "dummy request_dateTime data ";
 		final String testData_status = "dummy status data ";
 		final String testData_reply = "dummy reply data ";
-		final String testData_request_dateTime = "dummy request_dateTime data ";
+		final String testData_reply_dateTime = "dummy reply_dateTime data ";
 		
 		ContentResolver cr = getContext().getContentResolver();
 		
@@ -274,18 +282,20 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		for(int i=1; i<DATA_SET1_SIZE; i++) {
 			ContentValues contentValues = new ContentValues();
 			contentValues.put(CsRestContentProvider.Transactions.REQUEST, testData_request+"1");
+			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+"1");
 			contentValues.put(CsRestContentProvider.Transactions.STATUS, testData_status+"1");
 			contentValues.put(CsRestContentProvider.Transactions.REPLY, testData_reply+"1");
-			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+"1");
+			contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, testData_reply_dateTime+"1");
 
 			addedUris[i] = cr.insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
 		}
 		for(int i=6; i<TOTAL_DATA_SET_SIZE; i++) {
 			ContentValues contentValues = new ContentValues();
 			contentValues.put(CsRestContentProvider.Transactions.REQUEST, testData_request+"2");
+			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+"2");
 			contentValues.put(CsRestContentProvider.Transactions.STATUS, testData_status+"2");
 			contentValues.put(CsRestContentProvider.Transactions.REPLY, testData_reply+"2");
-			contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, testData_request_dateTime+"2");
+			contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, testData_reply_dateTime+"2");
 			
 			addedUris[i] = cr.insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
 		}
@@ -317,9 +327,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		c.moveToFirst();
 		while(!c.isAfterLast()) {
 			assertEquals(testData_request+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST)));
+			assertEquals(testData_request_dateTime+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
 			assertEquals(testData_status+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.STATUS)));
 			assertEquals(testData_reply+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REPLY)));
-			assertEquals(testData_request_dateTime+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REQUEST_DATETIME)));
+			assertEquals(testData_reply_dateTime+"1", c.getString(c.getColumnIndex(CsRestContentProvider.Transactions.REPLY_DATETIME)));
 			
 			c.moveToNext();
 		}

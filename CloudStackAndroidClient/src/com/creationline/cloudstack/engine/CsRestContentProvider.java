@@ -46,6 +46,16 @@ public class CsRestContentProvider extends ContentProvider {
 		public static final String STATUS = "status";
 		public static final String REPLY = "reply";
 		public static final String REQUEST_DATETIME = "request_dateTime";
+		public static final String REPLY_DATETIME = "reply_dateTime";
+
+		
+		//allowed values for the status column
+		public static final class STATUS_VALUES {
+			public static final String IN_PROGRESS = "in_progress";
+			public static final String SUCCESS = "success";
+			public static final String ERROR = "error";
+		}
+		
 	}
 	
 	private static class SQLiteDatabaseHelper extends SQLiteOpenHelper {
@@ -60,9 +70,10 @@ public class CsRestContentProvider extends ContentProvider {
 			///create db table
 			final String tableColumns = ", "
 										+ Transactions.REQUEST+" TEXT, "
+										+ Transactions.REQUEST_DATETIME+" TEXT, "
 										+ Transactions.STATUS+" TEXT, "
 										+ Transactions.REPLY+" TEXT,"
-										+ Transactions.REQUEST_DATETIME+" TEXT";
+										+ Transactions.REPLY_DATETIME+" TEXT";
 			db.execSQL("CREATE TABLE " + TABLE_NAME + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
 		}
 
