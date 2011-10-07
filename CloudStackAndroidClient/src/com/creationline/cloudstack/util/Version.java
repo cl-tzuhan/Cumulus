@@ -1,22 +1,22 @@
 package com.creationline.cloudstack.util;
+///This Version class is just for display purposes, when you want to present a "nice" version number
+///to the user that is easier to understand than the revno/revid combo.  The major/minor version
+///has no specific link to the state of the repository.  The revision information in the
+///Revision class is automatically generated from bzr, and thus is used as the actual
+///version tracking info for development/debugging purposes).
 
 public class Version {
 	// MAJOR_VER and MINOR_VER can be edited by hand.
-	// BUILD_NO will be incremented automatically every time the source is committed to Bazaar.
 	public static final int MAJOR_VER = 0;
 	public static final int MINOR_VER = 1;
-    public static final int BUILD_NO = 93;  //this must be on its own line (updated by incrementVersion.py automatically)
 	
     @Override
 	public String toString() {
-    	String returnStr = MAJOR_VER+"."+MINOR_VER+"."+BUILD_NO;
-    	try {
-    		Class revisionClass = Class.forName("Revision");
-    		returnStr += "  ("+revisionClass.toString()+")";
-    	} catch(ClassNotFoundException e) {
-    		;  //if Revision.java is not present, don't include revision info with version info
-    	}
-		return returnStr;
+    	return asString();
+	}
+    
+	public static String asString() {
+    	return MAJOR_VER+"."+MINOR_VER;
 	}
 
 }
