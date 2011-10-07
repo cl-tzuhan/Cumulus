@@ -51,9 +51,11 @@ public class CsRestContentProvider extends ContentProvider {
 		
 		//allowed values for the status column
 		public static final class STATUS_VALUES {
-			public static final String IN_PROGRESS = "in_progress";
-			public static final String SUCCESS = "success";
-			public static final String ERROR = "error";
+			public static final String IN_PROGRESS = "in_progress"; //request accepted and is being executed
+			public static final String SUCCESS = "success";         //request is finished and succeeded
+			public static final String FAIL = "fail";               //request is finished and failed (with error from CS itself)
+			public static final String ABORTED = "aborted";         //request itself did not make it to CS for some reason
+			                            							//TODO: tie ABORTED to some error db that app can go to to get associated error msg
 		}
 		
 	}

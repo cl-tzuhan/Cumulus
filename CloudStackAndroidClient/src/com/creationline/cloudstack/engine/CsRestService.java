@@ -15,37 +15,47 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.IntentService;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.format.Time;
 import android.util.Base64;
 
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
 	
-	public static final String MSG_ID = "com.creationline.engine.CALL_ID";
-	public static final String API_URL = "com.creationline.engine.API_URL";
+	//Intent msg-related constants
+	public static final String ACTION_ID = "com.creationline.engine.ACTION_ID";
+	public static final String API_CMD = "com.creationline.engine.API_CMD";
 //	public static final String PAYLOAD = "com.creationline.engine.PAYLOAD";
 	public static final String RESPONSE = "com.creationline.engine.RESPONSE";
 	
 	public static final String TEST_CALL = "com.creationline.cloudstack.engine.TEST_CALL";
+	
+	
+	private static Time time = null;
 
+	
 	public CsRestService() {
 		super("CsRestService");
+		time = new Time();  //use default timezone
 	}
 	
 	public static Intent createCsRestServiceIntent(Context context, String action, String url) {
 		
 		Bundle payload = new Bundle();
-        payload.putString(CsRestService.MSG_ID, action); //action always stored under MSG_ID key
-        payload.putString(CsRestService.API_URL, url);   //url always stored under API_URL key
+        payload.putString(CsRestService.ACTION_ID, action);  //action stored under this key
+        payload.putString(CsRestService.API_CMD, url);  //main part of REST request stored under this key
         
         Intent startCsRestServiceIntent = new Intent(context, CsRestService.class);
         startCsRestServiceIntent.putExtras(payload);
@@ -58,83 +68,78 @@ public class CsRestService extends IntentService {
 		//This is already running on a non-UI thread
 		
 		Bundle payload = intent.getExtras(); 
-		String apiUrl = payload.getString(CsRestService.API_URL);
-		System.out.println("CsRestService.onHandleIntent: will send API ["+apiUrl+"] call to server here");
+		String apiCmd = payload.getString(CsRestService.API_CMD);
 		
 		//doRestCall(apiUrl);
-		callUserApi(null);
+		//prepRestCall(apiUrl);
+		initiateRestRequest(apiCmd);
 		
-		Intent broadcastIntent = new Intent(payload.getString(CsRestService.MSG_ID));
-		broadcastIntent.putExtra(CsRestService.RESPONSE, apiUrl+"Response");
+		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
+		broadcastIntent.putExtra(CsRestService.RESPONSE, apiCmd+"Response");
 		sendBroadcast(broadcastIntent);
 
 	}
 	
-	/**
-	 * Adapted from:
-	 *   http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml
-	 *   
-	 * @param url url to send an http GET to
-	 */
-	private void doRestCall(final String url) {
-		final String TAG = "CsRestService.doRestCall()";
+	private void initiateRestRequest(String apiCmd) {
 		
-        HttpClient httpclient = new DefaultHttpClient();
-        try {
-            final HttpGet httpGet = new HttpGet(url);
-            //final HttpPost httpPost = new HttpPost(url);
+		// ApiKey and secretKey as given by your CloudStack vendor
+//		String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";    //thsu-account@192.168.3.11:8080 use
+//		String secretKey = "Yt_9ZEIDGlmRIg63MiMatAri-1aRoo4l-82mnbYdR3d8JdG7jvXqrrB5TpmbLZB_8zK_j95VRSQWZwnu0153eQ"; //thsu-account@192.168.3.11:8080 use
+		String apiKey = "fUFqsJeECZcMawm9q376WKFKdFvd51GLHwgm3d9PD-r3mjNJUaXBYbkKxBoxCdF5EubJ-ypmT8vHihtAm-gZvA";    //iizuka1@72.52.126.24 use
+		String secretKey = "Q3s_-gMYzivbaaO9S_2ewdXHSXHvUg6ExP0W2yRWBZxFIbTDIKD3ADk-0NU6qhsD0K31e9Irchh_Z8yuRQTuqQ"; //iizuka1@72.52.126.24 use
 
-            System.out.println("CsRestService.doRestCall(): executing request " + httpGet.getURI());
+		//create complete url
+		String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
+		
+		//save the request to db
+		Uri newUri = saveRequestToDb(finalUrl);
+		
+		//send request to cs
+		HttpResponse response = doRestCall(finalUrl);
+		
+		//save reply to view data db
+		saveReplyToDb(newUri, response);
+		
+	}
 
-            // Create a response handler
-            HttpResponse response =  httpclient.execute(httpGet);
-            final int statusCode = response.getStatusLine().getStatusCode();
-            final HttpEntity entity = response.getEntity();
-            final InputStream responseBody = entity.getContent();
-
-            if (statusCode != 200) {
-                // responseBody will have the error response
-            }
-            
-            
-            final StringBuilder responseText = inputStreamToString(responseBody);
-            
-            System.out.println("----------------------------------------");
-            System.out.println(responseText);
-            System.out.println("----------------------------------------");
-
-        } catch (ClientProtocolException e) {
-        	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
-			e.printStackTrace();
-		} catch (IOException e) {
-			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			e.printStackTrace();
-		} finally {
-            // When HttpClient instance is no longer needed,
-            // shut down the connection manager to ensure
-            // immediate deallocation of all system resources
-            httpclient.getConnectionManager().shutdown();
-        }
+	private Uri saveRequestToDb(String request) {
+		final String TAG = "CsRestService.saveRequestToDb()";
+		
+		ContentValues contentValues = new ContentValues();
+		contentValues.put(CsRestContentProvider.Transactions.REQUEST, request);
+		contentValues.put(CsRestContentProvider.Transactions.STATUS, CsRestContentProvider.Transactions.STATUS_VALUES.IN_PROGRESS);
+		time.setToNow();
+		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, time.format3339(false));
+		///To change the saved REQUEST_DATETIME str back into a Time object, use the following:
+		//    Time readTime = new Time();
+		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
+		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+		
+		Uri newUri = getContentResolver().insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
+		ClLog.d(TAG, "added new API request to db at " + newUri);
+		return newUri;
 	}
 	
 	/**
 	 * Adapted from:
 	 *   http://download.cloud.com/releases/2.2.0/api/user/2.2api_examplecode_details.html
+	 * @param host TODO
+	 * @param apiCmd command to send to CS server (not including host and user api path)
 	 *   
-	 * @param url 
+	 * @return finalized URL that can be used to call CS server; null if any step of the building process failed
 	 */
-	private void callUserApi(final String url) {
-		final String TAG = "CsRestService.callUserApi()";
+	public static String buildFinalUrl(String specifiedHost, String apiCmd, String apiKey, String secretKey) {
+		final String TAG = "CsRestService.prepRestCall()";
 		
-		// Host
-		String host = "http://192.168.3.11:8080/client/api";
+		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
+		String HOST = "http://72.52.126.24:8080/client/api";  //Citrix CS user api base url
+		final String JSON_PARAM = "&response=json";
+		
+		if (specifiedHost!=null) {HOST = specifiedHost;}  //use any caller-specified host over the default value
 		
 		// Command and Parameters
-		String apiUrl = "command=listVirtualMachines&account=thsu-account&domainid=2&response=json";
+//		String apiUrl = "command=listVirtualMachines&account=thsu-account&domainid=2&response=json";
 
-		// ApiKey and secretKey as given by your CloudStack vendor
-		String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";
-		String secretKey = "Yt_9ZEIDGlmRIg63MiMatAri-1aRoo4l-82mnbYdR3d8JdG7jvXqrrB5TpmbLZB_8zK_j95VRSQWZwnu0153eQ";
 		
 		/// These are the things that need to be done next!!!
 		///
@@ -144,11 +149,14 @@ public class CsRestService extends IntentService {
 		///
 
 		try {
-			if (apiUrl == null || apiKey == null || secretKey == null) {
-				return;
+			if (apiCmd == null || apiKey == null || secretKey == null) {
+				return null;
 			}
+			
+			//make sure we get reply in json 
+			apiCmd += JSON_PARAM;  //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
 
-			ClLog.d(TAG, "constructing API call to host = '" + host + "' with API command = '" + apiUrl + "' using apiKey = '" + apiKey + "' and secretKey = '" + secretKey + "'");
+			ClLog.d(TAG, "constructing API call to host='" + HOST + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
 			
 			// Step 1: Make sure your APIKey is toLowerCased and URL encoded
 			String encodedApiKey = URLEncoder.encode(apiKey.toLowerCase(), "UTF-8"); //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
@@ -158,7 +166,7 @@ public class CsRestService extends IntentService {
 			// the string
 			List<String> sortedParams = new ArrayList<String>();
 			sortedParams.add("apikey="+encodedApiKey);
-			StringTokenizer st = new StringTokenizer(apiUrl, "&");
+			StringTokenizer st = new StringTokenizer(apiCmd, "&");
 			while (st.hasMoreTokens()) {
 				String paramValue = st.nextToken().toLowerCase();
 				String param = paramValue.substring(0, paramValue.indexOf("="));
@@ -166,7 +174,7 @@ public class CsRestService extends IntentService {
 				sortedParams.add(param + "=" + value);
 			}
 			Collections.sort(sortedParams);
-			ClLog.d(TAG, "sorted Parameters: " + sortedParams);
+			ClLog.d(TAG, "sorted Parameters= " + sortedParams);
 			
 			// Step 3: Construct the sorted URL and sign and URL encode the sorted URL with your secret key
 			String sortedUrl = null;
@@ -184,16 +192,19 @@ public class CsRestService extends IntentService {
 			
 			// Step 4: Construct the final URL we want to send to the CloudStack Management Server
 			// Final result should look like:
-			// http(s)://://client/api?&apiKey=&signature=
-			final String finalUrl = host + "?" + apiUrl + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
-			ClLog.d(TAG, "final URL: " + finalUrl);
+			// http(s)://client/api?&apiKey=&signature=
+			final String finalUrl = HOST + "?" + apiCmd + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
+			ClLog.d(TAG, "finalURL= " + finalUrl);
 //			System.out.println("CsRestService.callUserApi(): final URL: " + finalUrl);
 			
 			// Step 5: Perform a HTTP GET on this URL to execute the command
-			doRestCall(finalUrl);
+//			doRestCall(finalUrl);
+			// Step 5: return final URL
+			return finalUrl;
 			
 		} catch (Throwable t) {
-			System.out.println(t);
+			ClLog.e(TAG, "error occurred building api call: " + t.toString() + " ["+t.getMessage()+"]");
+			return null;
 		}
 	}
 	
@@ -227,6 +238,111 @@ public class CsRestService extends IntentService {
 	}
 	
 	/**
+	 * Adapted from:
+	 *   http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml
+	 *   
+	 * @param url url to send an http GET to
+	 */
+	private HttpResponse doRestCall(final String url) {
+		final String TAG = "CsRestService.doRestCall()";
+		
+        HttpClient httpclient = new DefaultHttpClient();
+        try {
+            final HttpGet httpGet = new HttpGet(url);
+            //final HttpPost httpPost = new HttpPost(url);
+
+///DEBUG
+System.out.println("CsRestService.doRestCall(): executing request " + httpGet.getURI());
+///endDEBUG
+            
+            // Create a response handler
+            HttpResponse response =  httpclient.execute(httpGet);
+            
+            return response;
+            
+//            final int statusCode = response.getStatusLine().getStatusCode();
+//            final HttpEntity entity = response.getEntity();
+//            final InputStream responseBody = entity.getContent();
+//
+//            if (statusCode != 200) {
+//                // responseBody will have the error response
+//            }
+//            
+//            
+//            final StringBuilder responseText = inputStreamToString(responseBody);
+//            
+//            System.out.println("----------------------------------------");
+//            System.out.println(responseText);
+//            System.out.println("----------------------------------------");
+
+        } catch (ClientProtocolException e) {
+        	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			e.printStackTrace();
+		} finally {
+            // When HttpClient instance is no longer needed,
+            // shut down the connection manager to ensure
+            // immediate deallocation of all system resources
+            httpclient.getConnectionManager().shutdown();
+        }
+		
+		return null;
+	}
+	
+	private void saveReplyToDb(Uri uriToUpdate, HttpResponse reply) {
+		final String TAG = "CsRestService.saveReplyToDb()";
+
+		if(uriToUpdate==null || reply==null) {
+			ClLog.e(TAG, "required params are null, so aborting.  uriToUpdate="+uriToUpdate+"  reply="+reply);
+			
+			//mark this request as aborted on db
+			ContentValues contentValues = new ContentValues();
+			contentValues.put(CsRestContentProvider.Transactions.STATUS, CsRestContentProvider.Transactions.STATUS_VALUES.ABORTED);
+			time.setToNow();
+			contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, time.format3339(false));
+			int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
+			assert(rowsUpdated==1);  //sanity check: this should only every update a single row
+			ClLog.d(TAG, "marked as aborted " + uriToUpdate);
+			
+			return;
+		}
+		
+		//parse the reply for data
+		final int statusCode = reply.getStatusLine().getStatusCode();
+		final HttpEntity entity = reply.getEntity();
+		InputStream replyBody = null;
+		try {
+			replyBody = entity.getContent();
+		} catch (IllegalStateException e) {
+			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
+			e.printStackTrace();
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			e.printStackTrace();
+		}
+		final String status = (statusCode==HttpStatus.SC_OK)? CsRestContentProvider.Transactions.STATUS_VALUES.SUCCESS : CsRestContentProvider.Transactions.STATUS_VALUES.FAIL;
+		final StringBuilder replyBodyText = inputStreamToString(replyBody);
+		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBodyText);
+
+		//save the parsed data to db
+		ContentValues contentValues = new ContentValues();
+		contentValues.put(CsRestContentProvider.Transactions.STATUS, status);
+		contentValues.put(CsRestContentProvider.Transactions.REPLY, replyBodyText.toString());
+		time.setToNow();
+		contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, time.format3339(false));
+		///To change the saved REQUEST_DATETIME str back into a Time object, use the following:
+		//    Time readTime = new Time();
+		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
+		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+		int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
+		assert(rowsUpdated==1);  //sanity check: this should only every update a single row
+		ClLog.d(TAG, "updated request/reply record for " + uriToUpdate);
+	}
+	
+	/**
 	 * Copied with slight modification from:
 	 *   http://www.androidsnippets.com/get-the-content-from-a-httpresponse-or-any-inputstream-as-a-string
 	 *   
@@ -253,7 +369,6 @@ public class CsRestService extends IntentService {
 	    // Return full string
 	    return total;
 	}
-	
 	
 
 }
