@@ -132,7 +132,7 @@ public class CsRestService extends IntentService {
 		final String TAG = "CsRestService.prepRestCall()";
 		
 		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
-		String HOST = "http://72.52.126.24:8080/client/api";  //Citrix CS user api base url
+		String HOST = "http://72.52.126.24/client/api";  //Citrix CS user api base url
 		final String JSON_PARAM = "&response=json";
 		
 		if (specifiedHost!=null) {HOST = specifiedHost;}  //use any caller-specified host over the default value
