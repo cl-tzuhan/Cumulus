@@ -20,6 +20,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
 
 import android.app.IntentService;
 import android.content.ContentValues;
@@ -30,6 +33,7 @@ import android.os.Bundle;
 import android.text.format.Time;
 import android.util.Base64;
 
+import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
@@ -102,20 +106,20 @@ public class CsRestService extends IntentService {
 		
 	}
 
-	private Uri saveRequestToDb(String request) {
+	public Uri saveRequestToDb(String request) {
 		final String TAG = "CsRestService.saveRequestToDb()";
 		
 		ContentValues contentValues = new ContentValues();
-		contentValues.put(CsRestContentProvider.Transactions.REQUEST, request);
-		contentValues.put(CsRestContentProvider.Transactions.STATUS, CsRestContentProvider.Transactions.STATUS_VALUES.IN_PROGRESS);
+		contentValues.put(Transactions.REQUEST, request);
+		contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.IN_PROGRESS);
 		time.setToNow();
-		contentValues.put(CsRestContentProvider.Transactions.REQUEST_DATETIME, time.format3339(false));
+		contentValues.put(Transactions.REQUEST_DATETIME, time.format3339(false));
 		///To change the saved REQUEST_DATETIME str back into a Time object, use the following:
 		//    Time readTime = new Time();
 		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
 		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
 		
-		Uri newUri = getContentResolver().insert(CsRestContentProvider.Transactions.CONTENT_URI, contentValues);
+		Uri newUri = getBaseContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, contentValues);
 		ClLog.d(TAG, "added new API request to db at " + newUri);
 		return newUri;
 	}
@@ -292,7 +296,7 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 		return null;
 	}
 	
-	private void saveReplyToDb(Uri uriToUpdate, HttpResponse reply) {
+	public void saveReplyToDb(Uri uriToUpdate, HttpResponse reply) {
 		final String TAG = "CsRestService.saveReplyToDb()";
 
 		if(uriToUpdate==null || reply==null) {
@@ -300,11 +304,11 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 			
 			//mark this request as aborted on db
 			ContentValues contentValues = new ContentValues();
-			contentValues.put(CsRestContentProvider.Transactions.STATUS, CsRestContentProvider.Transactions.STATUS_VALUES.ABORTED);
+			contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
 			time.setToNow();
-			contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, time.format3339(false));
+			contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
 			int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
-			assert(rowsUpdated==1);  //sanity check: this should only every update a single row
+			assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
 			ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 			
 			return;
@@ -323,16 +327,16 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			e.printStackTrace();
 		}
-		final String status = (statusCode==HttpStatus.SC_OK)? CsRestContentProvider.Transactions.STATUS_VALUES.SUCCESS : CsRestContentProvider.Transactions.STATUS_VALUES.FAIL;
+		final String status = (statusCode==HttpStatus.SC_OK)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
 		final StringBuilder replyBodyText = inputStreamToString(replyBody);
 		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBodyText);
 
 		//save the parsed data to db
 		ContentValues contentValues = new ContentValues();
-		contentValues.put(CsRestContentProvider.Transactions.STATUS, status);
-		contentValues.put(CsRestContentProvider.Transactions.REPLY, replyBodyText.toString());
+		contentValues.put(Transactions.STATUS, status);
+		contentValues.put(Transactions.REPLY, replyBodyText.toString());
 		time.setToNow();
-		contentValues.put(CsRestContentProvider.Transactions.REPLY_DATETIME, time.format3339(false));
+		contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
 		///To change the saved REQUEST_DATETIME str back into a Time object, use the following:
 		//    Time readTime = new Time();
 		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
@@ -340,8 +344,11 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 		int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
 		assert(rowsUpdated==1);  //sanity check: this should only every update a single row
 		ClLog.d(TAG, "updated request/reply record for " + uriToUpdate);
+		
+		//save the actual data itself to the appropriate ui-use db
+		processAndSaveJsonReplyData(replyBodyText.toString());
 	}
-	
+
 	/**
 	 * Copied with slight modification from:
 	 *   http://www.androidsnippets.com/get-the-content-from-a-httpresponse-or-any-inputstream-as-a-string
@@ -368,6 +375,27 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 	    
 	    // Return full string
 	    return total;
+	}
+	
+	private void processAndSaveJsonReplyData(String replyBodyText) {
+		final String TAG = "CsRestService.processAndSaveJsonReplyData()";
+		
+		JsonFactory jsonFactory = new JsonFactory();
+		try {
+			JsonParser jsonParser = jsonFactory.createJsonParser(replyBodyText);
+		} catch (JsonParseException e) {
+			ClLog.e(TAG, "got JsonParseException from JsonFactory.createJsonParser()! [" + e.toString() +"]");
+			e.printStackTrace();
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			e.printStackTrace();
+		}
+		
+		///--------
+		///TODO: Need to write actual json parsing code here to save to db
+		///      Also need to think of method of telling this code which db to save to
+		///--------
+		
 	}
 	
 

@@ -81,5 +81,4 @@ public class CsRestServiceTest extends AndroidTestCase {
 		assertEquals(expectedFinalUrl, finalizedRequest);
 	}
 	
-	
 }
