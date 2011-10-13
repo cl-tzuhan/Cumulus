@@ -286,14 +286,14 @@ public class CsRestService extends IntentService {
             
         } catch (ClientProtocolException e) {
         	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
-			e.printStackTrace();
+        	ClLog.e(TAG, "stacktrace= "+e);
 			return null;
 		} catch (IllegalArgumentException e) {
 			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
@@ -332,10 +332,10 @@ public class CsRestService extends IntentService {
 			replyBody = entity.getContent();
 		} catch (IllegalStateException e) {
 			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		}
 		final String status = (statusCode==HttpStatus.SC_OK)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
 		final StringBuilder replyBodyText = inputStreamToString(replyBody);
@@ -367,6 +367,7 @@ public class CsRestService extends IntentService {
 	 * @return all the data in specified InputStream
 	 */
 	public StringBuilder inputStreamToString(final InputStream is) {
+
 	    String line = "";
 	    StringBuilder total = new StringBuilder();
 	    
@@ -379,8 +380,7 @@ public class CsRestService extends IntentService {
 			    total.append(line); 
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ClLog.e("inputStreamToString", "stacktrace= "+e);
 		}
 	    
 	    // Return full string
@@ -453,10 +453,10 @@ public class CsRestService extends IntentService {
 			
 		} catch (JsonParseException e) {
 			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		}
 	}
 	

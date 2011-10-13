@@ -118,7 +118,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was deleted
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "delete(): getWritableDatabase() failed!");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} finally {
 			sqlDb.close();
 		}
@@ -159,7 +159,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was added
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "insert(): getWritableDatabase() failed!");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} finally {
 			sqlDb.close();
 		}
@@ -198,7 +198,7 @@ public class CsRestContentProvider extends ContentProvider {
 			c.moveToFirst();  //hack?: for whatever reason, calling moveToFirst() here allows you to close sqlDb w/out affecting the output of the cursor in the calling method (if you don't, the calling method gets a cursor with no data)
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "query(): getReadableDatabase() failed!");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} finally {
 			sqlDb.close();
 		}
@@ -249,7 +249,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was updated
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "update(): getWritableDatabase() failed!");
-			e.printStackTrace();
+			ClLog.e(TAG, "stacktrace= "+e);
 		} finally {
 			sqlDb.close();
 		}
