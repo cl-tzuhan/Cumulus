@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="/Users/thsu/Library/Jackson/jackson-mini-1.9.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/thsu/Library/Jackson/jackson-mapper-asl-1.9.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/thsu/Library/Jackson/jackson-core-asl-1.9.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

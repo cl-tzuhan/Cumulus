@@ -7,8 +7,8 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -20,9 +20,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.IntentService;
 import android.content.ContentValues;
@@ -34,6 +36,7 @@ import android.text.format.Time;
 import android.util.Base64;
 
 import com.creationline.cloudstack.engine.db.Transactions;
+import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
@@ -41,10 +44,12 @@ public class CsRestService extends IntentService {
 	//Intent msg-related constants
 	public static final String ACTION_ID = "com.creationline.engine.ACTION_ID";
 	public static final String API_CMD = "com.creationline.engine.API_CMD";
-//	public static final String PAYLOAD = "com.creationline.engine.PAYLOAD";
 	public static final String RESPONSE = "com.creationline.engine.RESPONSE";
 	
 	public static final String TEST_CALL = "com.creationline.cloudstack.engine.TEST_CALL";
+	
+	//constants matching params used by the CS API request format
+	public static final String COMMAND = "command";
 	
 	
 	private static Time time = null;
@@ -55,11 +60,11 @@ public class CsRestService extends IntentService {
 		time = new Time();  //use default timezone
 	}
 	
-	public static Intent createCsRestServiceIntent(Context context, String action, String url) {
+	public static Intent createCsRestServiceIntent(Context context, String action, Bundle apiCmd) {
 		
 		Bundle payload = new Bundle();
         payload.putString(CsRestService.ACTION_ID, action);  //action stored under this key
-        payload.putString(CsRestService.API_CMD, url);  //main part of REST request stored under this key
+        payload.putBundle(CsRestService.API_CMD, apiCmd);  //main part of REST request stored under this key
         
         Intent startCsRestServiceIntent = new Intent(context, CsRestService.class);
         startCsRestServiceIntent.putExtras(payload);
@@ -72,10 +77,8 @@ public class CsRestService extends IntentService {
 		//This is already running on a non-UI thread
 		
 		Bundle payload = intent.getExtras(); 
-		String apiCmd = payload.getString(CsRestService.API_CMD);
+		Bundle apiCmd = payload.getBundle(CsRestService.API_CMD);
 		
-		//doRestCall(apiUrl);
-		//prepRestCall(apiUrl);
 		initiateRestRequest(apiCmd);
 		
 		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
@@ -84,7 +87,7 @@ public class CsRestService extends IntentService {
 
 	}
 	
-	private void initiateRestRequest(String apiCmd) {
+	private void initiateRestRequest(Bundle apiCmd) {
 		
 		// ApiKey and secretKey as given by your CloudStack vendor
 //		String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";    //thsu-account@192.168.3.11:8080 use
@@ -102,12 +105,16 @@ public class CsRestService extends IntentService {
 		HttpResponse response = doRestCall(finalUrl);
 		
 		//save reply to view data db
-		saveReplyToDb(newUri, response);
+		saveReplyToDb(newUri, response, apiCmd);
 		
 	}
 
 	public Uri saveRequestToDb(String request) {
 		final String TAG = "CsRestService.saveRequestToDb()";
+		
+		if(request==null) {
+			return null;
+		}
 		
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(Transactions.REQUEST, request);
@@ -132,7 +139,8 @@ public class CsRestService extends IntentService {
 	 *   
 	 * @return finalized URL that can be used to call CS server; null if any step of the building process failed
 	 */
-	public static String buildFinalUrl(String specifiedHost, String apiCmd, String apiKey, String secretKey) {
+//	public static String buildFinalUrl(String specifiedHost, String apiCmd, String apiKey, String secretKey) {
+	public static String buildFinalUrl(String specifiedHost, Bundle apiCmd, String apiKey, String secretKey) {
 		final String TAG = "CsRestService.prepRestCall()";
 		
 		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
@@ -149,16 +157,16 @@ public class CsRestService extends IntentService {
 		///
 		/// TODO: need to replace the above host/apiUrl with the passed-in url instead.
 		/// TODO: need to find a way to have the user specify her apiKey/secretKey
-		/// TODO: find a way to parse the json as data instead of just output as text
 		///
 
 		try {
-			if (apiCmd == null || apiKey == null || secretKey == null) {
+			if (apiCmd == null || apiCmd.isEmpty() || apiKey == null || secretKey == null) {
 				return null;
 			}
 			
 			//make sure we get reply in json 
-			apiCmd += JSON_PARAM;  //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
+//			apiCmd += JSON_PARAM;  //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
+			apiCmd.putString("response", "json");    //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
 
 			ClLog.d(TAG, "constructing API call to host='" + HOST + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
 			
@@ -170,12 +178,24 @@ public class CsRestService extends IntentService {
 			// the string
 			List<String> sortedParams = new ArrayList<String>();
 			sortedParams.add("apikey="+encodedApiKey);
-			StringTokenizer st = new StringTokenizer(apiCmd, "&");
-			while (st.hasMoreTokens()) {
-				String paramValue = st.nextToken().toLowerCase();
-				String param = paramValue.substring(0, paramValue.indexOf("="));
-				String value = URLEncoder.encode(paramValue.substring(paramValue.indexOf("=")+1, paramValue.length()), "UTF-8");   //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
-				sortedParams.add(param + "=" + value);
+//			StringTokenizer st = new StringTokenizer(apiCmd, "&");
+//			while (st.hasMoreTokens()) {
+//				String paramValue = st.nextToken().toLowerCase();
+//				String param = paramValue.substring(0, paramValue.indexOf("="));
+//				String value = URLEncoder.encode(paramValue.substring(paramValue.indexOf("=")+1, paramValue.length()), "UTF-8");   //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
+//				sortedParams.add(param + "=" + value);
+//			}
+			Iterator<String> keySetItr = apiCmd.keySet().iterator();
+			StringBuilder apiCmdSb = new StringBuilder();
+			while(keySetItr.hasNext()) {
+				//go through apiCmd bundle and compile the strings we need for building the actual request url
+				final String param = keySetItr.next();
+				final String value = apiCmd.getString(param);
+				
+				apiCmdSb.append(param).append("=").append(value).append("&");  //create the un-encoded/un-sorted version of the apiCmd that goes into the final url
+				
+				sortedParams.add(param+"="+URLEncoder.encode(value.toLowerCase(), "UTF-8"));  //compile a encoded&sorted string from the apiCmd params/values that is used to sign the request
+				   																			  //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
 			}
 			Collections.sort(sortedParams);
 			ClLog.d(TAG, "sorted Parameters= " + sortedParams);
@@ -197,7 +217,8 @@ public class CsRestService extends IntentService {
 			// Step 4: Construct the final URL we want to send to the CloudStack Management Server
 			// Final result should look like:
 			// http(s)://client/api?&apiKey=&signature=
-			final String finalUrl = HOST + "?" + apiCmd + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
+//			final String finalUrl = HOST + "?" + apiCmd + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
+			final String finalUrl = HOST + "?" + apiCmdSb.toString() + "apiKey=" + apiKey + "&signature=" + encodedSignature;
 			ClLog.d(TAG, "finalURL= " + finalUrl);
 //			System.out.println("CsRestService.callUserApi(): final URL: " + finalUrl);
 			
@@ -250,39 +271,26 @@ public class CsRestService extends IntentService {
 	private HttpResponse doRestCall(final String url) {
 		final String TAG = "CsRestService.doRestCall()";
 		
+		if(url==null) {
+			return null;
+		}
+		
         HttpClient httpclient = new DefaultHttpClient();
         try {
             final HttpGet httpGet = new HttpGet(url);
             //final HttpPost httpPost = new HttpPost(url);
-
-///DEBUG
-System.out.println("CsRestService.doRestCall(): executing request " + httpGet.getURI());
-///endDEBUG
             
             // Create a response handler
             HttpResponse response =  httpclient.execute(httpGet);
-            
             return response;
             
-//            final int statusCode = response.getStatusLine().getStatusCode();
-//            final HttpEntity entity = response.getEntity();
-//            final InputStream responseBody = entity.getContent();
-//
-//            if (statusCode != 200) {
-//                // responseBody will have the error response
-//            }
-//            
-//            
-//            final StringBuilder responseText = inputStreamToString(responseBody);
-//            
-//            System.out.println("----------------------------------------");
-//            System.out.println(responseText);
-//            System.out.println("----------------------------------------");
-
         } catch (ClientProtocolException e) {
         	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
 			e.printStackTrace();
 			return null;
+		} catch (IllegalArgumentException e) {
+			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
+			e.printStackTrace();
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			e.printStackTrace();
@@ -296,20 +304,22 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 		return null;
 	}
 	
-	public void saveReplyToDb(Uri uriToUpdate, HttpResponse reply) {
+	public void saveReplyToDb(Uri uriToUpdate, HttpResponse reply, Bundle apiCmd) {
 		final String TAG = "CsRestService.saveReplyToDb()";
 
 		if(uriToUpdate==null || reply==null) {
 			ClLog.e(TAG, "required params are null, so aborting.  uriToUpdate="+uriToUpdate+"  reply="+reply);
 			
-			//mark this request as aborted on db
-			ContentValues contentValues = new ContentValues();
-			contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
-			time.setToNow();
-			contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
-			int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
-			assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
-			ClLog.d(TAG, "marked as aborted " + uriToUpdate);
+			//mark this request as aborted on db if just reply is null
+			if(uriToUpdate!=null && reply==null) {
+				ContentValues contentValues = new ContentValues();
+				contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
+				time.setToNow();
+				contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
+				int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
+				assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
+				ClLog.d(TAG, "marked as aborted " + uriToUpdate);
+			}
 			
 			return;
 		}
@@ -346,7 +356,7 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 		ClLog.d(TAG, "updated request/reply record for " + uriToUpdate);
 		
 		//save the actual data itself to the appropriate ui-use db
-		processAndSaveJsonReplyData(replyBodyText.toString());
+		processAndSaveJsonReplyData(apiCmd, replyBodyText.toString());
 	}
 
 	/**
@@ -377,26 +387,78 @@ System.out.println("CsRestService.doRestCall(): executing request " + httpGet.ge
 	    return total;
 	}
 	
-	private void processAndSaveJsonReplyData(String replyBodyText) {
+	private void processAndSaveJsonReplyData(Bundle apiCmd, String replyBodyText) {
 		final String TAG = "CsRestService.processAndSaveJsonReplyData()";
+	
+		final String cmd = apiCmd.getString(CsRestService.COMMAND);
+		if("listVirtualMachines".equals(cmd)) {
+			//parse listVirtualMachine results and save to vms table
+			parseListVirtualMachinesResult(replyBodyText);
+			
+		} else {
+			//no such api call!
+			ClLog.e(TAG, "No such CloudStack API call exists [cmd="+cmd+"].  No data saved to datastore.");
+		}
 		
-		JsonFactory jsonFactory = new JsonFactory();
+	}
+
+	public void parseListVirtualMachinesResult(final String replyBodyText) {
+		final String TAG = "CsRestService.parseListVirtualMachinesResult()";
+
 		try {
-			JsonParser jsonParser = jsonFactory.createJsonParser(replyBodyText);
+			ObjectMapper om = new ObjectMapper();
+			JsonNode rootNode = om.readTree(replyBodyText);
+			//JsonNode vmNode = rootNode.findPath("virtualmachine");
+			JsonNode vmNode = rootNode.path("listvirtualmachinesresponse").path("virtualmachine");  //extract the virtualmachine list, which contains the actual vm data
+			JsonParser jsonParser = vmNode.traverse();
+			
+			int num = getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+			ClLog.i(TAG, "clearing vms db before adding new data; num of records deleted=" + num);
+			
+			JsonToken token = null;
+			ContentValues contentValues = new ContentValues();
+			for(token = jsonParser.nextToken(); token!=null && token!=JsonToken.END_ARRAY; token = jsonParser.nextToken()) {
+				
+				if(token==JsonToken.START_ARRAY || token==JsonToken.END_ARRAY) {
+					continue;  //ignore any array delimiters
+				}
+				
+				if(token==JsonToken.START_OBJECT) {
+					contentValues.clear();  //if we are at the start of an vm item, prepare a clean contentValues to save parsed data
+					continue;
+				}
+
+				if(token==JsonToken.END_OBJECT) {
+					Uri newUri = getContentResolver().insert(Vms.META_DATA.CONTENT_URI, contentValues);  //once we have parsed all the vm data, save it to db
+					if(newUri!=null) {
+						ClLog.i(TAG, "successfully inserted "+newUri+" into vms db");
+					}
+					continue;
+				}
+				
+				final String fieldName = jsonParser.getCurrentName();
+				jsonParser.nextToken();  //now on value of this field
+				String fieldValue = jsonParser.getText();
+				if(jsonParser.isExpectedStartArrayToken()) {
+					//parse & save any object/array values as plain json;
+					//the app will have the responsibility of re-creating the obj from the json if it is needed
+					JsonNode complexDataNode = om.readTree(jsonParser);
+					fieldValue = om.writeValueAsString(complexDataNode);
+				}
+
+				contentValues.put(fieldName, fieldValue);
+			}
+			
+			jsonParser.close();
+			
 		} catch (JsonParseException e) {
-			ClLog.e(TAG, "got JsonParseException from JsonFactory.createJsonParser()! [" + e.toString() +"]");
+			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
 			e.printStackTrace();
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			e.printStackTrace();
 		}
-		
-		///--------
-		///TODO: Need to write actual json parsing code here to save to db
-		///      Also need to think of method of telling this code which db to save to
-		///--------
-		
 	}
 	
 
-}
+} ///END CsRestService
