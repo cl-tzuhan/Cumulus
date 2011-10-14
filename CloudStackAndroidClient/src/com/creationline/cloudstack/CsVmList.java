@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
 import com.creationline.cloudstack.engine.CsRestService;
+import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Vms;
 
 public class CsVmList extends Activity {
@@ -36,21 +38,10 @@ public class CsVmList extends Activity {
         registerReceiver(broadcastreceiver, new IntentFilter(action));  //activity will now get intents broadcast by CsRestService (filtered by action str)
         
         
-        final Runnable updatedUiWithResults = new Runnable() {
-        	//This handles notifs from CsRestContentProvider upon changes in db
-        	public void run() {
-        		Toast.makeText(getBaseContext(), "Got a notif from VMS!!!!!!", Toast.LENGTH_LONG).show();
-        	}
-        };
-        final Handler handler = new Handler();
-        ContentObserver vmsObserver = new ContentObserver(null) {
-        	@Override
-        	public void onChange(boolean selfChange) {
-        		handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
-        	}
-        };
-        getContentResolver().registerContentObserver(Vms.META_DATA.CONTENT_URI, true, vmsObserver);  //activity will now get updated when vms db is changed
-        
+//        registerForErrorUpdate();
+//        registerForVmsUpdate();
+        registerForDbUpdate(Errors.META_DATA.CONTENT_URI);
+        registerForDbUpdate(Vms.META_DATA.CONTENT_URI);
         
         
 //        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "http://192.168.3.11:8096/?command=listVirtualMachines&account=thsu-account&domainid=2&response=json");  //admin api
@@ -64,6 +55,58 @@ public class CsVmList extends Activity {
         
         
     }
+
+    private void registerForDbUpdate(final Uri contentUriToObserve) {
+    	final Runnable updatedUiWithResults = new Runnable() {
+    		//This handles notifs from CsRestContentProvider upon changes in db
+    		public void run() {
+    			Toast.makeText(getBaseContext(), "Got a notif from "+contentUriToObserve.getPath()+"!!!!!!", Toast.LENGTH_LONG).show();
+    		}
+    	};
+    	final Handler handler = new Handler();
+    	ContentObserver contentObserver = new ContentObserver(null) {
+    		@Override
+    		public void onChange(boolean selfChange) {
+    			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
+    		}
+    	};
+    	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when vms db is changed
+    }
+
+//    private void registerForVmsUpdate() {
+//		final Runnable updatedUiWithResults = new Runnable() {
+//        	//This handles notifs from CsRestContentProvider upon changes in db
+//        	public void run() {
+//        		Toast.makeText(getBaseContext(), "Got a notif from VMS!!!!!!", Toast.LENGTH_LONG).show();
+//        	}
+//        };
+//        final Handler handler = new Handler();
+//        ContentObserver contentObserver = new ContentObserver(null) {
+//        	@Override
+//        	public void onChange(boolean selfChange) {
+//        		handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
+//        	}
+//        };
+//        getContentResolver().registerContentObserver(Vms.META_DATA.CONTENT_URI, true, contentObserver);  //activity will now get updated when vms db is changed
+//	}
+//
+//	private void registerForErrorUpdate() {
+//		final Runnable updatedUiWithResults = new Runnable() {
+//			//This handles notifs from CsRestContentProvider upon changes in db
+//			public void run() {
+//				Toast.makeText(getBaseContext(), "Got new error!!", Toast.LENGTH_LONG).show();
+//			}
+//		};
+//		final Handler handler = new Handler();
+//		ContentObserver contentObserver = new ContentObserver(null) {
+//			@Override
+//			public void onChange(boolean selfChange) {
+//				handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
+//			}
+//		};
+//		getContentResolver().registerContentObserver(Errors.META_DATA.CONTENT_URI, true, contentObserver);  //activity will now get updated when errors db is changed
+//	}
+
 
 	@Override
 	protected void onDestroy() {

@@ -15,6 +15,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
+import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -38,13 +39,6 @@ public class CsRestContentProvider extends ContentProvider {
 	private SQLiteDatabaseHelper sqlDbHelper;
 	private static final int DB_VERSION = 1;
 	
-	//all the tables created by this db
-	public static class TABLE_NAMES {
-		public static final String TRANSACTIONS = "transactions";
-		public static final String VMS = "vms";
-		//MEMO: add new databases here
-	}
-	
 	
 	public static class SQLiteDatabaseHelper extends SQLiteOpenHelper {
 		///This helper class simplifies management of the sql db itself
@@ -64,17 +58,22 @@ public class CsRestContentProvider extends ContentProvider {
 										+ Transactions.STATUS+" TEXT, "
 										+ Transactions.REPLY+" TEXT,"
 										+ Transactions.REPLY_DATETIME+" TEXT";
-			db.execSQL("CREATE TABLE " + TABLE_NAMES.TRANSACTIONS + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
+			db.execSQL("CREATE TABLE " + Transactions.META_DATA.TABLE_NAME + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
 			
 			//create the ui-use tables from the appropriate column definition classes
 			db.execSQL(makeCreateTableSqlStr(new Vms()));
+			
+			
+			//create the errors table
+			db.execSQL(makeCreateTableSqlStr(new Errors()));
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			///destroy and re-create the db tables
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAMES.TRANSACTIONS);
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAMES.VMS);
+			db.execSQL("DROP TABLE IF EXISTS " + Transactions.META_DATA.TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + Vms.META_DATA.TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + Errors.META_DATA.TABLE_NAME);
 			onCreate(db);
 		}
 		
@@ -118,7 +117,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was deleted
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "delete(): getWritableDatabase() failed!");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} finally {
 			sqlDb.close();
 		}
@@ -159,7 +158,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was added
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "insert(): getWritableDatabase() failed!");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} finally {
 			sqlDb.close();
 		}
@@ -198,7 +197,7 @@ public class CsRestContentProvider extends ContentProvider {
 			c.moveToFirst();  //hack?: for whatever reason, calling moveToFirst() here allows you to close sqlDb w/out affecting the output of the cursor in the calling method (if you don't, the calling method gets a cursor with no data)
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "query(): getReadableDatabase() failed!");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} finally {
 			sqlDb.close();
 		}
@@ -249,7 +248,7 @@ public class CsRestContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was updated
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "update(): getWritableDatabase() failed!");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} finally {
 			sqlDb.close();
 		}

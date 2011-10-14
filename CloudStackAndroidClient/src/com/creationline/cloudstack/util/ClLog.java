@@ -1,8 +1,5 @@
 package com.creationline.cloudstack.util;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import android.util.Log;
 
 @SuppressWarnings("unused")
@@ -53,28 +50,8 @@ public class ClLog {
 	
 	static public void e(String tag, Throwable t) {
 		if(LOG_LEVEL<=ERROR) {
-			Log.e(tag, getStackTrace(t));
+			Log.e(tag, Log.getStackTraceString(t));
 		}
 	}
-	
-	/**
-	 * Copied from:
-	 *   http://www.devx.com/tips/Tip/27885
-	 * When an exception occurs, this code snippet will print the stack trace of the exception to a string
-	 * This way, the exception stack trace at runtime can be recorded in log file.
-	 * 
-	 * @param t Exception whose stack trace to print
-	 * @return stack trace as a String
-	 */
-	public static String getStackTrace(Throwable t)
-    {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw, true);
-        t.printStackTrace(pw);
-        pw.flush();
-        sw.flush();
-        return sw.toString();
-    }
-	
 	
 }

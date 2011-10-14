@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.text.format.Time;
 import android.util.Base64;
 
+import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -102,7 +103,7 @@ public class CsRestService extends IntentService {
 		Uri newUri = saveRequestToDb(finalUrl);
 		
 		//send request to cs
-		HttpResponse response = doRestCall(finalUrl);
+		HttpResponse response = doRestCall(finalUrl, newUri);
 		
 		//save reply to view data db
 		saveReplyToDb(newUri, response, apiCmd);
@@ -229,6 +230,7 @@ public class CsRestService extends IntentService {
 			
 		} catch (Throwable t) {
 			ClLog.e(TAG, "error occurred building api call: " + t.toString() + " ["+t.getMessage()+"]");
+			ClLog.e(TAG, t);
 			return null;
 		}
 	}
@@ -258,6 +260,7 @@ public class CsRestService extends IntentService {
 			return URLEncoder.encode(Base64.encodeToString(encryptedBytes, Base64.NO_WRAP), "UTF-8"); //use NO_WRAP so no extraneous CR/LFs are added onto the end of the base64-ed string
 		} catch (Exception ex) {
 			ClLog.e(TAG, "got Exception! [" + ex.toString() +"]");
+			ClLog.e(TAG, ex);
 		}
 		return null;
 	}
@@ -267,8 +270,9 @@ public class CsRestService extends IntentService {
 	 *   http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml
 	 *   
 	 * @param url url to send an http GET to
+	 * @param transactionUri TODO
 	 */
-	private HttpResponse doRestCall(final String url) {
+	private HttpResponse doRestCall(final String url, Uri transactionUri) {
 		final String TAG = "CsRestService.doRestCall()";
 		
 		if(url==null) {
@@ -286,14 +290,19 @@ public class CsRestService extends IntentService {
             
         } catch (ClientProtocolException e) {
         	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
-        	ClLog.e(TAG, "stacktrace= "+e);
+        	ClLog.e(TAG, e);
 			return null;
 		} catch (IllegalArgumentException e) {
 			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
+			//save the error to errors db as well
+			ContentValues cv = new ContentValues();
+			cv.put(Errors.ERRORTEXT, e.getMessage());
+			cv.put(Errors.ORIGINATINGCALL, transactionUri.toString());
+			getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 		} finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
@@ -310,17 +319,9 @@ public class CsRestService extends IntentService {
 		if(uriToUpdate==null || reply==null) {
 			ClLog.e(TAG, "required params are null, so aborting.  uriToUpdate="+uriToUpdate+"  reply="+reply);
 			
-			//mark this request as aborted on db if just reply is null
 			if(uriToUpdate!=null && reply==null) {
-				ContentValues contentValues = new ContentValues();
-				contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
-				time.setToNow();
-				contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
-				int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
-				assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
-				ClLog.d(TAG, "marked as aborted " + uriToUpdate);
+				updateCallAsAbortedOnDb(uriToUpdate);
 			}
-			
 			return;
 		}
 		
@@ -332,14 +333,52 @@ public class CsRestService extends IntentService {
 			replyBody = entity.getContent();
 		} catch (IllegalStateException e) {
 			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		}
-		final String status = (statusCode==HttpStatus.SC_OK)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
+		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
+		final String status = (callReturnedOk)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
 		final StringBuilder replyBodyText = inputStreamToString(replyBody);
 		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBodyText);
+
+		updateCallWithReplyOnDb(uriToUpdate, status, replyBodyText);
+		
+		if(callReturnedOk) {
+			processAndSaveJsonReplyData(apiCmd, replyBodyText.toString());
+		} else {
+			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBodyText);
+		}
+	}
+
+	public void parseErrorAndAddToDb(final Uri uriToUpdate, final int statusCode, final StringBuilder replyBodyText) {
+		final String TAG = "CsRestService.parseErrorAndAddToDb()";
+
+		//extract the error details from the reply, defaulting to unknown if parse fails
+		String errorText = "unknown error";
+		ObjectMapper om = new ObjectMapper();
+		try {
+			JsonNode errorObj = om.readTree(replyBodyText.toString());
+			errorText = errorObj.findValue("errortext").asText();
+		} catch (JsonParseException e) {
+			ClLog.e(TAG, "expected errorresponse not well-formed! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException parsing errorresponse! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		}
+		
+		ContentValues cv = new ContentValues();
+		cv.put(Errors.ERRORTEXT, errorText);
+		cv.put(Errors.ERRORCODE, statusCode);
+		cv.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
+		//save the error to errors db
+		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+	}
+
+	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {
+		final String TAG = "CsRestService.updateCallWithReplyOnDb()";
 
 		//save the parsed data to db
 		ContentValues contentValues = new ContentValues();
@@ -351,12 +390,25 @@ public class CsRestService extends IntentService {
 		//    Time readTime = new Time();
 		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
 		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+		
 		int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
 		assert(rowsUpdated==1);  //sanity check: this should only every update a single row
-		ClLog.d(TAG, "updated request/reply record for " + uriToUpdate);
 		
-		//save the actual data itself to the appropriate ui-use db
-		processAndSaveJsonReplyData(apiCmd, replyBodyText.toString());
+		ClLog.d(TAG, "updated request/reply record for " + uriToUpdate);
+	}
+
+	public void updateCallAsAbortedOnDb(Uri uriToUpdate) {
+		final String TAG = "CsRestService.updateCallAsAborted()";
+
+		ContentValues contentValues = new ContentValues();
+		contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
+		time.setToNow();
+		contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
+		
+		int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
+		assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
+		
+		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 	}
 
 	/**
@@ -380,7 +432,7 @@ public class CsRestService extends IntentService {
 			    total.append(line); 
 			}
 		} catch (IOException e) {
-			ClLog.e("inputStreamToString", "stacktrace= "+e);
+			ClLog.e("inputStreamToString", e);
 		}
 	    
 	    // Return full string
@@ -393,8 +445,12 @@ public class CsRestService extends IntentService {
 		final String cmd = apiCmd.getString(CsRestService.COMMAND);
 		if("listVirtualMachines".equals(cmd)) {
 			//parse listVirtualMachine results and save to vms table
-			parseListVirtualMachinesResult(replyBodyText);
+			parseReplyBody_listVirtualMachines(replyBodyText);
 			
+			
+			///////////////////////////////////////////////////////////////////
+			//TODO: other API calls to handle will go below here as an else-if
+			///////////////////////////////////////////////////////////////////
 		} else {
 			//no such api call!
 			ClLog.e(TAG, "No such CloudStack API call exists [cmd="+cmd+"].  No data saved to datastore.");
@@ -402,7 +458,7 @@ public class CsRestService extends IntentService {
 		
 	}
 
-	public void parseListVirtualMachinesResult(final String replyBodyText) {
+	public void parseReplyBody_listVirtualMachines(final String replyBodyText) {
 		final String TAG = "CsRestService.parseListVirtualMachinesResult()";
 
 		try {
@@ -453,10 +509,10 @@ public class CsRestService extends IntentService {
 			
 		} catch (JsonParseException e) {
 			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, "stacktrace= "+e);
+			ClLog.e(TAG, e);
 		}
 	}
 	

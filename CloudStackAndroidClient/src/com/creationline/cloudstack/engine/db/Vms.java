@@ -14,8 +14,9 @@ public class Vms implements BaseColumns {
 	//The name of the member var, in lower case, will be used as the column name, so please make sure to avoid
 	//1) case-sensitive names, and 2) names that are SQL keywords.
 	
-	//table columns other than _ID (_ID already included in BaseColumns declaration)
-	//the following member vars will be automatically created as columns for the vms db (names case insensitive)
+	//table columns other than _ID (_ID already included in BaseColumns declaration).
+	//the following member vars will be automatically created as columns for the vms db (names case insensitive).
+	//value of var must match name of var exactly, except just lower-case.
 	public static final String ID = "id";
 	public static final String ACCOUNT = "account";
 	public static final String CPUNUMBER = "cpunumber";
@@ -99,7 +100,8 @@ public class Vms implements BaseColumns {
 	
 	
 	public static final class META_DATA {
-		public static final Uri CONTENT_URI = Uri.parse("content://"+CsRestContentProvider.AUTHORITY+"/"+CsRestContentProvider.TABLE_NAMES.VMS);
+		public static final String TABLE_NAME = "vms";
+		public static final Uri CONTENT_URI = Uri.parse("content://"+CsRestContentProvider.AUTHORITY+"/"+TABLE_NAME);
 	}
 	
 }
