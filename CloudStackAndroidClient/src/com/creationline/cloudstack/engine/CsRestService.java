@@ -135,7 +135,7 @@ public class CsRestService extends IntentService {
 	/**
 	 * Adapted from:
 	 *   http://download.cloud.com/releases/2.2.0/api/user/2.2api_examplecode_details.html
-	 * @param host TODO
+	 * @param host if not null, the CS server url to connect to
 	 * @param apiCmd command to send to CS server (not including host and user api path)
 	 *   
 	 * @return finalized URL that can be used to call CS server; null if any step of the building process failed
@@ -156,7 +156,7 @@ public class CsRestService extends IntentService {
 		
 		/// These are the things that need to be done next!!!
 		///
-		/// TODO: need to replace the above host/apiUrl with the passed-in url instead.
+		/// TODO: need to find a way to have the user specify her own host
 		/// TODO: need to find a way to have the user specify her apiKey/secretKey
 		///
 
@@ -270,9 +270,9 @@ public class CsRestService extends IntentService {
 	 *   http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml
 	 *   
 	 * @param url url to send an http GET to
-	 * @param transactionUri TODO
+	 * @param originatingTransactionUri uri of row in transactions db table that records this call (used to link an error in the errors db table to the specific transaction in the case of a failure)
 	 */
-	private HttpResponse doRestCall(final String url, Uri transactionUri) {
+	private HttpResponse doRestCall(final String url, final Uri originatingTransactionUri) {
 		final String TAG = "CsRestService.doRestCall()";
 		
 		if(url==null) {
@@ -301,7 +301,7 @@ public class CsRestService extends IntentService {
 			//save the error to errors db as well
 			ContentValues cv = new ContentValues();
 			cv.put(Errors.ERRORTEXT, e.getMessage());
-			cv.put(Errors.ORIGINATINGCALL, transactionUri.toString());
+			cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString());
 			getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 		} finally {
             // When HttpClient instance is no longer needed,
@@ -400,13 +400,22 @@ public class CsRestService extends IntentService {
 	public void updateCallAsAbortedOnDb(Uri uriToUpdate) {
 		final String TAG = "CsRestService.updateCallAsAborted()";
 
-		ContentValues contentValues = new ContentValues();
-		contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
+		//mark transaction as aborted
+		ContentValues cvForTransactionsTable = new ContentValues();
+		cvForTransactionsTable.put(Transactions.STATUS, Transactions.STATUS_VALUES.ABORTED);
 		time.setToNow();
-		contentValues.put(Transactions.REPLY_DATETIME, time.format3339(false));
+		cvForTransactionsTable.put(Transactions.REPLY_DATETIME, time.format3339(false));
 		
-		int rowsUpdated = getContentResolver().update(uriToUpdate, contentValues, null, null);
+		int rowsUpdated = getContentResolver().update(uriToUpdate, cvForTransactionsTable, null, null);
 		assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
+		
+		
+		//add error msg to errors table so user sees an error msg
+		ContentValues cvForErrorsTable = new ContentValues();
+		cvForErrorsTable.put(Errors.ERRORTEXT, "Connection could not be made; transaction aborted.");
+		cvForErrorsTable.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
+		
+		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cvForErrorsTable);
 		
 		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 	}

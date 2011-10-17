@@ -24,7 +24,6 @@ public class Transactions implements BaseColumns {
 		public static final String SUCCESS = "success";         //request is finished and succeeded
 		public static final String FAIL = "fail";               //request is finished and failed (with error from CS itself)
 		public static final String ABORTED = "aborted";         //request itself did not make it to CS for some reason
-		                            							//TODO: tie ABORTED to some error db that app can go to to get associated error msg
 	}
 	
 	public static final class META_DATA {
