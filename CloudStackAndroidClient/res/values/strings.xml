@@ -2,4 +2,5 @@
 <resources>
     <string name="hello">Hello World, CsVmList!</string>
     <string name="app_name">CloudStackAndroidClient</string>
+    <string name="status_noVms">You have no Virtual Machine instances.</string>
 </resources>

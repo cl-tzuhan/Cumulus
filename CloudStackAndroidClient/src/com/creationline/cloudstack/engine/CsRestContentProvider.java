@@ -116,10 +116,10 @@ public class CsRestContentProvider extends ContentProvider {
 			
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was deleted
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "delete(): getWritableDatabase() failed!");
+			ClLog.e(TAG, "delete(): getWritableDatabase() failed for "+uri);
 			ClLog.e(TAG, e);
 		} finally {
-			sqlDb.close();
+			closeDbIfNotInUse();
 		}
 		
 		return numDeleted;
@@ -157,10 +157,10 @@ public class CsRestContentProvider extends ContentProvider {
 			returnUri = ContentUris.appendId(Transactions.META_DATA.CONTENT_URI.buildUpon(), rowId).build();
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was added
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "insert(): getWritableDatabase() failed!");
+			ClLog.e(TAG, "insert(): getWritableDatabase() failed for "+uri);
 			ClLog.e(TAG, e);
 		} finally {
-			sqlDb.close();
+			closeDbIfNotInUse();
 		}
 		
 		return returnUri;
@@ -196,10 +196,10 @@ public class CsRestContentProvider extends ContentProvider {
 			c.setNotificationUri(getContext().getContentResolver(), uri);  //register to watch for content uri changes
 			c.moveToFirst();  //hack?: for whatever reason, calling moveToFirst() here allows you to close sqlDb w/out affecting the output of the cursor in the calling method (if you don't, the calling method gets a cursor with no data)
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "query(): getReadableDatabase() failed!");
+			ClLog.e(TAG, "query(): getReadableDatabase() failed for "+uri);
 			ClLog.e(TAG, e);
 		} finally {
-			sqlDb.close();
+			closeDbIfNotInUse();
 		}
 		
 		return c;
@@ -247,13 +247,19 @@ public class CsRestContentProvider extends ContentProvider {
 			
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was updated
 		} catch (SQLiteException e) {
-			ClLog.e(TAG, "update(): getWritableDatabase() failed!");
+			ClLog.e(TAG, "update(): getWritableDatabase() failed for "+uri);
 			ClLog.e(TAG, e);
 		} finally {
-			sqlDb.close();
+			closeDbIfNotInUse();
 		}
 		
 		return numRowsUpdated;
+	}
+
+	public void closeDbIfNotInUse() {
+//		if(sqlDb!=null && !sqlDb.isDbLockedByOtherThreads() && sqlDb.isOpen()) {
+//			sqlDb.close();
+//		}
 	}
 
 }

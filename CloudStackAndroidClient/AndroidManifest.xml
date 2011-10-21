@@ -6,7 +6,7 @@
     <uses-sdk android:minSdkVersion="10" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name=".CsVmList"
+        <activity android:name=".CloudStackAndroidClient"
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -14,9 +14,15 @@
             </intent-filter>
         </activity>
         
-        <service android:name="com.creationline.cloudstack.engine.CsRestService" />
+        <activity android:name=".ui.CsVmList"
+                  android:label="@string/app_name" />
 
-	    <provider android:name="com.creationline.cloudstack.engine.CsRestContentProvider" android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
+        <activity android:name=".ui.CsSnapshotList"
+                  android:label="@string/app_name" />
+        
+        <service android:name=".engine.CsRestService" />
+
+	    <provider android:name=".engine.CsRestContentProvider" android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
     
     </application>
     

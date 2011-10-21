@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.test.AndroidTestCase;
 
+import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 
@@ -19,22 +20,26 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 
 	protected void tearDown() throws Exception {
-		deleteDb();  //clean-up so we don't leave test data around
+		deleteAllData();  //clean-up so we don't leave test data around
 		
 		super.tearDown();
 	}
 	
-	protected void deleteDb() {
-		//Completely remove the db if it exists
+	protected void deleteAllData() {
+//		//Completely remove the db if it exists
+//		if (getContext().databaseList().length<=0) {
+//			return; //do nothing if there is no db to start with
+//		}
+//		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
 		
-		if (getContext().databaseList().length<=0) {
-			return; //do nothing if there is no db to start with
-		}
-		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
+		//erase all data from each table
+		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
 	}
 
 	public void testInsertAndQuery_rowSpecifiedInUri() {
-		deleteDb();
+		deleteAllData();
 
 		final String testData1_request = "This is a sample request";
 		final String testData1_request_dateTime = "This is a sample request dateTime";
@@ -77,7 +82,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 	
 	public void testInsertAndQuery_rowSpecifiedInParams() {
-		deleteDb();
+		deleteAllData();
 
 		final String testData1_request = "This is a sample request";
 		final String testData1_request_dateTime = "This is a sample request dateTime";
@@ -125,7 +130,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 	
 	public void testQuery_edgeCases() {
-		deleteDb();
+		deleteAllData();
 		
 		final ContentResolver cr = getContext().getContentResolver();
 		
@@ -141,7 +146,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 
 	public void testUpdate() {
-		deleteDb();
+		deleteAllData();
 		
 		final int TEST_SIZE = 6;
 		Uri[] addedUris = new Uri[TEST_SIZE];
@@ -251,7 +256,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 	
 	public void testUpdate_emptyCase() {
-		deleteDb();
+		deleteAllData();
 		
 		ContentResolver cr = getContext().getContentResolver();
 		
@@ -267,7 +272,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 
 	
 	public void testDelete() {
-		deleteDb();
+		deleteAllData();
 		
 		final int DATA_SET1_SIZE = 6;
 		final int TOTAL_DATA_SET_SIZE = 11;

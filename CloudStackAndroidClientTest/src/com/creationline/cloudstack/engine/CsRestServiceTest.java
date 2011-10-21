@@ -53,13 +53,17 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		return getService();
 	}
 	
-	protected void deleteDb() {
-		//Completely remove the db if it exists
+	protected void deleteAllData() {
+//		//Completely remove the db if it exists
+//		if (getContext().databaseList().length<=0) {
+//			return; //do nothing if there is no db to start with
+//		}
+//		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
 		
-		if (getContext().databaseList().length<=0) {
-			return; //do nothing if there is no db to start with
-		}
-		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
+		//erase all data from each table
+		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
 	}
 	
 	public void testSignRequest() {
@@ -206,7 +210,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testParseErrorAndAddToDb() {
-		deleteDb();
+		deleteAllData();
 		
 		final String sampleUriToUpdate = "content://com.creationline.cloudstack.engine.csrestcontentprovider/transactions/4";
 		final int sampleStatusCode = 432;
@@ -233,7 +237,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testUpdateCallWithReplyOnDb() {
-		deleteDb();
+		deleteAllData();
 
 		final String sampleRequest = "1234567890-^\\qwertyop@[asdfghjl;:]zxcvbnm,./_";
 		final String sampleOriginalStatus = Transactions.STATUS_VALUES.IN_PROGRESS;
@@ -268,7 +272,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testUpdateCallAsAbortedOnDb() {
-		deleteDb();
+		deleteAllData();
 
 		final String sampleRequest = "1234567890-^\\QWERTYUIOP@[ASDFGHJKL;:]ZXCVBNM,./_";
 		final String sampleOriginalStatus = Transactions.STATUS_VALUES.IN_PROGRESS;

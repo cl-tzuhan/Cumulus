@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TwoLineListItem xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/csvmlistitem" android:paddingTop="5dip"
+	android:paddingBottom="8dip" android:layout_width="fill_parent"
+	android:layout_height="wrap_content" android:minHeight="?android:attr/listPreferredItemHeight"
+	android:mode="twoLine">
+	<TextView android:id="@+id/status" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" />
+	<TextView android:id="@+id/request" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:layout_below="@id/status"
+		android:layout_marginLeft="10sp" android:textAppearance="?android:attr/textAppearanceSmall" />
+</TwoLineListItem>

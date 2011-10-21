@@ -53,6 +53,7 @@ public class CsRestService extends IntentService {
 	public static final String COMMAND = "command";
 	
 	
+	private Uri inProgressTransaction = null;
 	private static Time time = null;
 
 	
@@ -88,25 +89,41 @@ public class CsRestService extends IntentService {
 
 	}
 	
+	@Override
+	public void onDestroy() {
+		final String TAG = "CsRestService.onDestory()";
+
+		if(inProgressTransaction!=null) {
+			ClLog.i(TAG, "App exited before request completed.  Marking "+inProgressTransaction+" as canceled");
+			updateCallAsAbortedOnDb(inProgressTransaction);
+		}
+		
+		super.onDestroy();
+	}
+
 	private void initiateRestRequest(Bundle apiCmd) {
 		
 		// ApiKey and secretKey as given by your CloudStack vendor
 //		String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";    //thsu-account@192.168.3.11:8080 use
 //		String secretKey = "Yt_9ZEIDGlmRIg63MiMatAri-1aRoo4l-82mnbYdR3d8JdG7jvXqrrB5TpmbLZB_8zK_j95VRSQWZwnu0153eQ"; //thsu-account@192.168.3.11:8080 use
-		String apiKey = "fUFqsJeECZcMawm9q376WKFKdFvd51GLHwgm3d9PD-r3mjNJUaXBYbkKxBoxCdF5EubJ-ypmT8vHihtAm-gZvA";    //iizuka1@72.52.126.24 use
-		String secretKey = "Q3s_-gMYzivbaaO9S_2ewdXHSXHvUg6ExP0W2yRWBZxFIbTDIKD3ADk-0NU6qhsD0K31e9Irchh_Z8yuRQTuqQ"; //iizuka1@72.52.126.24 use
+//		String apiKey = "fUFqsJeECZcMawm9q376WKFKdFvd51GLHwgm3d9PD-r3mjNJUaXBYbkKxBoxCdF5EubJ-ypmT8vHihtAm-gZvA";    //iizuka1@72.52.126.24 use
+//		String secretKey = "Q3s_-gMYzivbaaO9S_2ewdXHSXHvUg6ExP0W2yRWBZxFIbTDIKD3ADk-0NU6qhsD0K31e9Irchh_Z8yuRQTuqQ"; //iizuka1@72.52.126.24 use
+		String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
+		String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
 
 		//create complete url
 		String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
 		
 		//save the request to db
-		Uri newUri = saveRequestToDb(finalUrl);
+		inProgressTransaction = saveRequestToDb(finalUrl);
 		
 		//send request to cs
-		HttpResponse response = doRestCall(finalUrl, newUri);
+		HttpResponse response = doRestCall(finalUrl, inProgressTransaction);
 		
 		//save reply to view data db
-		saveReplyToDb(newUri, response, apiCmd);
+		saveReplyToDb(inProgressTransaction, response, apiCmd);
+		
+		inProgressTransaction = null;
 		
 	}
 
@@ -142,11 +159,11 @@ public class CsRestService extends IntentService {
 	 */
 //	public static String buildFinalUrl(String specifiedHost, String apiCmd, String apiKey, String secretKey) {
 	public static String buildFinalUrl(String specifiedHost, Bundle apiCmd, String apiKey, String secretKey) {
-		final String TAG = "CsRestService.prepRestCall()";
+		final String TAG = "CsRestService.buildFinalUrl()";
 		
 		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
-		String HOST = "http://72.52.126.24/client/api";  //Citrix CS user api base url
-		final String JSON_PARAM = "&response=json";
+		//String HOST = "http://72.52.126.24/client/api";  //Citrix CS user api base url
+		String HOST = "http://219.117.239.169:8080/client/api";  //SakauePark CS user api base url
 		
 		if (specifiedHost!=null) {HOST = specifiedHost;}  //use any caller-specified host over the default value
 		
@@ -411,11 +428,10 @@ public class CsRestService extends IntentService {
 		
 		
 		//add error msg to errors table so user sees an error msg
-		ContentValues cvForErrorsTable = new ContentValues();
-		cvForErrorsTable.put(Errors.ERRORTEXT, "Connection could not be made; transaction aborted.");
-		cvForErrorsTable.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
-		
-		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cvForErrorsTable);
+//		ContentValues cvForErrorsTable = new ContentValues();
+//		cvForErrorsTable.put(Errors.ERRORTEXT, "Connection could not be made; transaction aborted.");
+//		cvForErrorsTable.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
+//		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cvForErrorsTable);
 		
 		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 	}
@@ -501,7 +517,7 @@ public class CsRestService extends IntentService {
 					continue;
 				}
 				
-				final String fieldName = jsonParser.getCurrentName();
+				String fieldName = jsonParser.getCurrentName();
 				jsonParser.nextToken();  //now on value of this field
 				String fieldValue = jsonParser.getText();
 				if(jsonParser.isExpectedStartArrayToken()) {
@@ -511,6 +527,13 @@ public class CsRestService extends IntentService {
 					fieldValue = om.writeValueAsString(complexDataNode);
 				}
 
+				if(fieldName.equals(Vms.META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)) {
+					//this is an unfortunate special check being done to map any "group" fields from cs to
+					//a client-specific "groupa" fieldname (arbitrary name).  This is necessary b/c "group"
+					//is an sql keyword so we cannot use it as a field name or it cases sql statements to choke.
+					fieldName = Vms.GROUPA;
+				}
+				
 				contentValues.put(fieldName, fieldValue);
 			}
 			

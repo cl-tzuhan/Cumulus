@@ -27,7 +27,8 @@ public class Vms implements BaseColumns {
 	public static final String DOMAIN = "domain";
 	public static final String DOMAINID = "domainid";
 	public static final String FORVIRTUALNETWORK = "forvirtualnetwork";
-	public static final String GROUPA = "group";  //member var name purposefully named different than CS API property name b/c "group" is a keyword in SQL which causes statements with this word in it to choke
+	public static final String GROUPA = "groupa";  //member var name purposefully named different than CS API property name b/c "group" is a keyword in SQL which causes statements with this word in it to choke
+												   //(also see META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)
 	public static final String GROUPID = "groupid";
 	public static final String GUESTOSID = "guestosid";
 	public static final String HAENABLE = "haenable";
@@ -102,6 +103,7 @@ public class Vms implements BaseColumns {
 	public static final class META_DATA {
 		public static final String TABLE_NAME = "vms";
 		public static final Uri CONTENT_URI = Uri.parse("content://"+CsRestContentProvider.AUTHORITY+"/"+TABLE_NAME);
+		public static final String CS_ORIGINAL_GROUP_FIELD_NAME = "group";  //the real "group" field name used by the cs server/api
 	}
 	
 }
