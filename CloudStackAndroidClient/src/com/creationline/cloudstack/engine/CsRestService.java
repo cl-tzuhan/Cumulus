@@ -312,6 +312,11 @@ public class CsRestService extends IntentService {
 		} catch (IllegalArgumentException e) {
 			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
+			//save the error to errors db as well
+			ContentValues cv = new ContentValues();
+			cv.put(Errors.ERRORTEXT, e.getMessage());
+			cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString());
+			getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);

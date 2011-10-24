@@ -6,20 +6,26 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
+import android.view.Gravity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
 
-public class CsVmList extends FragmentActivity {
+public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory, View.OnClickListener {
 	
 	private BroadcastReceiver broadcastReceiver = null;
 	
@@ -35,6 +41,14 @@ public class CsVmList extends FragmentActivity {
 //            getSupportFragmentManager().beginTransaction().add(R.id.listfragment, list).commit();
 //        }
         
+        //set-up error log view to update with animation
+        TextSwitcher ts = (TextSwitcher) findViewById(R.id.errorLogTextView);
+        ts.setFactory(this);
+        Animation in = AnimationUtils.loadAnimation(this,  android.R.anim.fade_in);
+        Animation out = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
+        ts.setInAnimation(in);
+        ts.setOutAnimation(out);
+                
         final String action = CsRestService.TEST_CALL;
 
         
@@ -84,7 +98,7 @@ public class CsVmList extends FragmentActivity {
     			final int latestErrorMsgId = errorLog.getInt(errorLog.getColumnIndex(Errors._ID));
     			final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
     			
-    			TextView errorLogTextView = (TextView)findViewById(R.id.errorLogTextView);
+    			TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
     			errorLogTextView.setText(latestErrorMsgId+": "+latestErrorMsg);
     		}
     	};
@@ -141,6 +155,22 @@ public class CsVmList extends FragmentActivity {
 			}
 		}
 		super.onDestroy();
+	}
+
+
+	@Override
+	public void onClick(View arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public View makeView() {
+		TextView t = new TextView(this);
+		t.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
+		t.setTextSize(15);
+		t.setTextColor(Color.YELLOW);
+		return t;
 	}
 
 
