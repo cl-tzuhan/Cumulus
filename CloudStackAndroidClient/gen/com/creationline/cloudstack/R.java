@@ -8,40 +8,49 @@
 package com.creationline.cloudstack;
 
 public final class R {
+    public static final class anim {
+        public static final int fadein=0x7f040000;
+        public static final int fadein_layoutanim=0x7f040001;
+        public static final int slide_lefttoright=0x7f040002;
+        public static final int slide_lefttoright_layoutanim=0x7f040003;
+        public static final int slide_righttoleft=0x7f040004;
+        public static final int slide_righttoleft_layoutanim=0x7f040005;
+    }
     public static final class attr {
     }
     public static final class color {
-        public static final int grey_a5=0x7f040001;
-        public static final int grey_ee=0x7f040000;
-        public static final int supplementaryinfo_color_selector=0x7f040002;
-        public static final int vmrunning_color_selector=0x7f040003;
-        public static final int vmstopped_color_selector=0x7f040004;
-        public static final int vmunknown_color_selector=0x7f040005;
+        public static final int grey_a5=0x7f050001;
+        public static final int grey_ee=0x7f050000;
+        public static final int supplementaryinfo_color_selector=0x7f050002;
+        public static final int vmrunning_color_selector=0x7f050003;
+        public static final int vmstopped_color_selector=0x7f050004;
+        public static final int vmunknown_color_selector=0x7f050005;
     }
     public static final class drawable {
         public static final int icon=0x7f020000;
     }
     public static final class id {
-        public static final int button1=0x7f060003;
-        public static final int cpunumber=0x7f06000d;
-        public static final int cpunumberunit=0x7f06000e;
-        public static final int cpuspeed=0x7f060010;
-        public static final int cpuspeedunit=0x7f060011;
-        public static final int cpustatsseperator=0x7f06000f;
-        public static final int csvmlist=0x7f060001;
-        public static final int csvmlistfragment=0x7f060002;
-        public static final int csvmlistitem=0x7f060005;
-        public static final int displayname=0x7f060007;
-        public static final int errorLogTextView=0x7f060004;
-        public static final int hypervisor=0x7f06000c;
-        public static final int memory=0x7f060012;
-        public static final int memoryunit=0x7f060013;
-        public static final int name=0x7f060008;
-        public static final int serviceofferingname=0x7f06000a;
-        public static final int state=0x7f060009;
-        public static final int templatedisplaytext=0x7f06000b;
-        public static final int textView1=0x7f060000;
-        public static final int vmicon=0x7f060006;
+        public static final int button1=0x7f070003;
+        public static final int cpunumber=0x7f07000e;
+        public static final int cpunumberunit=0x7f07000f;
+        public static final int cpuspeed=0x7f070011;
+        public static final int cpuspeedunit=0x7f070012;
+        public static final int cpustatsseperator=0x7f070010;
+        public static final int csvmlist=0x7f070001;
+        public static final int csvmlistfragment=0x7f070002;
+        public static final int csvmlistitem=0x7f070005;
+        public static final int displayname=0x7f070008;
+        public static final int errorLogTextView=0x7f070004;
+        public static final int hypervisor=0x7f07000d;
+        public static final int memory=0x7f070013;
+        public static final int memoryunit=0x7f070014;
+        public static final int name=0x7f070009;
+        public static final int serviceofferingname=0x7f07000b;
+        public static final int state=0x7f07000a;
+        public static final int templatedisplaytext=0x7f07000c;
+        public static final int textView1=0x7f070000;
+        public static final int vmicon=0x7f070007;
+        public static final int vmiconframe=0x7f070006;
     }
     public static final class layout {
         public static final int cssnapshotlist=0x7f030000;
@@ -50,8 +59,8 @@ public final class R {
         public static final int main=0x7f030003;
     }
     public static final class string {
-        public static final int app_name=0x7f050001;
-        public static final int hello=0x7f050000;
-        public static final int status_noVms=0x7f050002;
+        public static final int app_name=0x7f060001;
+        public static final int hello=0x7f060000;
+        public static final int status_noVms=0x7f060002;
     }
 }
