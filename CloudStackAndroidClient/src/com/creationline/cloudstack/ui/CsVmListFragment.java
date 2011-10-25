@@ -25,7 +25,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     private class CsVmListAdapter extends ResourceCursorAdapter {
     	//This adaptor use strictly for use with the CsVmList class/layout, and expects specific data to fill its contents.
     	
-    	private int _layout;
+    	private int _layout;  //unused as the onClickListner-related code is currently unncessary
 
     	public CsVmListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
@@ -37,6 +37,12 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			setTextViewWithString(view, R.id.displayname, cursor, Vms.DISPLAYNAME);
 			setTextViewWithString(view, R.id.name, cursor, Vms.NAME);
 			setTextViewWithString(view, R.id.state, cursor, Vms.STATE);
+			setTextViewWithString(view, R.id.serviceofferingname, cursor, Vms.SERVICEOFFERINGNAME);
+			setTextViewWithString(view, R.id.templatedisplaytext, cursor, Vms.TEMPLATEDISPLAYTEXT);
+			setTextViewWithString(view, R.id.hypervisor, cursor, Vms.HYPERVISOR);
+			setTextViewWithString(view, R.id.cpunumber, cursor, Vms.CPUNUMBER);
+			setTextViewWithString(view, R.id.cpuspeed, cursor, Vms.CPUSPEED);
+			setTextViewWithString(view, R.id.memory, cursor, Vms.MEMORY);
     	}
 
 		/**
@@ -49,6 +55,18 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		public void setTextViewWithString(View view, int textViewId, Cursor cursor, String columnName) {
 			TextView tv = (TextView) view.findViewById(textViewId);
 			tv.setText(cursor.getString(cursor.getColumnIndex(columnName)));
+
+			if(textViewId==R.id.state) {
+				//for the vm state text, we change its color depending on the current state of the vm
+				String stateStr = tv.getText().toString();
+				if("running".equalsIgnoreCase(stateStr)) {
+					tv.setTextColor(getResources().getColorStateList(R.color.vmrunning_color_selector));
+				} else if ("stopped".equalsIgnoreCase(stateStr)) {
+					tv.setTextColor(getResources().getColorStateList(R.color.vmstopped_color_selector));
+				} else {
+					tv.setTextColor(getResources().getColorStateList(R.color.vmunknown_color_selector));
+				}
+			}
 		}
 		
 ////NOTE: This code below was being used as a work-around for the listview not responding to touch "clicks".
@@ -112,7 +130,13 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         		Vms._ID,
         		Vms.DISPLAYNAME,
         		Vms.NAME,
-        		Vms.STATE
+        		Vms.STATE,
+        		Vms.SERVICEOFFERINGNAME,
+        		Vms.TEMPLATEDISPLAYTEXT,
+        		Vms.HYPERVISOR,
+        		Vms.CPUNUMBER,
+        		Vms.CPUSPEED,
+        		Vms.MEMORY
         };
         CursorLoader cl = new CursorLoader(getActivity(), Vms.META_DATA.CONTENT_URI, columns, null, null, null);
 		return cl;

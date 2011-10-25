@@ -79,21 +79,27 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	public void testInputStreamToString() {
 		CsRestService csRestService = startCsRestService();
 
-		final String sampleText = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !#$%&\'()-^\\@[;:],./=~|`{+*}<>?";
-		InputStream sampleTextStream = new StringBufferInputStream(sampleText);
-		StringBuilder result1 = csRestService.inputStreamToString(sampleTextStream);
-		assertEquals(sampleText, result1.toString());
-		
-		final String emptyStr = "";
-		InputStream emptyStream = new StringBufferInputStream(emptyStr);
-		StringBuilder result2 = csRestService.inputStreamToString(emptyStream);
-		assertEquals(emptyStr, result2.toString());
-		
-		String bigStr = sampleText + sampleText + sampleText + sampleText + sampleText + sampleText + sampleText;
-		bigStr = bigStr + bigStr + bigStr + bigStr + bigStr;
-		InputStream bigStrStream = new StringBufferInputStream(bigStr);
-		StringBuilder result3 = csRestService.inputStreamToString(bigStrStream);
-		assertEquals(bigStr, result3.toString());
+		try {
+			final String sampleText = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !#$%&\'()-^\\@[;:],./=~|`{+*}<>?";
+			InputStream sampleTextStream = new StringBufferInputStream(sampleText);
+			StringBuilder result1;
+			result1 = csRestService.inputStreamToString(sampleTextStream);
+			assertEquals(sampleText, result1.toString());
+
+			final String emptyStr = "";
+			InputStream emptyStream = new StringBufferInputStream(emptyStr);
+			StringBuilder result2 = csRestService.inputStreamToString(emptyStream);
+			assertEquals(emptyStr, result2.toString());
+
+			String bigStr = sampleText + sampleText + sampleText + sampleText + sampleText + sampleText + sampleText;
+			bigStr = bigStr + bigStr + bigStr + bigStr + bigStr;
+			InputStream bigStrStream = new StringBufferInputStream(bigStr);
+			StringBuilder result3 = csRestService.inputStreamToString(bigStrStream);
+			assertEquals(bigStr, result3.toString());
+		} catch (IOException e) {
+			fail("inputStreamToString ran into error trying to process stream");
+			e.printStackTrace();
+		}
 	}
 	
 	public void testBuildFinalUrl() {

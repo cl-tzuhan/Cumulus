@@ -362,7 +362,14 @@ public class CsRestService extends IntentService {
 		}
 		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
 		final String status = (callReturnedOk)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
-		final StringBuilder replyBodyText = inputStreamToString(replyBody);
+		StringBuilder replyBodyText;
+		try {
+			replyBodyText = inputStreamToString(replyBody);
+		} catch (IOException e) {
+			ClLog.e(TAG, "failure occured trying to read replyBody so aborting.  uriToUpdate="+uriToUpdate+"  reply="+reply);
+			updateCallAsAbortedOnDb(uriToUpdate);
+			return;
+		}
 		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBodyText);
 
 		updateCallWithReplyOnDb(uriToUpdate, status, replyBodyText);
@@ -448,7 +455,7 @@ public class CsRestService extends IntentService {
 	 * @param is InputStream with data to read out
 	 * @return all the data in specified InputStream
 	 */
-	public StringBuilder inputStreamToString(final InputStream is) {
+	public StringBuilder inputStreamToString(final InputStream is) throws IOException {
 
 	    String line = "";
 	    StringBuilder total = new StringBuilder();
@@ -463,6 +470,7 @@ public class CsRestService extends IntentService {
 			}
 		} catch (IOException e) {
 			ClLog.e("inputStreamToString", e);
+			throw e;
 		}
 	    
 	    // Return full string

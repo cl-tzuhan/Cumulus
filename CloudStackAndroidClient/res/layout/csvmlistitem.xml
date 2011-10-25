@@ -5,30 +5,85 @@
 	android:paddingTop="5dip" android:paddingBottom="8dip"
 	android:minHeight="?android:attr/listPreferredItemHeight">
 
-	<ImageView android:layout_width="wrap_content"
-		android:id="@+id/vmicon" android:layout_height="wrap_content"
-		android:src="@android:drawable/ic_lock_power_off"
-		android:layout_alignParentLeft="true"
+	<ImageView android:id="@+id/vmicon" android:src="@android:drawable/ic_lock_power_off"
+		android:layout_alignParentLeft="true" android:layout_centerVertical="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:layout_marginLeft="10sp" android:layout_marginRight="10sp"
-		android:focusable="false" android:focusableInTouchMode="false"
-		android:layout_centerVertical="true" android:background="@android:color/transparent" />
-	<TextView android:text="Display Name" android:layout_width="wrap_content"
-		android:id="@+id/displayname" android:layout_height="wrap_content"
+		android:background="@android:color/transparent" />
+	<TextView android:id="@+id/displayname"
+		android:layout_toRightOf="@id/vmicon" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:focusable="false" android:focusableInTouchMode="false"
-		android:layout_alignParentTop="true" android:layout_toRightOf="@id/vmicon" />
-	<TextView android:id="@+id/name" android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:layout_alignBaseline="@id/displayname"
-		android:layout_toRightOf="@id/displayname" android:layout_marginLeft="10sp" 
+		android:text="Display Name" />
+	<TextView android:id="@+id/name" android:layout_toRightOf="@id/displayname"
+		android:layout_alignBaseline="@id/displayname" android:layout_height="wrap_content"
+		android:layout_width="wrap_content" android:layout_marginLeft="10sp"
 		android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
-		android:focusable="false" android:focusableInTouchMode="false"
 		android:text="name" />
-	<TextView android:id="@+id/state" android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:layout_alignLeft="@id/displayname"
-		android:layout_below="@id/displayname"
-		android:textSize="12sp" android:textColor="#00DD00" android:textStyle="bold"
-		android:focusable="false" android:focusableInTouchMode="false"
+	<TextView android:id="@+id/state" android:layout_alignLeft="@id/displayname"
+		android:layout_below="@id/displayname" android:layout_height="wrap_content"
+		android:layout_width="wrap_content" android:textSize="10sp"
+		android:textColor="@color/vmunknown_color_selector" android:textStyle="bold"
 		android:text="state" />
+
+	<TextView android:id="@+id/serviceofferingname"
+		android:layout_alignLeft="@id/displayname" android:layout_below="@id/state"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="10sp"
+		android:text="Service offering" />
+	<TextView android:id="@+id/templatedisplaytext"
+		android:layout_alignLeft="@id/displayname" android:layout_below="@id/serviceofferingname"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="10sp"
+		android:text="Description of this template" />
+	<TextView android:id="@+id/hypervisor"
+		android:layout_alignLeft="@id/displayname" android:layout_below="@id/templatedisplaytext"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="10sp"
+		android:text="Hypervisor" />
+		
+	<TextView android:id="@+id/cpunumber" android:layout_alignLeft="@id/displayname"
+		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:text="XXX" />
+	<TextView android:id="@+id/cpunumberunit"
+		android:layout_toRightOf="@id/cpunumber" android:layout_below="@id/hypervisor"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/cpunumber"
+		android:layout_marginLeft="1sp"
+		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="CPU" />
+		<TextView android:id="@+id/cpustatsseperator"
+		android:layout_toRightOf="@id/cpunumberunit" android:layout_below="@id/hypervisor"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="2sp"
+		android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="/" />
+	<TextView android:id="@+id/cpuspeed" android:layout_toRightOf="@id/cpustatsseperator"
+		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:layout_marginLeft="2sp"
+		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:text="XXX" />
+	<TextView android:id="@+id/cpuspeedunit"
+		android:layout_toRightOf="@id/cpuspeed" android:layout_below="@id/hypervisor"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/cpuspeed"
+		android:layout_marginLeft="1sp"
+		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="Ghz" />
+	<TextView android:id="@+id/memory" android:layout_toRightOf="@id/cpuspeedunit"
+		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:layout_marginLeft="14sp"
+		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:text="XXX" />
+	<TextView android:id="@+id/memoryunit"
+		android:layout_toRightOf="@id/memory" android:layout_below="@id/hypervisor"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/memory"
+		android:layout_marginLeft="1sp"
+		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="MB" />
+
 
 
 
