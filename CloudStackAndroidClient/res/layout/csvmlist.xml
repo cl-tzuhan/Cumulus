@@ -3,11 +3,17 @@
 	android:orientation="vertical" android:layout_width="match_parent"
 	android:layout_height="match_parent" android:id="@+id/csvmlist">
 	
+	<!--
 	<fragment class="com.creationline.cloudstack.ui.CsVmListFragment"
 		android:layout_width="match_parent" android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
 		android:layout_alignParentRight="true" android:id="@+id/csvmlistfragment">
 	</fragment>
+	-->
+	
+	<android.support.v4.view.ViewPager android:id="@+id/viewpager"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_weight="1" />
 
 	<Button android:id="@+id/button1" android:text="Button"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -26,11 +32,9 @@
 		
 	<TextSwitcher android:textAppearance="?android:attr/textAppearanceSmall"
 		android:id="@+id/errorLogTextView" android:text="error log"
-		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:layout_alignParentLeft="true"
-		android:layout_alignParentBottom="true" android:layout_below="@android:id/list"
-			android:focusable="false" android:focusableInTouchMode="false"
-		
+		android:layout_width="match_parent" android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+		android:focusable="false" android:focusableInTouchMode="false"
 		android:layout_alignParentRight="true" android:fadingEdge="horizontal"></TextSwitcher>
 
 </RelativeLayout>

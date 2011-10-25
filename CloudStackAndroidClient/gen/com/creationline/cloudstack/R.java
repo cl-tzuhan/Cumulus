@@ -37,7 +37,6 @@ public final class R {
         public static final int cpuspeedunit=0x7f070012;
         public static final int cpustatsseperator=0x7f070010;
         public static final int csvmlist=0x7f070001;
-        public static final int csvmlistfragment=0x7f070002;
         public static final int csvmlistitem=0x7f070005;
         public static final int displayname=0x7f070008;
         public static final int errorLogTextView=0x7f070004;
@@ -49,6 +48,7 @@ public final class R {
         public static final int state=0x7f07000a;
         public static final int templatedisplaytext=0x7f07000c;
         public static final int textView1=0x7f070000;
+        public static final int viewpager=0x7f070002;
         public static final int vmicon=0x7f070007;
         public static final int vmiconframe=0x7f070006;
     }

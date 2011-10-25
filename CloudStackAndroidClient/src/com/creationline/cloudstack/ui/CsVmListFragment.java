@@ -1,6 +1,7 @@
 package com.creationline.cloudstack.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -14,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.creationline.cloudstack.R;
+import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 
@@ -112,6 +114,15 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        //make the rest call to cs server for data
+        final String action = CsRestService.TEST_CALL;   
+        Bundle apiCmd = new Bundle();
+        apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
+        apiCmd.putString("account", "rickson");
+        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
+        getActivity().startService(csRestServiceIntent);
+      
+        //set-up the loader & adapter for populating this list
         getLoaderManager().initLoader(CSVM_LIST_LOADER, null, this);
         adapter = new CsVmListAdapter(getActivity().getApplicationContext(), R.layout.csvmlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
         setListAdapter(adapter);

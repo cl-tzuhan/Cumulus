@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
@@ -41,6 +42,10 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 //            getSupportFragmentManager().beginTransaction().add(R.id.listfragment, list).commit();
 //        }
         
+        ViewPageAdapter vpa = new ViewPageAdapter(getSupportFragmentManager());
+        ViewPager vp = (ViewPager)findViewById(R.id.viewpager);
+        vp.setAdapter(vpa);
+        
         //set-up error log view to update with animation
         TextSwitcher ts = (TextSwitcher) findViewById(R.id.errorLogTextView);
         ts.setFactory(this);
@@ -49,9 +54,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         ts.setInAnimation(in);
         ts.setOutAnimation(out);
                 
-        final String action = CsRestService.TEST_CALL;
-
-        
+        final String action = CsRestService.TEST_CALL;     
         broadcastReceiver = new BroadcastReceiver(){
         	//This handles intents broadcasted by CsRestService
         	@Override
@@ -66,21 +69,19 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         
         registerForErrorsDbUpdate();
         registerForVmsDbUpdate();
-//        registerForDbUpdate(Errors.META_DATA.CONTENT_URI);
-//        registerForDbUpdate(Vms.META_DATA.CONTENT_URI);
         
+////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "http://192.168.3.11:8096/?command=listVirtualMachines&account=thsu-account&domainid=2&response=json");  //admin api
+////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=thsu-account&domainid=2");  //user api
+////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=iizuka1");  //user api
+//        Bundle apiCmd = new Bundle();
+//        apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
+////        apiCmd.putString("account", "iizuka1");
+//        apiCmd.putString("account", "rickson");
+//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, apiCmd);  //user api
+//        startService(csRestServiceIntent);
         
-//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "http://192.168.3.11:8096/?command=listVirtualMachines&account=thsu-account&domainid=2&response=json");  //admin api
-//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=thsu-account&domainid=2");  //user api
-//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=iizuka1");  //user api
-        Bundle apiCmd = new Bundle();
-        apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
-//        apiCmd.putString("account", "iizuka1");
-        apiCmd.putString("account", "rickson");
-        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, apiCmd);  //user api
-        startService(csRestServiceIntent);
-        
-        
+//        TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
+//		errorLogTextView.setText("error log");
     }
 
     
