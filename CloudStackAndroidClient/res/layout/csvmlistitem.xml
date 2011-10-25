@@ -24,6 +24,7 @@
 		android:layout_below="@id/displayname" android:layout_height="wrap_content"
 		android:layout_width="wrap_content" android:textSize="10sp"
 		android:textColor="@color/vmunknown_color_selector" android:textStyle="bold"
+		android:typeface="monospace"
 		android:text="state" />
 
 	<TextView android:id="@+id/serviceofferingname"
@@ -35,6 +36,7 @@
 		android:layout_alignLeft="@id/displayname" android:layout_below="@id/serviceofferingname"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:textSize="10sp"
+		android:typeface="serif"
 		android:text="Description of this template" />
 	<TextView android:id="@+id/hypervisor"
 		android:layout_alignLeft="@id/displayname" android:layout_below="@id/templatedisplaytext"
@@ -46,6 +48,7 @@
 		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:typeface="serif"
 		android:text="XXX" />
 	<TextView android:id="@+id/cpunumberunit"
 		android:layout_toRightOf="@id/cpunumber" android:layout_below="@id/hypervisor"
@@ -64,6 +67,7 @@
 		android:layout_width="wrap_content"
 		android:layout_marginLeft="2sp"
 		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:typeface="serif"
 		android:text="XXX" />
 	<TextView android:id="@+id/cpuspeedunit"
 		android:layout_toRightOf="@id/cpuspeed" android:layout_below="@id/hypervisor"
@@ -76,6 +80,7 @@
 		android:layout_width="wrap_content"
 		android:layout_marginLeft="14sp"
 		android:textSize="16sp" android:textColor="@color/grey_ee"
+		android:typeface="serif"
 		android:text="XXX" />
 	<TextView android:id="@+id/memoryunit"
 		android:layout_toRightOf="@id/memory" android:layout_below="@id/hypervisor"
