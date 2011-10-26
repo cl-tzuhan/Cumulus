@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.test.ServiceTestCase;
 
 import com.creationline.cloudstack.engine.db.Errors;
+import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 
@@ -63,6 +64,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		//erase all data from each table
 		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
 		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
 		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
 	}
 	
@@ -102,7 +104,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 	}
 	
-	public void testBuildFinalUrl() {
+	public void testBuildFinalUrl_listVirtualMachines() {
 		//Test for request+key signing with pre-determined result for thsu-account@192.168.3.11:8080
 		String host = "http://192.168.3.11:8080/client/api";
 //		String apiCmd = "command=listVirtualMachines&account=thsu-account&domainid=2";
@@ -130,6 +132,21 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		finalizedRequest = CsRestService.buildFinalUrl(host, apiCmd, apiKey, secretKey);
 		assertEquals(expectedFinalUrl, finalizedRequest);
+	}
+
+	public void testBuildFinalUrl_listSnapshots() {
+		//Test for request+key signing with pre-determined result for ricksont@219.117.239.169:8080
+		String host = "http://219.117.239.169:8080/client/api";
+		Bundle apiCmd = new Bundle();
+		apiCmd.putString(CsRestService.COMMAND, "listSnapshots");
+		apiCmd.putString("account", "rickson");
+		String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";
+		String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q";
+		String expectedFinalUrl = "http://219.117.239.169:8080/client/api?response=json&command=listSnapshots&account=rickson&apiKey=cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g&signature=3%2BkXi7q6hcOlD4oQFX1w6iCuabQ%3D";
+		
+		String finalizedRequest = CsRestService.buildFinalUrl(host, apiCmd, apiKey, secretKey);
+		assertEquals(expectedFinalUrl, finalizedRequest);
+		
 	}
 	
 	public void testParseListVirtualMachinesResult() {
@@ -213,6 +230,80 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 		
 		assertEquals("Number of VM objects in db does not match expected number", numVms, c.getCount());
+	}
+	
+	public void testParseListSnapshotsResult() {
+		final String columns[] = new String[] {
+				Snapshots.ID,
+				Snapshots.ACCOUNT,
+				Snapshots.CREATED,
+				Snapshots.DOMAIN,
+				Snapshots.DOMAINID,
+				Snapshots.INTERVALTYPE,
+				Snapshots.JOBID,
+				Snapshots.JOBSTATUS,
+				Snapshots.NAME,
+				Snapshots.SNAPSHOTTYPE,
+				Snapshots.STATE,
+				Snapshots.VOLUMEID,
+				Snapshots.VOLUMENAME,
+				Snapshots.VOLUMETYPE
+		};
+
+		final String sampleBodyWith3Snapshots = "{ \"listsnapshotsresponse\" : { \"count\":3 ,\"snapshot\" : [  {\"id\":6,\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"snapshottype\":\"MANUAL\",\"volumeid\":60,\"volumename\":\"DATA-51\",\"volumetype\":\"DATADISK\",\"created\":\"2011-10-26T11:15:21+0900\",\"name\":\"i-13-51-VM_DATA-51_20111026021521\",\"intervaltype\":\"MANUAL\",\"state\":\"BackedUp\"}, {\"id\":5,\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"snapshottype\":\"MANUAL\",\"volumeid\":59,\"volumename\":\"ROOT-51\",\"volumetype\":\"ROOT\",\"created\":\"2011-10-26T11:15:16+0900\",\"name\":\"i-13-51-VM_ROOT-51_20111026021516\",\"intervaltype\":\"MANUAL\",\"state\":\"BackedUp\"}, {\"id\":4,\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"snapshottype\":\"MANUAL\",\"volumeid\":59,\"volumename\":\"ROOT-51\",\"volumetype\":\"ROOT\",\"created\":\"2011-10-21T12:45:25+0900\",\"name\":\"i-13-51-VM_ROOT-51_20111021034525\",\"intervaltype\":\"MANUAL\",\"state\":\"BackedUp\"} ] } }";
+		executeAndCheckParseListSnapshots(sampleBodyWith3Snapshots, columns);
+	}
+	
+	private void executeAndCheckParseListSnapshots(final String jsonData, final String[] columns) {
+		
+		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the snapshots db for this
+		CsRestService csRestService = startCsRestService();
+		csRestService.parseReplyBody_listSnapshots(jsonData);
+		
+		//grab the data saved directly from db so we can check the saved values below
+		Cursor c = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, columns, null, null, null);
+		c.moveToFirst();
+		
+		//parse the original sample json data into a tree so we can use it to compare individual values below
+	    ObjectMapper om = new ObjectMapper();
+	    JsonNode rootNode = null;
+		try {
+			rootNode = om.readTree(jsonData);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		//grab the expected snapshots list inside listsnapshotsresponse; we will parse these snapshot objects, checking their values
+		Iterator<JsonNode> listItr = rootNode.findValue("snapshot").getElements();
+		
+		int numVms = 0;
+		while(listItr.hasNext()) {
+			//go through each snapshot object returned and check every field to see if it matches the original value
+			JsonNode snapshotNode = listItr.next();  //grab next parsed snapshot object to use as expected result
+			numVms++;
+			for(String columnName : c.getColumnNames()) {
+				//check values of all columns and make sure read-back data match the original
+				final String retrievedValue = c.getString(c.getColumnIndex(columnName));
+				final JsonNode jn = snapshotNode.findValue(columnName);
+				if(jn==null) {
+					//if the expected value is a null...
+					if(retrievedValue==null) {
+						continue;  //...pass if the db also has no value for this column
+					} else {
+						fail("field="+columnName+" should exist, but is not found in output");  //...fail if it db contains a value for this column
+					}
+				}
+				final String expectedValue = jn.toString();
+				assertEquals(trimDoubleQuotes(expectedValue), trimDoubleQuotes(retrievedValue));
+			}
+			c.moveToNext();  //get next snapshot object read from db to check
+		}
+		
+		assertEquals("Number of snapshot objects in db does not match expected number", numVms, c.getCount());
 	}
 	
 	public void testParseErrorAndAddToDb() {
