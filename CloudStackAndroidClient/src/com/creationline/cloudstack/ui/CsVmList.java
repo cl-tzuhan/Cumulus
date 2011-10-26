@@ -26,7 +26,7 @@ import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
 
-public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory, View.OnClickListener {
+public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory {
 	
 	private BroadcastReceiver broadcastReceiver = null;
 	
@@ -69,6 +69,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         
         registerForErrorsDbUpdate();
         registerForVmsDbUpdate();
+        
         
 ////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "http://192.168.3.11:8096/?command=listVirtualMachines&account=thsu-account&domainid=2&response=json");  //admin api
 ////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=thsu-account&domainid=2");  //user api
@@ -158,13 +159,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 		super.onDestroy();
 	}
 
-
-	@Override
-	public void onClick(View arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	@Override
 	public View makeView() {
 		TextView t = new TextView(this);
@@ -173,6 +167,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 		t.setTextColor(Color.YELLOW);
 		return t;
 	}
+
 
 
     

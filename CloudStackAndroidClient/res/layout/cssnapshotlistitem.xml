@@ -26,20 +26,20 @@
 		android:layout_below="@id/name" android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:textSize="19sp" android:textColor="@color/primaryinfo_color_selector"
-		android:layout_marginTop="-7dp"
+		android:layout_marginTop="-4dp"
 		android:typeface="serif"
 		android:text="Created" />
 	<TextView android:id="@+id/createdtime" android:layout_toRightOf="@id/created"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/created"
 		android:layout_marginLeft="4dp"
-		android:textSize="19sp" android:textColor="#7777ff"
+		android:textSize="12sp" android:textColor="#7777ff"
 		android:typeface="serif"
 		android:text="Time" />
 	<TextView android:id="@+id/createdatelabel"
 		android:layout_toRightOf="@id/createdtime"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/created"
 		android:layout_marginLeft="4dp"
-		android:textSize="19sp" android:textColor="@color/label"
+		android:textSize="12sp" android:textColor="@color/label"
 		android:text="create date" />
 		
 	<TextView android:id="@+id/volumename" android:layout_alignLeft="@id/name"
@@ -52,14 +52,14 @@
 	<TextView android:id="@+id/volumetype"
 		android:layout_toRightOf="@id/volumename" android:layout_below="@id/created"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/volumename"
-		android:layout_marginLeft="6dp"
-		android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:layout_marginLeft="4dp"
+		android:textSize="13sp" android:textColor="@color/supplementaryinfo_color_selector"
 		android:text="Volume Type" />
 	<TextView android:id="@+id/volumelabel"
 		android:layout_toRightOf="@id/volumetype" android:layout_below="@id/created"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/volumename"
 		android:layout_marginLeft="4dp"
-		android:textSize="14sp" android:textColor="@color/label"
+		android:textSize="13sp" android:textColor="@color/label"
 		android:text="volume" />
 		
 
