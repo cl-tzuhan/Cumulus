@@ -20,10 +20,13 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.IntentService;
@@ -36,6 +39,7 @@ import android.text.format.Time;
 import android.util.Base64;
 
 import com.creationline.cloudstack.engine.db.Errors;
+import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -484,6 +488,10 @@ public class CsRestService extends IntentService {
 		if("listVirtualMachines".equals(cmd)) {
 			//parse listVirtualMachine results and save to vms table
 			parseReplyBody_listVirtualMachines(replyBodyText);
+		} else if("listSnapshots".equals(cmd)) {
+			//parse listSnapshots results and save to snapshots table
+			parseReplyBody_listSnapshots(replyBodyText);
+			
 			
 			
 			///////////////////////////////////////////////////////////////////
@@ -509,46 +517,7 @@ public class CsRestService extends IntentService {
 			int num = getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
 			ClLog.i(TAG, "clearing vms db before adding new data; num of records deleted=" + num);
 			
-			JsonToken token = null;
-			ContentValues contentValues = new ContentValues();
-			for(token = jsonParser.nextToken(); token!=null && token!=JsonToken.END_ARRAY; token = jsonParser.nextToken()) {
-				
-				if(token==JsonToken.START_ARRAY || token==JsonToken.END_ARRAY) {
-					continue;  //ignore any array delimiters
-				}
-				
-				if(token==JsonToken.START_OBJECT) {
-					contentValues.clear();  //if we are at the start of an vm item, prepare a clean contentValues to save parsed data
-					continue;
-				}
-
-				if(token==JsonToken.END_OBJECT) {
-					Uri newUri = getContentResolver().insert(Vms.META_DATA.CONTENT_URI, contentValues);  //once we have parsed all the vm data, save it to db
-					if(newUri!=null) {
-						ClLog.i(TAG, "successfully inserted "+newUri+" into vms db");
-					}
-					continue;
-				}
-				
-				String fieldName = jsonParser.getCurrentName();
-				jsonParser.nextToken();  //now on value of this field
-				String fieldValue = jsonParser.getText();
-				if(jsonParser.isExpectedStartArrayToken()) {
-					//parse & save any object/array values as plain json;
-					//the app will have the responsibility of re-creating the obj from the json if it is needed
-					JsonNode complexDataNode = om.readTree(jsonParser);
-					fieldValue = om.writeValueAsString(complexDataNode);
-				}
-
-				if(fieldName.equals(Vms.META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)) {
-					//this is an unfortunate special check being done to map any "group" fields from cs to
-					//a client-specific "groupa" fieldname (arbitrary name).  This is necessary b/c "group"
-					//is an sql keyword so we cannot use it as a field name or it cases sql statements to choke.
-					fieldName = Vms.GROUPA;
-				}
-				
-				contentValues.put(fieldName, fieldValue);
-			}
+			parseAndSaveReply(om, jsonParser, Vms.META_DATA.CONTENT_URI);
 			
 			jsonParser.close();
 			
@@ -558,6 +527,77 @@ public class CsRestService extends IntentService {
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
+		}
+	}
+
+	public void parseReplyBody_listSnapshots(final String replyBodyText) {
+		final String TAG = "CsRestService.parseReplyBody_listSnapshots()";
+		
+		try {
+			ObjectMapper om = new ObjectMapper();
+			JsonNode rootNode = om.readTree(replyBodyText);
+			JsonNode vmNode = rootNode.path("listsnapshotsresponse").path("snapshot");  //extract the snapshot list, which contains the actual snapshot data
+			JsonParser jsonParser = vmNode.traverse();
+			
+			int num = getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
+			ClLog.i(TAG, "clearing snapshots db before adding new data; num of records deleted=" + num);
+			
+			parseAndSaveReply(om, jsonParser, Snapshots.META_DATA.CONTENT_URI);
+			
+			jsonParser.close();
+			
+		} catch (JsonParseException e) {
+			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		}
+	}
+
+	public void parseAndSaveReply(ObjectMapper om, JsonParser jsonParser, Uri dbTableToUpdate)
+		throws IOException, JsonParseException, JsonProcessingException, JsonGenerationException, JsonMappingException {
+		final String TAG = "CsRestService.parseAndSaveReply()";
+
+		JsonToken token = null;
+		ContentValues contentValues = new ContentValues();
+		for(token = jsonParser.nextToken(); token!=null && token!=JsonToken.END_ARRAY; token = jsonParser.nextToken()) {
+			
+			if(token==JsonToken.START_ARRAY || token==JsonToken.END_ARRAY) {
+				continue;  //ignore any array delimiters
+			}
+			
+			if(token==JsonToken.START_OBJECT) {
+				contentValues.clear();  //if we are at the start of an vm item, prepare a clean contentValues to save parsed data
+				continue;
+			}
+
+			if(token==JsonToken.END_OBJECT) {
+				Uri newUri = getContentResolver().insert(dbTableToUpdate, contentValues);  //once we have parsed all the vm data, save it to db
+				if(newUri!=null) {
+					ClLog.i(TAG, "successfully inserted "+newUri);
+				}
+				continue;
+			}
+			
+			String fieldName = jsonParser.getCurrentName();
+			jsonParser.nextToken();  //now on value of this field
+			String fieldValue = jsonParser.getText();
+			if(jsonParser.isExpectedStartArrayToken()) {
+				//parse & save any object/array values as plain json;
+				//the app will have the responsibility of re-creating the obj from the json if it is needed
+				JsonNode complexDataNode = om.readTree(jsonParser);
+				fieldValue = om.writeValueAsString(complexDataNode);
+			}
+
+			if(fieldName.equals(Vms.META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)) {
+				//this is an unfortunate special check being done to map any "group" fields from cs to
+				//a client-specific "groupa" fieldname (arbitrary name).  This is necessary b/c "group"
+				//is an sql keyword so we cannot use it as a field name or it cases sql statements to choke.
+				fieldName = Vms.GROUPA;
+			}
+			
+			contentValues.put(fieldName, fieldValue);
 		}
 	}
 	

@@ -21,42 +21,54 @@ public final class R {
     public static final class color {
         public static final int grey_a5=0x7f050001;
         public static final int grey_ee=0x7f050000;
-        public static final int supplementaryinfo_color_selector=0x7f050002;
-        public static final int vmrunning_color_selector=0x7f050003;
-        public static final int vmstopped_color_selector=0x7f050004;
-        public static final int vmunknown_color_selector=0x7f050005;
+        public static final int label=0x7f050002;
+        public static final int primaryinfo_color_selector=0x7f050003;
+        public static final int supplementaryinfo_color_selector=0x7f050004;
+        public static final int vmrunning_color_selector=0x7f050005;
+        public static final int vmstopped_color_selector=0x7f050006;
+        public static final int vmunknown_color_selector=0x7f050007;
     }
     public static final class drawable {
         public static final int icon=0x7f020000;
     }
     public static final class id {
-        public static final int button1=0x7f070003;
-        public static final int cpunumber=0x7f07000e;
-        public static final int cpunumberunit=0x7f07000f;
-        public static final int cpuspeed=0x7f070011;
-        public static final int cpuspeedunit=0x7f070012;
-        public static final int cpustatsseperator=0x7f070010;
-        public static final int csvmlist=0x7f070001;
-        public static final int csvmlistitem=0x7f070005;
-        public static final int displayname=0x7f070008;
-        public static final int errorLogTextView=0x7f070004;
-        public static final int hypervisor=0x7f07000d;
-        public static final int memory=0x7f070013;
-        public static final int memoryunit=0x7f070014;
-        public static final int name=0x7f070009;
-        public static final int serviceofferingname=0x7f07000b;
-        public static final int state=0x7f07000a;
-        public static final int templatedisplaytext=0x7f07000c;
+        public static final int button1=0x7f07000d;
+        public static final int cpunumber=0x7f070017;
+        public static final int cpunumberunit=0x7f070018;
+        public static final int cpuspeed=0x7f07001a;
+        public static final int cpuspeedunit=0x7f07001b;
+        public static final int cpustatsseperator=0x7f070019;
+        public static final int created=0x7f070005;
+        public static final int createdatelabel=0x7f070007;
+        public static final int createdtime=0x7f070006;
+        public static final int cssnapshotlistitem=0x7f070001;
+        public static final int csvmlist=0x7f07000b;
+        public static final int csvmlistitem=0x7f07000f;
+        public static final int displayname=0x7f070012;
+        public static final int errorLogTextView=0x7f07000e;
+        public static final int hypervisor=0x7f070016;
+        public static final int memory=0x7f07001c;
+        public static final int memoryunit=0x7f07001d;
+        public static final int name=0x7f070004;
+        public static final int serviceofferingname=0x7f070014;
+        public static final int snapshoticon=0x7f070003;
+        public static final int snapshoticonframe=0x7f070002;
+        public static final int state=0x7f070013;
+        public static final int templatedisplaytext=0x7f070015;
         public static final int textView1=0x7f070000;
-        public static final int viewpager=0x7f070002;
-        public static final int vmicon=0x7f070007;
-        public static final int vmiconframe=0x7f070006;
+        public static final int viewpager=0x7f07000c;
+        public static final int vmicon=0x7f070011;
+        public static final int vmiconframe=0x7f070010;
+        public static final int volumelabel=0x7f07000a;
+        public static final int volumename=0x7f070008;
+        public static final int volumetype=0x7f070009;
     }
     public static final class layout {
         public static final int cssnapshotlist=0x7f030000;
-        public static final int csvmlist=0x7f030001;
-        public static final int csvmlistitem=0x7f030002;
-        public static final int main=0x7f030003;
+        public static final int cssnapshotlistitem=0x7f030001;
+        public static final int csvmlist=0x7f030002;
+        public static final int csvmlistitem=0x7f030003;
+        public static final int main=0x7f030004;
     }
     public static final class string {
         public static final int app_name=0x7f060001;

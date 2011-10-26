@@ -63,9 +63,9 @@
 		android:layout_toRightOf="@id/cpunumber" android:layout_below="@id/hypervisor"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/cpunumber"
 		android:layout_marginLeft="1dp"
-		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:textSize="16sp" android:textColor="@color/label"
 		android:text="CPU" />
-		<TextView android:id="@+id/cpustatsseperator"
+	<TextView android:id="@+id/cpustatsseperator"
 		android:layout_toRightOf="@id/cpunumberunit" android:layout_below="@id/hypervisor"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:layout_marginLeft="2dp"
@@ -82,7 +82,7 @@
 		android:layout_toRightOf="@id/cpuspeed" android:layout_below="@id/hypervisor"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/cpuspeed"
 		android:layout_marginLeft="1dp"
-		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:textSize="16sp" android:textColor="@color/label"
 		android:text="Ghz" />
 	<TextView android:id="@+id/memory" android:layout_toRightOf="@id/cpuspeedunit"
 		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
@@ -95,7 +95,7 @@
 		android:layout_toRightOf="@id/memory" android:layout_below="@id/hypervisor"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/memory"
 		android:layout_marginLeft="1dp"
-		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:textSize="16sp" android:textColor="@color/label"
 		android:text="MB" />
 
 

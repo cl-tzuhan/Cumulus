@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 import com.creationline.cloudstack.engine.db.Errors;
+import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -37,7 +38,7 @@ public class CsRestContentProvider extends ContentProvider {
 	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
 	private SQLiteDatabaseHelper sqlDbHelper;
-	private static final int DB_VERSION = 1;
+	private static final int DB_VERSION = 2;
 	
 	
 	public static class SQLiteDatabaseHelper extends SQLiteOpenHelper {
@@ -60,8 +61,10 @@ public class CsRestContentProvider extends ContentProvider {
 										+ Transactions.REPLY_DATETIME+" TEXT";
 			db.execSQL("CREATE TABLE " + Transactions.META_DATA.TABLE_NAME + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
 			
+			
 			//create the ui-use tables from the appropriate column definition classes
 			db.execSQL(makeCreateTableSqlStr(new Vms()));
+			db.execSQL(makeCreateTableSqlStr(new Snapshots()));
 			
 			
 			//create the errors table
@@ -73,6 +76,7 @@ public class CsRestContentProvider extends ContentProvider {
 			///destroy and re-create the db tables
 			db.execSQL("DROP TABLE IF EXISTS " + Transactions.META_DATA.TABLE_NAME);
 			db.execSQL("DROP TABLE IF EXISTS " + Vms.META_DATA.TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + Snapshots.META_DATA.TABLE_NAME);
 			db.execSQL("DROP TABLE IF EXISTS " + Errors.META_DATA.TABLE_NAME);
 			onCreate(db);
 		}
