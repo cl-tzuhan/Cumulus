@@ -18,9 +18,10 @@
                   android:label="@string/app_name" />
 
         <activity android:name=".ui.CsSnapshotList"
-                  android:label="@string/app_name" />
+                  android:label="Snapshots" />
         
         <service android:name=".engine.CsRestService" />
+		<receiver android:name=".engine.CheckAsyncJobProgress" />
 
 	    <provider android:name=".engine.CsRestContentProvider" android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
     

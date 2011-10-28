@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -29,7 +32,9 @@ import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -47,19 +52,51 @@ import com.creationline.cloudstack.util.ClLog;
 public class CsRestService extends IntentService {
 	
 	//Intent msg-related constants
-	public static final String ACTION_ID = "com.creationline.engine.ACTION_ID";
-	public static final String API_CMD = "com.creationline.engine.API_CMD";
-	public static final String RESPONSE = "com.creationline.engine.RESPONSE";
+	public static final String ACTION_ID = "com.creationline.cloudstack.engine.ACTION_ID";
+	public static final String API_CMD = "com.creationline.cloudstack.engine.API_CMD";
+	public static final String RESPONSE = "com.creationline.cloudstack.engine.RESPONSE";
 	
 	public static final String TEST_CALL = "com.creationline.cloudstack.engine.TEST_CALL";
 	
 	//constants matching params used by the CS API request format
 	public static final String COMMAND = "command";
-	
+
+	private static final int INSERT_DATA = 0;
+	private static final int UPDATE_DATA = 1;
 	
 	private Uri inProgressTransaction = null;
 	private static Time time = null;
 
+	
+	// ApiKey and secretKey as given by your CloudStack vendor
+	private String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
+	private String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
+	
+	private class JsonNameNodePair {
+		private String responseName;
+		private JsonNode responseData;
+		
+		public JsonNameNodePair(String responseName, JsonNode responseData) {
+			this.setResponseName(responseName);
+			this.setResponseData(responseData);
+		}
+
+		public void setResponseName(String responseName) {
+			this.responseName = responseName;
+		}
+
+		public String getFieldName() {
+			return responseName;
+		}
+
+		public void setResponseData(JsonNode responseData) {
+			this.responseData = responseData;
+		}
+
+		public JsonNode getValueNode() {
+			return responseData;
+		}
+	}
 	
 	public CsRestService() {
 		super("CsRestService");
@@ -85,7 +122,7 @@ public class CsRestService extends IntentService {
 		Bundle payload = intent.getExtras(); 
 		Bundle apiCmd = payload.getBundle(CsRestService.API_CMD);
 		
-		initiateRestRequest(apiCmd);
+		performRestRequest(apiCmd);
 		
 		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
 		broadcastIntent.putExtra(CsRestService.RESPONSE, apiCmd+"Response");
@@ -105,27 +142,40 @@ public class CsRestService extends IntentService {
 		super.onDestroy();
 	}
 
-	private void initiateRestRequest(Bundle apiCmd) {
+	private void performRestRequest(Bundle apiCmd) {
 		
-		// ApiKey and secretKey as given by your CloudStack vendor
-//		String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";    //thsu-account@192.168.3.11:8080 use
-//		String secretKey = "Yt_9ZEIDGlmRIg63MiMatAri-1aRoo4l-82mnbYdR3d8JdG7jvXqrrB5TpmbLZB_8zK_j95VRSQWZwnu0153eQ"; //thsu-account@192.168.3.11:8080 use
-//		String apiKey = "fUFqsJeECZcMawm9q376WKFKdFvd51GLHwgm3d9PD-r3mjNJUaXBYbkKxBoxCdF5EubJ-ypmT8vHihtAm-gZvA";    //iizuka1@72.52.126.24 use
-//		String secretKey = "Q3s_-gMYzivbaaO9S_2ewdXHSXHvUg6ExP0W2yRWBZxFIbTDIKD3ADk-0NU6qhsD0K31e9Irchh_Z8yuRQTuqQ"; //iizuka1@72.52.126.24 use
-		String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
-		String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
+		try {
+			//create complete url
+			String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
 
-		//create complete url
-		String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
-		
-		//save the request to db
-		inProgressTransaction = saveRequestToDb(finalUrl);
-		
-		//send request to cs
-		HttpResponse response = doRestCall(finalUrl, inProgressTransaction);
-		
-		//save reply to view data db
-		saveReplyToDb(inProgressTransaction, response, apiCmd);
+			//save the request to db
+			inProgressTransaction = saveRequestToDb(finalUrl);
+
+			//send request to cs
+			HttpResponse reply = doRestCall(finalUrl, inProgressTransaction);
+
+			//extract body text from response
+			StringBuilder replyBody = getReplyBody(reply);
+
+			//save reply to view data db
+			saveReplyToDb(inProgressTransaction, reply, replyBody);
+			
+			//read each field/value from reply data and save to appropriate db
+			unpackAndSaveReplyBodyData(inProgressTransaction, reply, replyBody);
+			
+		} catch (InvalidParameterException e) {
+			//buildFinalUrl() throws this exception when it cannot build the url.
+			//since we have not saved the request yet, we don't need to do anything.
+			//user should not see this type of error in the wild.
+			;
+		} catch (IllegalArgumentException e) {
+			//buildFinalUrl() throws this exception when it cannot build the url.
+			//since we have not saved the request yet, we don't need to do anything.
+			//user should not see this type of error in the wild.
+			;
+		} catch (IOException e) {
+			updateCallAsAbortedOnDb(inProgressTransaction);
+		}
 		
 		inProgressTransaction = null;
 		
@@ -160,9 +210,11 @@ public class CsRestService extends IntentService {
 	 * @param apiCmd command to send to CS server (not including host and user api path)
 	 *   
 	 * @return finalized URL that can be used to call CS server; null if any step of the building process failed
+	 * @throws InvalidParameterException when one or more of the parameters are null/emtpy
+	 * @throws IllegalArgumentException when parameters are not null, but error occurred when trying to build url
 	 */
-//	public static String buildFinalUrl(String specifiedHost, String apiCmd, String apiKey, String secretKey) {
-	public static String buildFinalUrl(String specifiedHost, Bundle apiCmd, String apiKey, String secretKey) {
+	public static String buildFinalUrl(final String specifiedHost, final Bundle apiCmd, final String apiKey, final String secretKey)
+																			throws InvalidParameterException, IllegalArgumentException {
 		final String TAG = "CsRestService.buildFinalUrl()";
 		
 		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
@@ -183,7 +235,8 @@ public class CsRestService extends IntentService {
 
 		try {
 			if (apiCmd == null || apiCmd.isEmpty() || apiKey == null || secretKey == null) {
-				return null;
+				ClLog.e(TAG, "required parmeter(s) are null, so aborting.  apiCmd="+apiCmd+"  apiKey="+apiKey+"  secretKey="+secretKey);
+				throw new InvalidParameterException();
 			}
 			
 			//make sure we get reply in json 
@@ -251,8 +304,8 @@ public class CsRestService extends IntentService {
 			
 		} catch (Throwable t) {
 			ClLog.e(TAG, "error occurred building api call: " + t.toString() + " ["+t.getMessage()+"]");
-			ClLog.e(TAG, t);
-			return null;
+			//ClLog.e(TAG, t);
+			throw new IllegalArgumentException("error in trying to build final url", t);
 		}
 	}
 	
@@ -339,7 +392,39 @@ public class CsRestService extends IntentService {
 		return null;
 	}
 	
-	public void saveReplyToDb(Uri uriToUpdate, HttpResponse reply, Bundle apiCmd) {
+	public StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
+		final String TAG = "CsRestService.getReplyBody()";
+		
+		if(reply==null) {
+			return null;
+		}
+
+		final int statusCode = reply.getStatusLine().getStatusCode();
+		final HttpEntity entity = reply.getEntity();
+		
+		InputStream replyBodyObject = null;
+		try {
+			replyBodyObject = entity.getContent();
+		} catch (IllegalStateException e) {
+			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		}
+		
+		StringBuilder replyBody;
+		try {
+			replyBody = inputStreamToString(replyBodyObject);
+		} catch (IOException e) {
+			ClLog.e(TAG, "failure occured trying to read replyBody so aborting.  reply="+reply);
+			throw e;
+		}
+		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBody);
+		return replyBody;
+	}
+	
+	public void saveReplyToDb(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) {
 		final String TAG = "CsRestService.saveReplyToDb()";
 
 		if(uriToUpdate==null || reply==null) {
@@ -353,46 +438,32 @@ public class CsRestService extends IntentService {
 		
 		//parse the reply for data
 		final int statusCode = reply.getStatusLine().getStatusCode();
-		final HttpEntity entity = reply.getEntity();
-		InputStream replyBody = null;
-		try {
-			replyBody = entity.getContent();
-		} catch (IllegalStateException e) {
-			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		} catch (IOException e) {
-			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		}
 		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
 		final String status = (callReturnedOk)? Transactions.STATUS_VALUES.SUCCESS : Transactions.STATUS_VALUES.FAIL;
-		StringBuilder replyBodyText;
-		try {
-			replyBodyText = inputStreamToString(replyBody);
-		} catch (IOException e) {
-			ClLog.e(TAG, "failure occured trying to read replyBody so aborting.  uriToUpdate="+uriToUpdate+"  reply="+reply);
-			updateCallAsAbortedOnDb(uriToUpdate);
-			return;
-		}
-		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBodyText);
-
-		updateCallWithReplyOnDb(uriToUpdate, status, replyBodyText);
+		
+		updateCallWithReplyOnDb(uriToUpdate, status, replyBody);
+		
+	}
+	
+	public void unpackAndSaveReplyBodyData(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) {
+		final int statusCode = reply.getStatusLine().getStatusCode();
+		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
 		
 		if(callReturnedOk) {
-			processAndSaveJsonReplyData(apiCmd, replyBodyText.toString());
+			processAndSaveJsonReplyData(replyBody.toString());
 		} else {
-			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBodyText);
+			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody);
 		}
 	}
 
-	public void parseErrorAndAddToDb(final Uri uriToUpdate, final int statusCode, final StringBuilder replyBodyText) {
+	public void parseErrorAndAddToDb(final Uri uriToUpdate, final int statusCode, final StringBuilder replyBody) {
 		final String TAG = "CsRestService.parseErrorAndAddToDb()";
 
 		//extract the error details from the reply, defaulting to unknown if parse fails
 		String errorText = "unknown error";
 		ObjectMapper om = new ObjectMapper();
 		try {
-			JsonNode errorObj = om.readTree(replyBodyText.toString());
+			JsonNode errorObj = om.readTree(replyBody.toString());
 			errorText = errorObj.findValue("errortext").asText();
 		} catch (JsonParseException e) {
 			ClLog.e(TAG, "expected errorresponse not well-formed! [" + e.toString() +"]");
@@ -481,125 +552,277 @@ public class CsRestService extends IntentService {
 	    return total;
 	}
 	
-	private void processAndSaveJsonReplyData(Bundle apiCmd, String replyBodyText) {
+	public void processAndSaveJsonReplyData(final String replyBodyText) {
 		final String TAG = "CsRestService.processAndSaveJsonReplyData()";
 	
-		final String cmd = apiCmd.getString(CsRestService.COMMAND);
-		if("listVirtualMachines".equals(cmd)) {
+		//extract the specific response name (*response, where * is the api name),
+		//as well as the actual data object representing the response
+		JsonNode rootNode = null;
+		try {
+			ObjectMapper om = new ObjectMapper();
+			rootNode = om.readTree(replyBodyText);
+		} catch (JsonParseException e) {
+			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		}
+		final JsonNameNodePair responseData = extractFirstFieldValuePair(rootNode);  //we assume the "*response" tag is always the first field of the replyBody
+		
+//		final String apiName = apiCmd.getString(CsRestService.COMMAND);
+		if("listVirtualMachinesResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listVirtualMachine results and save to vms table
-			parseReplyBody_listVirtualMachines(replyBodyText);
-		} else if("listSnapshots".equals(cmd)) {
+			parseReplyBody_listVirtualMachines(responseData.getValueNode());
+		} else if("startVirtualMachineResponse".equalsIgnoreCase(responseData.getFieldName())) {
+			//parse startVirtualMachine results and wait for async results
+			parseReplyBody_startVirtualMachine(responseData.getValueNode());
+		} else if("listSnapshotsResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listSnapshots results and save to snapshots table
-			parseReplyBody_listSnapshots(replyBodyText);
+			parseReplyBody_listSnapshots(responseData.getValueNode());
 			
 			
 			
 			///////////////////////////////////////////////////////////////////
 			//TODO: other API calls to handle will go below here as an else-if
 			///////////////////////////////////////////////////////////////////
+		} else if("queryAsyncJobResultResponse".equalsIgnoreCase(responseData.getFieldName())) {
+			//parse queryAsyncJobResult results and save to appropriate table
+			parseReplyBody_queryAsyncJobResult(responseData.getValueNode());
 		} else {
 			//no such api call!
-			ClLog.e(TAG, "No such CloudStack API call exists [cmd="+cmd+"].  No data saved to datastore.");
+			ClLog.e(TAG, "No such CloudStack API call/response exists [apiResponseName="+responseData.getFieldName()+"].  No data saved to datastore.");
 		}
 		
 	}
+	
+	public JsonNameNodePair extractFirstFieldValuePair(JsonNode node) {
+		final String TAG = "CsRestService.extractValueNodePair()";
 
-	public void parseReplyBody_listVirtualMachines(final String replyBodyText) {
+		Iterator<String> fieldNameIterator = node.getFieldNames();
+
+		final String apiResponseName = fieldNameIterator.next();
+		final JsonNode responseDataNode = node.path(apiResponseName);
+
+		return new JsonNameNodePair(apiResponseName, responseDataNode);
+	}
+
+	public void parseReplyBody_listVirtualMachines(JsonNode responseDataNode) {
 		final String TAG = "CsRestService.parseListVirtualMachinesResult()";
 
-		try {
-			ObjectMapper om = new ObjectMapper();
-			JsonNode rootNode = om.readTree(replyBodyText);
-			//JsonNode vmNode = rootNode.findPath("virtualmachine");
-			JsonNode vmNode = rootNode.path("listvirtualmachinesresponse").path("virtualmachine");  //extract the virtualmachine list, which contains the actual vm data
-			JsonParser jsonParser = vmNode.traverse();
-			
-			int num = getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
-			ClLog.i(TAG, "clearing vms db before adding new data; num of records deleted=" + num);
-			
-			parseAndSaveReply(om, jsonParser, Vms.META_DATA.CONTENT_URI);
-			
-			jsonParser.close();
-			
-		} catch (JsonParseException e) {
-			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		} catch (IOException e) {
-			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		}
-	}
+		JsonNode vmNode = responseDataNode.path("virtualmachine");  //extract the virtualmachine list, which contains the actual vm data
+		JsonParser vmListParser = vmNode.traverse();
 
-	public void parseReplyBody_listSnapshots(final String replyBodyText) {
-		final String TAG = "CsRestService.parseReplyBody_listSnapshots()";
+		final int num = getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		ClLog.i(TAG, "clearing vms db before adding new data; num of records deleted=" + num);
+
+		parseAndSaveReply(vmListParser, Vms.META_DATA.CONTENT_URI, INSERT_DATA);
+
+		try {
+			vmListParser.close();
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException trying to close vm list parser! [" + e.toString() +"]");
+			e.printStackTrace();
+		}
+
+	}
+	
+	private void parseReplyBody_startVirtualMachine(JsonNode responseDataNode) {
+		final String TAG = "CsRestService.parseReplyBody_startVirtualMachine()";
 		
-		try {
-			ObjectMapper om = new ObjectMapper();
-			JsonNode rootNode = om.readTree(replyBodyText);
-			JsonNode vmNode = rootNode.path("listsnapshotsresponse").path("snapshot");  //extract the snapshot list, which contains the actual snapshot data
-			JsonParser jsonParser = vmNode.traverse();
-			
-			int num = getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
-			ClLog.i(TAG, "clearing snapshots db before adding new data; num of records deleted=" + num);
-			
-			parseAndSaveReply(om, jsonParser, Snapshots.META_DATA.CONTENT_URI);
-			
-			jsonParser.close();
-			
-		} catch (JsonParseException e) {
-			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		} catch (IOException e) {
-			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
+		final JsonNode jobidNode = responseDataNode.path("jobid");  //extract the jobid object
+		final String jobid = jobidNode.asText();
+
+		if(jobid==null) {
+			ClLog.e(TAG, "expecting jobid to query, but could not parse replyBodyText; aborting async query request");
+			return;
 		}
+
+		startCheckAsyncJobProgress(jobid);
 	}
 
-	public void parseAndSaveReply(ObjectMapper om, JsonParser jsonParser, Uri dbTableToUpdate)
-		throws IOException, JsonParseException, JsonProcessingException, JsonGenerationException, JsonMappingException {
-		final String TAG = "CsRestService.parseAndSaveReply()";
+	public void parseReplyBody_listSnapshots(JsonNode responseDataNode) {
+		final String TAG = "CsRestService.parseReplyBody_listSnapshots()";
 
-		JsonToken token = null;
-		ContentValues contentValues = new ContentValues();
-		for(token = jsonParser.nextToken(); token!=null && token!=JsonToken.END_ARRAY; token = jsonParser.nextToken()) {
-			
-			if(token==JsonToken.START_ARRAY || token==JsonToken.END_ARRAY) {
-				continue;  //ignore any array delimiters
-			}
-			
-			if(token==JsonToken.START_OBJECT) {
-				contentValues.clear();  //if we are at the start of an vm item, prepare a clean contentValues to save parsed data
-				continue;
-			}
+		final JsonNode snapshotNode = responseDataNode.path("snapshot");  //extract the snapshot list, which contains the actual snapshot data
+		final JsonParser snapshotListParser = snapshotNode.traverse();
 
-			if(token==JsonToken.END_OBJECT) {
-				Uri newUri = getContentResolver().insert(dbTableToUpdate, contentValues);  //once we have parsed all the vm data, save it to db
-				if(newUri!=null) {
-					ClLog.i(TAG, "successfully inserted "+newUri);
-				}
-				continue;
-			}
-			
-			String fieldName = jsonParser.getCurrentName();
-			jsonParser.nextToken();  //now on value of this field
-			String fieldValue = jsonParser.getText();
-			if(jsonParser.isExpectedStartArrayToken()) {
-				//parse & save any object/array values as plain json;
-				//the app will have the responsibility of re-creating the obj from the json if it is needed
-				JsonNode complexDataNode = om.readTree(jsonParser);
-				fieldValue = om.writeValueAsString(complexDataNode);
-			}
+		final int num = getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
+		ClLog.i(TAG, "clearing snapshots db before adding new data; num of records deleted=" + num);
 
-			if(fieldName.equals(Vms.META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)) {
-				//this is an unfortunate special check being done to map any "group" fields from cs to
-				//a client-specific "groupa" fieldname (arbitrary name).  This is necessary b/c "group"
-				//is an sql keyword so we cannot use it as a field name or it cases sql statements to choke.
-				fieldName = Vms.GROUPA;
-			}
-			
-			contentValues.put(fieldName, fieldValue);
+		parseAndSaveReply(snapshotListParser, Snapshots.META_DATA.CONTENT_URI, INSERT_DATA);
+
+		try {
+			snapshotListParser.close();
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException trying to close snapshot list parser! [" + e.toString() +"]");
+			e.printStackTrace();
 		}
 	}
 	
 
+	
+	private void parseReplyBody_queryAsyncJobResult(JsonNode responseDataNode) {
+		final String TAG = "CsRestService.parseReplyBody_queryAsyncJobResult()";
+
+		final String jobid = responseDataNode.path("jobid").asText();
+		final String jobstatus = responseDataNode.path("jobstatus").asText();
+		
+        
+		switch(Integer.valueOf(jobstatus)) {
+			case 0: //job still in progress
+				{
+					//we basically do nothing while we wait for the async job to finish
+					ClLog.i(TAG, "waiting for result of pending async jobid="+jobid);
+				}
+				break;
+			case 1: //job completed successfully
+				{
+					//read and save jobResult object (how do we tell where it goes?!?)
+					ClLog.d(TAG, "async jobid="+jobid+"returned as success");
+					
+			        endCheckAsyncJobProgress(jobid);
+
+					final JsonNode jobresultObject = responseDataNode.path("jobresult");
+					final JsonNameNodePair jobresult = extractFirstFieldValuePair(jobresultObject);
+					ClLog.d(TAG, "jobresult.getFieldName()= "+jobresult.getFieldName());
+					ClLog.d(TAG, "jobresult.getValueNode()= "+jobresult.getValueNode());
+					
+					if("virtualmachine".equalsIgnoreCase(jobresult.getFieldName())) {
+						//update vms row with returned data
+						final JsonParser nodeParser = jobresult.getValueNode().traverse();
+						parseAndSaveReply(nodeParser, Vms.META_DATA.CONTENT_URI, UPDATE_DATA);
+					} else {
+						ClLog.e(TAG, "got jobresult with unrecognized data.  jobresult fieldname="+jobresult.getFieldName());
+					}
+
+				}
+				break;
+			case 2: //job failed to complete
+				{
+					//read and show error
+					ClLog.d(TAG, "async jobid="+jobid+"returned as failure ;_;");
+					
+			        endCheckAsyncJobProgress(jobid);
+			        
+					final String jobresultcode = responseDataNode.path("jobresultcode").asText();
+					final String jobresult = responseDataNode.path("jobresult").asText();
+
+					//TODO: fill me out!
+					
+					///DEBUG
+					System.out.println("jobresultcode= "+jobresultcode);
+					System.out.println("jobresult= "+jobresult);
+					///endDEBUG
+				}
+				break;
+			default:
+				ClLog.e(TAG, "got an unrecognized jobstatus="+jobstatus);
+		}
+	}
+
+	public void startCheckAsyncJobProgress(final String jobid) {
+		//set up a task to repeatedly check with cs server whether this jobid has completed
+        final long currentTimeInMillis = System.currentTimeMillis();
+        final long eightSecIntervalInMillis = 8000;
+        
+        final PendingIntent checkAsyncProgressPendingItent = createCheckAsyncJobProgressPendingIntent(jobid);
+        AlarmManager alarmManager = (AlarmManager) getApplication().getSystemService(Context.ALARM_SERVICE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, eightSecIntervalInMillis, checkAsyncProgressPendingItent);
+	}
+	
+	public void endCheckAsyncJobProgress(final String jobid) {
+		//stop checking up on async job progress, canceling all pending intents
+		final PendingIntent checkAsyncProgressPendingItent = createCheckAsyncJobProgressPendingIntent(jobid);
+		AlarmManager alarmManager = (AlarmManager) getApplication().getSystemService(Context.ALARM_SERVICE);
+		alarmManager.cancel(checkAsyncProgressPendingItent);
+	}
+
+	public PendingIntent createCheckAsyncJobProgressPendingIntent(final String jobid) {
+		Bundle apiCmd = new Bundle();
+        apiCmd.putString(CsRestService.COMMAND, "queryAsyncJobResult");
+        apiCmd.putString("jobid", jobid);
+        
+        Intent checkAsyncJobProgressIntent = new Intent(getApplicationContext(), CheckAsyncJobProgress.class);
+        checkAsyncJobProgressIntent.putExtras(apiCmd);
+        final PendingIntent checkAsyncJobProgressPendingItent = PendingIntent.getBroadcast(getApplicationContext(), 0, checkAsyncJobProgressIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		return checkAsyncJobProgressPendingItent;
+	}
+	
+
+	public void parseAndSaveReply(final JsonParser listObjectParser, final Uri targetDbTable, final int insertOrUpdate) {
+		final String TAG = "CsRestService.parseAndSaveReply()";
+
+		try {
+			ObjectMapper om = new ObjectMapper();
+			JsonToken token = null;
+			ContentValues contentValues = new ContentValues();
+			for(token = listObjectParser.nextToken(); token!=null && token!=JsonToken.END_ARRAY; token = listObjectParser.nextToken()) {
+
+				if(token==JsonToken.START_ARRAY || token==JsonToken.END_ARRAY) {
+					continue;  //ignore any array delimiters
+				}
+
+				if(token==JsonToken.START_OBJECT) {
+					contentValues.clear();  //if we are at the start of an vm item, prepare a clean contentValues to save parsed data
+					continue;
+				}
+
+				if(token==JsonToken.END_OBJECT) {
+					if(insertOrUpdate==UPDATE_DATA) {
+						//update only the row with the same id as the parsed data
+						final String whereClause = Vms.ID+"=?"; //using Vms.ID here, but assumed that all ID fieldnames for all tables are the same, i.e. "id"
+						final String[] selectionArgs = new String[] {contentValues.getAsString("id")};
+						final int numUpdated = getContentResolver().update(targetDbTable, contentValues, whereClause, selectionArgs);
+						ClLog.i(TAG, "updated "+numUpdated+" row(s)");
+					} else {
+						//insert parsed data into table
+						final Uri newUri = getContentResolver().insert(targetDbTable, contentValues);
+						if(newUri!=null) {
+							ClLog.i(TAG, "successfully inserted "+newUri);
+						}
+					}
+					continue;
+				}
+
+				String fieldName = listObjectParser.getCurrentName();
+				listObjectParser.nextToken();  //now on value of this field
+				String fieldValue = listObjectParser.getText();
+				if(listObjectParser.isExpectedStartArrayToken()) {
+					//parse & save any object/array values as plain json;
+					//the app will have the responsibility of re-creating the obj from the json if it is needed
+					JsonNode complexDataNode = om.readTree(listObjectParser);
+					fieldValue = om.writeValueAsString(complexDataNode);
+				}
+
+				if(fieldName.equals(Vms.META_DATA.CS_ORIGINAL_GROUP_FIELD_NAME)) {
+					//this is an unfortunate special check being done to map any "group" fields from cs to
+					//a client-specific "groupa" fieldname (arbitrary name).  This is necessary b/c "group"
+					//is an sql keyword so we cannot use it as a field name or it cases sql statements to choke.
+					fieldName = Vms.GROUPA;
+				}
+
+				contentValues.put(fieldName, fieldValue);
+			}
+		} catch (JsonParseException e) {
+			ClLog.e(TAG, "got Exception parsing json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (JsonGenerationException e) {
+			ClLog.e(TAG, "got Exception generating json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (JsonMappingException e) {
+			ClLog.e(TAG, "got Exception mapping json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (JsonProcessingException e) {
+			ClLog.e(TAG, "got Exception processing json! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		} catch (IOException e) {
+			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+		}
+		
+	}
+	
+
 } ///END CsRestService
+

@@ -61,7 +61,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         	public void onReceive(Context arg0, Intent arg1) {
         		String responseString = arg1.getStringExtra(CsRestService.RESPONSE);
         		Toast.makeText(getBaseContext(), "CsRestService: request "+responseString+" initiated...", Toast.LENGTH_SHORT).show();
-        		unregisterReceiver(this); //unregister self once the broadcast has been received
         	}
         };
         registerReceiver(broadcastReceiver, new IntentFilter(action));  //activity will now get intents broadcast by CsRestService (filtered by action str)
@@ -70,19 +69,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         registerForErrorsDbUpdate();
         registerForVmsDbUpdate();
         
-        
-////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "http://192.168.3.11:8096/?command=listVirtualMachines&account=thsu-account&domainid=2&response=json");  //admin api
-////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=thsu-account&domainid=2");  //user api
-////        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, "command=listVirtualMachines&account=iizuka1");  //user api
-//        Bundle apiCmd = new Bundle();
-//        apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
-////        apiCmd.putString("account", "iizuka1");
-//        apiCmd.putString("account", "rickson");
-//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(this, action, apiCmd);  //user api
-//        startService(csRestServiceIntent);
-        
-//        TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
-//		errorLogTextView.setText("error log");
     }
 
     
@@ -90,7 +76,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     	final Runnable updatedUiWithResults = new Runnable() {
     		//This handles notifs from CsRestContentProvider upon changes in db
     		public void run() {
-//    			Toast.makeText(getBaseContext(), "Got a notif from errors!!!!!!", Toast.LENGTH_LONG).show();
     			final String columns[] = new String[] {
     					Errors._ID,
     					Errors.ERRORTEXT

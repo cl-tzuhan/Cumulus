@@ -2,7 +2,7 @@
 <RelativeLayout android:id="@+id/csvmlistitem"
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="wrap_content"
-	android:paddingTop="14dp" android:paddingBottom="14dp"
+	android:paddingTop="14dp"
 	android:layoutAnimation="@anim/slide_righttoleft_layoutanim"
 	android:minHeight="?android:attr/listPreferredItemHeight">
 
@@ -96,9 +96,19 @@
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/memory"
 		android:layout_marginLeft="1dp"
 		android:textSize="16sp" android:textColor="@color/label"
+		android:paddingBottom="14dp"
 		android:text="MB" />
 
 
-
+	<TextView android:id="@+id/id"
+		android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="9sp" android:textColor="@color/label"
+		android:visibility="invisible"
+		android:text="id" />
+	<ImageView android:id="@+id/quickactionicon" android:src="@android:drawable/ic_menu_revert"
+			android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
+			android:layout_height="wrap_content" android:layout_width="wrap_content"
+			android:background="@android:color/transparent" />
 
 </RelativeLayout>
