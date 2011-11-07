@@ -67,7 +67,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         
         
         registerForErrorsDbUpdate();
-        registerForVmsDbUpdate();
+        //registerForVmsDbUpdate();
         
     }
 
@@ -97,7 +97,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     	final Runnable updatedUiWithResults = new Runnable() {
     		//This handles notifs from CsRestContentProvider upon changes in db
     		public void run() {
-    			Toast.makeText(getBaseContext(), "Got a notif from vms!!!!!!", Toast.LENGTH_LONG).show();
+    			Toast.makeText(getBaseContext(), "Got a notif from vms!!!!!!", Toast.LENGTH_SHORT).show();
     		}
     	};
     	

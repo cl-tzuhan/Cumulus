@@ -20,16 +20,16 @@ import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
+import com.creationline.cloudstack.mock.CsacMockApplication;
 
 @SuppressWarnings("deprecation")
 public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 
-//	CsRestService csRestService = null;
-	
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-//		csRestService = new CsRestService();
+		
+		setApplication(new CsacMockApplication());
 	}
 
 	@Override
@@ -183,7 +183,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		final String sampleBodyWith1Vm = "{ \"listvirtualmachinesresponse\" : { \"virtualmachine\" : [  {\"id\":2027,\"name\":\"i-39-2027-VM\",\"displayname\":\"i-39-2027-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-09-10T02:43:42-0700\",\"state\":\"Running\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":259,\"templatename\":\"CentOS 5.3 (64 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.3 (64 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":1,\"serviceofferingname\":\"Small Instance\",\"cpunumber\":1,\"cpuspeed\":500,\"memory\":512,\"cpuused\":\"0%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware\"} ] } }";
 		executeAndCheck_listVirtualMachines(sampleBodyWith1Vm, columns);
 
-		final String sampleBodyWith3Vms = "{ \"listvirtualmachinesresponse\" : { \"virtualmachine\" : [  {\"id\":1123,\"name\":\"AWS-i2236.ao\",\"displayname\":\"My big AWS VM\",\"account\":\"kamehameha\",\"domainid\":1000,\"domain\":\"ROOTS!\",\"created\":\"2001-01-01T00:00:00-0700\",\"state\":\"Stopped\",\"haenable\":false,\"zoneid\":12,\"zonename\":\"Mars (the planet)\",\"templateid\":1111111,\"templatename\":\"AWS Cloud OS version 0.0.0001x\",\"templatedisplaytext\":\"TOP SECRET OS!!  FOR YOUR EYES ONLY!!!\",\"passwordenabled\":true,\"serviceofferingid\":11111,\"serviceofferingname\":\"Cloud instance\",\"cpunumber\":11111,\"cpuspeed\":500001,\"memory\":51200123,\"cpuused\":\"10%\",\"networkkbsread\":1220,\"networkkbswrite\":45110,\"guestosid\":1232,\"rootdeviceid\":10,\"rootdevicetype\":\"IZUMOFilesystem\",\"nic\":[{\"id\":5522,\"networkid\":2475555,\"netmask\":\"113.25.255.0\",\"gateway\":\"10.0.0.1\",\"ipaddress\":\"100.100.100.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"AWSware\"}, "
+		final String sampleBodyWith3Vms = "{ \"listvirtualmachinesresponse\" : { \"virtualmachine\" : [  {\"id\":1123,\"name\":\"AWS-i2236.ao\",\"displayname\":\"My big AWS VM\",\"account\":\"kamehameha\",\"domainid\":1000,\"domain\":\"ROOTS!\",\"created\":\"2001-01-01T00:00:00-0700\",\"state\":\"STOPPED\",\"haenable\":false,\"zoneid\":12,\"zonename\":\"Mars (the planet)\",\"templateid\":1111111,\"templatename\":\"AWS Cloud OS version 0.0.0001x\",\"templatedisplaytext\":\"TOP SECRET OS!!  FOR YOUR EYES ONLY!!!\",\"passwordenabled\":true,\"serviceofferingid\":11111,\"serviceofferingname\":\"Cloud instance\",\"cpunumber\":11111,\"cpuspeed\":500001,\"memory\":51200123,\"cpuused\":\"10%\",\"networkkbsread\":1220,\"networkkbswrite\":45110,\"guestosid\":1232,\"rootdeviceid\":10,\"rootdevicetype\":\"IZUMOFilesystem\",\"nic\":[{\"id\":5522,\"networkid\":2475555,\"netmask\":\"113.25.255.0\",\"gateway\":\"10.0.0.1\",\"ipaddress\":\"100.100.100.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"AWSware\"}, "
 			+"{\"id\":2394,\"name\":\"i-39-2394-VM\",\"displayname\":\"Don't look at me\",\"account\":\"kamehameha\",\"domainid\":0,\"domain\":\"AROMA!\",\"created\":\"1034-10-10T10:10:10-0700\",\"state\":\"Running\",\"haenable\":true,\"zoneid\":986,\"zonename\":\"Mars (the symphony)\",\"templateid\":222222222,\"templatename\":\"Unknown OS\",\"templatedisplaytext\":\"If you are the owner of this OS, please contact 080-1456-2235\",\"passwordenabled\":false,\"serviceofferingid\":0,\"serviceofferingname\":\"Unknown instance\",\"cpunumber\":0,\"cpuspeed\":0,\"memory\":0,\"cpuused\":\"100%\",\"networkkbsread\":1098765,\"networkkbswrite\":56789,\"guestosid\":0,\"rootdeviceid\":333,\"rootdevicetype\":\"Unknown\",\"nic\":[{\"id\":883,\"networkid\":0,\"netmask\":\"0.0.0.0\",\"gateway\":\"0.0.0.0\",\"ipaddress\":\"0.0.0.0\",\"traffictype\":\"System\",\"type\":\"Real\",\"isdefault\":false}],\"hypervisor\":\"Megavisor!\"},"
 			+"{\"id\":838272,\"name\":\"AWOL in the numerious battlefields of Kondak\",\"displayname\":\"_\",\"account\":\"kamehameha\",\"domainid\":99,\"domain\":\"none\",\"created\":\"2011-11-11T11:11:11-0700\",\"state\":\"Running\",\"haenable\":true,\"zoneid\":66346,\"zonename\":\"Mars (the candybar)\",\"templateid\":1,\"templatename\":\"Android OS for iPhone\",\"templatedisplaytext\":\"#%=(+%*?@$%')\",\"passwordenabled\":false,\"serviceofferingid\":259,\"serviceofferingname\":\"Android for iPhone instance\",\"cpunumber\":10000001,\"cpuspeed\":1340,\"memory\":5520,\"cpuused\":\"50%\",\"networkkbsread\":22,\"networkkbswrite\":4,\"guestosid\":20,\"rootdeviceid\":2,\"rootdevicetype\":\"ContentProvider store\",\"nic\":[{\"id\":883,\"networkid\":0,\"netmask\":\"0.0.0.0\",\"gateway\":\"0.0.0.0\",\"ipaddress\":\"0.0.0.0\",\"traffictype\":\"Admin\",\"type\":\"Worldly\",\"isdefault\":false}],\"hypervisor\":\"Googavisor!\"} ] } }";
 		executeAndCheck_listVirtualMachines(sampleBodyWith3Vms, columns);
@@ -193,7 +193,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the vms db for this
 		CsRestService csRestService = startCsRestService();
-		csRestService.processAndSaveJsonReplyData(jsonData);
+		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for listVirtualMachines call
 		
 		//grab the data saved directly from db so we can check the saved values below
 		Cursor c = getContext().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, null, null, null);
@@ -231,6 +231,105 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		assertEquals("Number of VM objects in db does not match expected number", numVms, c.getCount());
 	}
+
+	public void testProcessAndSaveJsonReplyData_startVirtualMachines() {
+		final String columns[] = new String[] {
+				Transactions.JOBID,
+				};
+		
+		final String sampleBody = "{ \"startvirtualmachineresponse\" : {\"jobid\":383} }";
+		executeAndCheck_startVirtualMachines(sampleBody, columns);
+	}
+	
+	private void executeAndCheck_startVirtualMachines(final String jsonData, final String[] columns) {
+		deleteAllData();
+		
+		//insert sample record so we can test whether it is successfully updated below
+		ContentValues cv = new ContentValues();
+		cv.put(Transactions.REQUEST, "test request");
+		cv.put(Transactions.REQUEST_DATETIME, "test request datetime");
+		cv.put(Transactions.STATUS, "test status");
+		final Uri uriToUpdate = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+		
+		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the transactions db for this
+		CsRestService csRestService = startCsRestService();
+		csRestService.processAndSaveJsonReplyData(uriToUpdate, jsonData);
+		
+		//grab the data saved directly from db so we can check the saved values below
+		Cursor c = getContext().getContentResolver().query(uriToUpdate, columns, null, null, null);
+		c.moveToFirst();
+		
+		//parse the original sample json data into a tree so we can use it to compare individual values below
+		ObjectMapper om = new ObjectMapper();
+		JsonNode rootNode = null;
+		try {
+			rootNode = om.readTree(jsonData);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		final String expectedJobid = rootNode.findValue("jobid").asText();
+		final String retreivedJobid = c.getString(c.getColumnIndex(Transactions.JOBID));
+		
+		assertEquals("Jobids do not match!", expectedJobid, retreivedJobid);
+	}
+	
+	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult() {
+		final String columns[] = new String[] {
+				Errors.ERRORCODE,
+				Errors.ERRORTEXT,
+				Errors.ORIGINATINGCALL,
+				};
+
+		final String sampleBody = "{ \"queryasyncjobresultresponse\" : {\"jobid\":163,\"jobstatus\":2,\"jobprocstatus\":0,\"jobresultcode\":530,\"jobresulttype\":\"object\",\"jobresult\":{\"errorcode\":530,\"errortext\":\"Internal error executing command, please contact your system administrator\"}} }";
+		executeAndCheck_queryAsyncJobResult(sampleBody, columns);
+
+	}
+	
+	private void executeAndCheck_queryAsyncJobResult(final String jsonData, final String[] columns) {
+		deleteAllData();
+		
+		//insert sample record so we can test whether it is successfully updated below
+		final String sampleRequest = "http://cha.la.head.cha.la/";
+		ContentValues cv = new ContentValues();
+		cv.put(Transactions.REQUEST, sampleRequest);
+		cv.put(Transactions.REQUEST_DATETIME, "test request datetime");
+		cv.put(Transactions.STATUS, "test status");
+		cv.put(Transactions.JOBID, "163");  //all the other data is arbitrary, but this jobid must match the jobid of the data in the sampleBody
+		getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+		
+		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the errors db for this
+		CsRestService csRestService = startCsRestService();
+		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for queryAsyncJobResult call
+		
+		//grab the data saved directly from db so we can check the saved values below
+		Cursor c = getContext().getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, null);
+		c.moveToFirst();
+		
+		//parse the original sample json data into a tree so we can use it to compare individual values below
+	    ObjectMapper om = new ObjectMapper();
+	    JsonNode rootNode = null;
+		try {
+			rootNode = om.readTree(jsonData);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		final String expectedErrorCode = rootNode.findPath("jobresultcode").asText();
+		final String expectedErrorText = rootNode.findPath("errortext").asText();
+		
+		assertEquals(expectedErrorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
+		assertEquals(expectedErrorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+		assertEquals(sampleRequest, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+	}
 	
 	public void testProcessAndSaveJsonReplyData_listSnapshots() {
 		final String columns[] = new String[] {
@@ -258,7 +357,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the snapshots db for this
 		CsRestService csRestService = startCsRestService();
-		csRestService.processAndSaveJsonReplyData(jsonData);
+		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for listVirtualMachines call
 		
 		//grab the data saved directly from db so we can check the saved values below
 		Cursor c = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, columns, null, null, null);
@@ -400,6 +499,34 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't get the exact timestamp that's added automatically by CsRestService, so will just check that it exists
 	}
 	
+	public void testUnpackAndSaveReplyBodyData() {
+		CsRestService csRestService = startCsRestService();
+		
+		final Uri uri = Uri.parse("");
+		final StringBuilder replyBody = new StringBuilder();
+		
+		csRestService.unpackAndSaveReplyBodyData(uri, null, replyBody);
+		//we'll consider this a pass if we don't crash
+		
+		csRestService.unpackAndSaveReplyBodyData(null, null, replyBody);
+		//we'll consider this a pass if we don't crash
+		
+		csRestService.unpackAndSaveReplyBodyData(uri, null, null);
+		//we'll consider this a pass if we don't crash
+		
+		csRestService.unpackAndSaveReplyBodyData(null, null, null);
+		//we'll consider this a pass if we don't crash
+	}
+	
+	public void testFindRequestForJobid_edegeCases() {
+		CsRestService csRestService = startCsRestService();
+		
+		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findRequestForJobid(null));
+		
+		deleteAllData();
+		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findRequestForJobid("63934"));
+		
+	}
 	
 	/**
 	 * Copied from:

@@ -38,7 +38,7 @@ public class CsRestContentProvider extends ContentProvider {
 	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
 	private SQLiteDatabaseHelper sqlDbHelper;
-	private static final int DB_VERSION = 2;
+	private static final int DB_VERSION = 3;
 	
 	
 	public static class SQLiteDatabaseHelper extends SQLiteOpenHelper {
@@ -58,7 +58,8 @@ public class CsRestContentProvider extends ContentProvider {
 										+ Transactions.REQUEST_DATETIME+" TEXT, "
 										+ Transactions.STATUS+" TEXT, "
 										+ Transactions.REPLY+" TEXT,"
-										+ Transactions.REPLY_DATETIME+" TEXT";
+										+ Transactions.REPLY_DATETIME+" TEXT, "
+										+ Transactions.JOBID+" TEXT";
 			db.execSQL("CREATE TABLE " + Transactions.META_DATA.TABLE_NAME + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
 			
 			

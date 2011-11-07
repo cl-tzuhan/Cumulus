@@ -99,6 +99,14 @@ public class Vms implements BaseColumns {
 		}
 	}
 	
+	public static final class STATE_VALUES {
+		public static final String RUNNING = "Running";
+		public static final String STOPPED = "STOPPED";
+		public static final String STARTING = "Starting";
+		public static final String STOPPING = "Stopping";
+
+		public static final String REBOOTING = "Rebooting";  //this is not a real CS API value; this used locally by CSAC
+	}
 	
 	public static final class META_DATA {
 		public static final String TABLE_NAME = "vms";

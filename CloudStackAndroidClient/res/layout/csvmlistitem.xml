@@ -107,8 +107,15 @@
 		android:visibility="invisible"
 		android:text="id" />
 	<ImageView android:id="@+id/quickactionicon" android:src="@android:drawable/ic_menu_revert"
-			android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
-			android:layout_height="wrap_content" android:layout_width="wrap_content"
-			android:background="@android:color/transparent" />
+		android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:visibility="invisible"
+		android:background="@android:color/transparent" />
+	<ProgressBar android:id="@+id/quickactionprogress" style="?android:attr/progressBarStyleSmall"
+		android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
+		android:layout_height="wrap_content"  android:layout_width="wrap_content"
+		android:layout_marginRight="15dp" android:paddingBottom="15dp"
+		android:visibility="invisible"
+		/>
 
 </RelativeLayout>

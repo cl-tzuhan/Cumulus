@@ -11,26 +11,28 @@ public final class R {
     public static final class anim {
         public static final int disappear=0x7f040000;
         public static final int fadein=0x7f040001;
-        public static final int fadein_layoutanim=0x7f040002;
-        public static final int grow_from_bottom=0x7f040003;
-        public static final int grow_from_bottomleft_to_topright=0x7f040004;
-        public static final int grow_from_bottomright_to_topleft=0x7f040005;
-        public static final int grow_from_top=0x7f040006;
-        public static final int grow_from_topleft_to_bottomright=0x7f040007;
-        public static final int grow_from_topright_to_bottomleft=0x7f040008;
-        public static final int pump_bottom=0x7f040009;
-        public static final int pump_top=0x7f04000a;
-        public static final int rail=0x7f04000b;
-        public static final int shrink_from_bottom=0x7f04000c;
-        public static final int shrink_from_bottomleft_to_topright=0x7f04000d;
-        public static final int shrink_from_bottomright_to_topleft=0x7f04000e;
-        public static final int shrink_from_top=0x7f04000f;
-        public static final int shrink_from_topleft_to_bottomright=0x7f040010;
-        public static final int shrink_from_topright_to_bottomleft=0x7f040011;
-        public static final int slide_lefttoright=0x7f040012;
-        public static final int slide_lefttoright_layoutanim=0x7f040013;
-        public static final int slide_righttoleft=0x7f040014;
-        public static final int slide_righttoleft_layoutanim=0x7f040015;
+        public static final int fadein_decelerate=0x7f040002;
+        public static final int fadein_layoutanim=0x7f040003;
+        public static final int fadeout_decelerate=0x7f040004;
+        public static final int grow_from_bottom=0x7f040005;
+        public static final int grow_from_bottomleft_to_topright=0x7f040006;
+        public static final int grow_from_bottomright_to_topleft=0x7f040007;
+        public static final int grow_from_top=0x7f040008;
+        public static final int grow_from_topleft_to_bottomright=0x7f040009;
+        public static final int grow_from_topright_to_bottomleft=0x7f04000a;
+        public static final int pump_bottom=0x7f04000b;
+        public static final int pump_top=0x7f04000c;
+        public static final int rail=0x7f04000d;
+        public static final int shrink_from_bottom=0x7f04000e;
+        public static final int shrink_from_bottomleft_to_topright=0x7f04000f;
+        public static final int shrink_from_bottomright_to_topleft=0x7f040010;
+        public static final int shrink_from_top=0x7f040011;
+        public static final int shrink_from_topleft_to_bottomright=0x7f040012;
+        public static final int shrink_from_topright_to_bottomleft=0x7f040013;
+        public static final int slide_lefttoright=0x7f040014;
+        public static final int slide_lefttoright_layoutanim=0x7f040015;
+        public static final int slide_righttoleft=0x7f040016;
+        public static final int slide_righttoleft_layoutanim=0x7f040017;
     }
     public static final class attr {
     }
@@ -40,9 +42,12 @@ public final class R {
         public static final int label=0x7f050002;
         public static final int primaryinfo_color_selector=0x7f050003;
         public static final int supplementaryinfo_color_selector=0x7f050004;
-        public static final int vmrunning_color_selector=0x7f050005;
-        public static final int vmstopped_color_selector=0x7f050006;
-        public static final int vmunknown_color_selector=0x7f050007;
+        public static final int vmrebooting_color_selector=0x7f050005;
+        public static final int vmrunning_color_selector=0x7f050006;
+        public static final int vmstarting_color_selector=0x7f050007;
+        public static final int vmstopped_color_selector=0x7f050008;
+        public static final int vmstopping_color_selector=0x7f050009;
+        public static final int vmunknown_color_selector=0x7f05000a;
     }
     public static final class drawable {
         public static final int action_item_btn=0x7f020000;
@@ -60,8 +65,8 @@ public final class R {
         public static final int popup=0x7f02000c;
     }
     public static final class id {
-        public static final int arrow_down=0x7f080025;
-        public static final int arrow_up=0x7f080024;
+        public static final int arrow_down=0x7f080026;
+        public static final int arrow_up=0x7f080025;
         public static final int button1=0x7f08000f;
         public static final int cpunumber=0x7f080019;
         public static final int cpunumberunit=0x7f08001a;
@@ -83,14 +88,15 @@ public final class R {
         public static final int memoryunit=0x7f08001f;
         public static final int name=0x7f080006;
         public static final int quickactionicon=0x7f080021;
-        public static final int scroller=0x7f080022;
+        public static final int quickactionprogress=0x7f080022;
+        public static final int scroller=0x7f080023;
         public static final int serviceofferingname=0x7f080016;
         public static final int snapshoticon=0x7f080005;
         public static final int snapshoticonframe=0x7f080004;
         public static final int state=0x7f080015;
         public static final int templatedisplaytext=0x7f080017;
         public static final int textView1=0x7f080002;
-        public static final int tracks=0x7f080023;
+        public static final int tracks=0x7f080024;
         public static final int tv_title=0x7f080001;
         public static final int viewpager=0x7f08000e;
         public static final int vmicon=0x7f080013;

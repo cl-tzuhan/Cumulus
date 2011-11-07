@@ -8,10 +8,8 @@ import java.net.URLEncoder;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -38,6 +36,7 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.Time;
@@ -64,7 +63,7 @@ public class CsRestService extends IntentService {
 	private static final int INSERT_DATA = 0;
 	private static final int UPDATE_DATA = 1;
 	
-	private Uri inProgressTransaction = null;
+	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
 	private static Time time = null;
 
 	
@@ -370,18 +369,12 @@ public class CsRestService extends IntentService {
 			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
-			ContentValues cv = new ContentValues();
-			cv.put(Errors.ERRORTEXT, e.getMessage());
-			cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString());
-			getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
-			ContentValues cv = new ContentValues();
-			cv.put(Errors.ERRORTEXT, e.getMessage());
-			cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString());
-			getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
 		} finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
@@ -390,6 +383,14 @@ public class CsRestService extends IntentService {
         }
 		
 		return null;
+	}
+
+	public void addToErrorLog(final String errorCode, final String errorText, final String originatingTransactionUri) {
+		ContentValues cv = new ContentValues();
+		if(errorCode!=null) { cv.put(Errors.ERRORCODE, errorCode); };
+		if(errorText!=null) { cv.put(Errors.ERRORTEXT, errorText); };
+		if(originatingTransactionUri!=null) { cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString()); };
+		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
 	public StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
@@ -446,11 +447,16 @@ public class CsRestService extends IntentService {
 	}
 	
 	public void unpackAndSaveReplyBodyData(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) {
+		
+		if(uriToUpdate==null || reply==null || replyBody==null) {
+			return;
+		}
+		
 		final int statusCode = reply.getStatusLine().getStatusCode();
 		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
 		
 		if(callReturnedOk) {
-			processAndSaveJsonReplyData(replyBody.toString());
+			processAndSaveJsonReplyData(uriToUpdate, replyBody.toString());
 		} else {
 			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody);
 		}
@@ -473,12 +479,7 @@ public class CsRestService extends IntentService {
 			ClLog.e(TAG, e);
 		}
 		
-		ContentValues cv = new ContentValues();
-		cv.put(Errors.ERRORTEXT, errorText);
-		cv.put(Errors.ERRORCODE, statusCode);
-		cv.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
-		//save the error to errors db
-		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+		addToErrorLog(String.valueOf(statusCode), errorText, uriToUpdate.toString());
 	}
 
 	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {
@@ -552,7 +553,7 @@ public class CsRestService extends IntentService {
 	    return total;
 	}
 	
-	public void processAndSaveJsonReplyData(final String replyBodyText) {
+	public void processAndSaveJsonReplyData(final Uri uriToUpdate, final String replyBodyText) {
 		final String TAG = "CsRestService.processAndSaveJsonReplyData()";
 	
 		//extract the specific response name (*response, where * is the api name),
@@ -570,13 +571,18 @@ public class CsRestService extends IntentService {
 		}
 		final JsonNameNodePair responseData = extractFirstFieldValuePair(rootNode);  //we assume the "*response" tag is always the first field of the replyBody
 		
-//		final String apiName = apiCmd.getString(CsRestService.COMMAND);
 		if("listVirtualMachinesResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listVirtualMachine results and save to vms table
 			parseReplyBody_listVirtualMachines(responseData.getValueNode());
 		} else if("startVirtualMachineResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse startVirtualMachine results and wait for async results
-			parseReplyBody_startVirtualMachine(responseData.getValueNode());
+			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
+		} else if("stopVirtualMachineResponse".equalsIgnoreCase(responseData.getFieldName())) {
+			//parse stopVirtualMachine results and wait for async results
+			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
+		}  else if("rebootVirtualMachineResponse".equalsIgnoreCase(responseData.getFieldName())) {
+			//parse rebootVirtualMachine results and wait for async results
+			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
 		} else if("listSnapshotsResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listSnapshots results and save to snapshots table
 			parseReplyBody_listSnapshots(responseData.getValueNode());
@@ -597,8 +603,6 @@ public class CsRestService extends IntentService {
 	}
 	
 	public JsonNameNodePair extractFirstFieldValuePair(JsonNode node) {
-		final String TAG = "CsRestService.extractValueNodePair()";
-
 		Iterator<String> fieldNameIterator = node.getFieldNames();
 
 		final String apiResponseName = fieldNameIterator.next();
@@ -627,8 +631,8 @@ public class CsRestService extends IntentService {
 
 	}
 	
-	private void parseReplyBody_startVirtualMachine(JsonNode responseDataNode) {
-		final String TAG = "CsRestService.parseReplyBody_startVirtualMachine()";
+	private void parseReplyBody_startOrStopOrRebootVirtualMachine(final Uri uriToUpdate, JsonNode responseDataNode) {
+		final String TAG = "CsRestService.parseReplyBody_startOrStopOrRebootVirtualMachine()";
 		
 		final JsonNode jobidNode = responseDataNode.path("jobid");  //extract the jobid object
 		final String jobid = jobidNode.asText();
@@ -637,6 +641,11 @@ public class CsRestService extends IntentService {
 			ClLog.e(TAG, "expecting jobid to query, but could not parse replyBodyText; aborting async query request");
 			return;
 		}
+		
+		//mark the pending async request with the received jobid
+		ContentValues cv = new ContentValues();
+		cv.put(Transactions.JOBID, jobid);
+		getContentResolver().update(uriToUpdate, cv, null, null);
 
 		startCheckAsyncJobProgress(jobid);
 	}
@@ -706,19 +715,39 @@ public class CsRestService extends IntentService {
 			        endCheckAsyncJobProgress(jobid);
 			        
 					final String jobresultcode = responseDataNode.path("jobresultcode").asText();
-					final String jobresult = responseDataNode.path("jobresult").asText();
-
-					//TODO: fill me out!
+					final String errortext = responseDataNode.findPath("errortext").asText();
+					ClLog.d(TAG, "jobresultcode= "+jobresultcode);
+					ClLog.d(TAG, "jobresult.errortext= "+errortext);
 					
-					///DEBUG
-					System.out.println("jobresultcode= "+jobresultcode);
-					System.out.println("jobresult= "+jobresult);
-					///endDEBUG
+					String originatingTransactionUri = findRequestForJobid(jobid);
+
+					addToErrorLog(jobresultcode, errortext, originatingTransactionUri);
+					
 				}
 				break;
 			default:
 				ClLog.e(TAG, "got an unrecognized jobstatus="+jobstatus);
 		}
+	}
+
+	public String findRequestForJobid(final String jobid) {
+		
+		if(jobid==null) {
+			return null;
+		}
+		
+		final String[] columns = new String[] { Transactions.REQUEST };
+		final String whereClause = Transactions.JOBID+"=?";
+		final String[] selectionArgs = new String[] { jobid };
+		Cursor c = getContentResolver().query(Transactions.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+		
+		if(c==null || c.getCount()<1) {
+			return null;
+		}
+		
+		c.moveToFirst();
+		final String originatingTransactionUri = c.getString(c.getColumnIndex(Transactions.REQUEST));
+		return originatingTransactionUri;
 	}
 
 	public void startCheckAsyncJobProgress(final String jobid) {
@@ -728,14 +757,18 @@ public class CsRestService extends IntentService {
         
         final PendingIntent checkAsyncProgressPendingItent = createCheckAsyncJobProgressPendingIntent(jobid);
         AlarmManager alarmManager = (AlarmManager) getApplication().getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, eightSecIntervalInMillis, checkAsyncProgressPendingItent);
+        if(alarmManager != null) {
+        	alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, eightSecIntervalInMillis, checkAsyncProgressPendingItent);
+        }
 	}
 	
 	public void endCheckAsyncJobProgress(final String jobid) {
 		//stop checking up on async job progress, canceling all pending intents
 		final PendingIntent checkAsyncProgressPendingItent = createCheckAsyncJobProgressPendingIntent(jobid);
 		AlarmManager alarmManager = (AlarmManager) getApplication().getSystemService(Context.ALARM_SERVICE);
-		alarmManager.cancel(checkAsyncProgressPendingItent);
+		if(alarmManager!=null) {
+			alarmManager.cancel(checkAsyncProgressPendingItent);
+		}
 	}
 
 	public PendingIntent createCheckAsyncJobProgressPendingIntent(final String jobid) {
@@ -745,6 +778,7 @@ public class CsRestService extends IntentService {
         
         Intent checkAsyncJobProgressIntent = new Intent(getApplicationContext(), CheckAsyncJobProgress.class);
         checkAsyncJobProgressIntent.putExtras(apiCmd);
+        checkAsyncJobProgressIntent.setData(Uri.parse(jobid));  //setting jobid as data here to make AlarmManager spawn an independent alarm for each job (the jobid-as-uri itself means nothing, we just need some piece of unique info that makes this PendingIntent different than the others spawned to keep track of other jobs)
         final PendingIntent checkAsyncJobProgressPendingItent = PendingIntent.getBroadcast(getApplicationContext(), 0, checkAsyncJobProgressIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		return checkAsyncJobProgressPendingItent;
 	}
