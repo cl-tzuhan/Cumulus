@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+   <color name="grey_66">#666666</color>
    <color name="grey_ee">#EEEEEE</color>
    <color name="grey_a5">#A5A5A5</color>
    
    <color name="label">#3a3a3a</color>
+
+   <color name="viewPagerIndicator_unselectedColor">#333333</color>
+   <color name="viewPagerIndicator_selectedColor">#888888</color>
+
 </resources>

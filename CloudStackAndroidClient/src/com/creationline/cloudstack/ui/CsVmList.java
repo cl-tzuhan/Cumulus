@@ -25,6 +25,7 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
+import com.viewpagerindicator.TitlePageIndicator;
 
 public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory {
 	
@@ -42,9 +43,21 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 //            getSupportFragmentManager().beginTransaction().add(R.id.listfragment, list).commit();
 //        }
         
+        //bind the viewpager to the backing adaptor
         ViewPageAdapter vpa = new ViewPageAdapter(getSupportFragmentManager());
         ViewPager vp = (ViewPager)findViewById(R.id.viewpager);
         vp.setAdapter(vpa);
+        
+        //bind the titlepageindicator to the viewpager
+        TitlePageIndicator tpi = (TitlePageIndicator)findViewById(R.id.viewpagerindicator);
+        tpi.setViewPager(vp, 0);
+        final Animation slide_leftToRight_slow = AnimationUtils.loadAnimation(this, R.anim.slide_lefttoright_slow);
+        tpi.setAnimation(slide_leftToRight_slow);
+        
+        //set animation for apptitle
+        TextView tv = (TextView)findViewById(R.id.apptitle);
+        Animation slide_rightToLeft_slow = AnimationUtils.loadAnimation(this, R.anim.slide_righttoleft_slow);
+        tv.setAnimation(slide_rightToLeft_slow);
         
         //set-up error log view to update with animation
         TextSwitcher ts = (TextSwitcher) findViewById(R.id.errorLogTextView);
@@ -152,7 +165,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 		t.setTextColor(Color.YELLOW);
 		return t;
 	}
-
 
 
     

@@ -5,35 +5,9 @@
  * should not be modified by hand.
  */
 
-package com.creationline.cloudstack;
+package com.viewpagerindicator;
 
 public final class R {
-    public static final class anim {
-        public static final int disappear=0x7f040000;
-        public static final int fadein=0x7f040001;
-        public static final int fadein_decelerate=0x7f040002;
-        public static final int fadein_layoutanim=0x7f040003;
-        public static final int fadeout_decelerate=0x7f040004;
-        public static final int grow_from_bottom=0x7f040005;
-        public static final int grow_from_bottomleft_to_topright=0x7f040006;
-        public static final int grow_from_bottomright_to_topleft=0x7f040007;
-        public static final int grow_from_top=0x7f040008;
-        public static final int grow_from_topleft_to_bottomright=0x7f040009;
-        public static final int grow_from_topright_to_bottomleft=0x7f04000a;
-        public static final int pump_bottom=0x7f04000b;
-        public static final int pump_top=0x7f04000c;
-        public static final int rail=0x7f04000d;
-        public static final int shrink_from_bottom=0x7f04000e;
-        public static final int shrink_from_bottomleft_to_topright=0x7f04000f;
-        public static final int shrink_from_bottomright_to_topleft=0x7f040010;
-        public static final int shrink_from_top=0x7f040011;
-        public static final int shrink_from_topleft_to_bottomright=0x7f040012;
-        public static final int shrink_from_topright_to_bottomleft=0x7f040013;
-        public static final int slide_lefttoright_slow=0x7f040014;
-        public static final int slide_righttoleft=0x7f040015;
-        public static final int slide_righttoleft_layoutanim=0x7f040016;
-        public static final int slide_righttoleft_slow=0x7f040017;
-    }
     public static final class attr {
         /**  Whether or not the indicators should be centered. 
          <p>Must be a boolean value, either "<code>true</code>" or "<code>false</code>".
@@ -259,149 +233,54 @@ containing a value of this type.
         public static final int topPadding=0x7f010015;
     }
     public static final class bool {
-        public static final int default_circle_indicator_centered=0x7f060000;
-        public static final int default_circle_indicator_snap=0x7f060001;
-        public static final int default_title_indicator_selected_bold=0x7f060002;
+        public static final int default_circle_indicator_centered=0x7f050000;
+        public static final int default_circle_indicator_snap=0x7f050001;
+        public static final int default_title_indicator_selected_bold=0x7f050002;
     }
     public static final class color {
-        public static final int default_circle_indicator_fill_color=0x7f070000;
-        public static final int default_circle_indicator_stroke_color=0x7f070001;
-        public static final int default_title_indicator_footer_color=0x7f070002;
-        public static final int default_title_indicator_selected_color=0x7f070003;
-        public static final int default_title_indicator_text_color=0x7f070004;
-        public static final int grey_66=0x7f070005;
-        public static final int grey_a5=0x7f070007;
-        public static final int grey_ee=0x7f070006;
-        public static final int label=0x7f070008;
-        public static final int primaryinfo_color_selector=0x7f07000b;
-        public static final int supplementaryinfo_color_selector=0x7f07000c;
-        public static final int viewPagerIndicator_selectedColor=0x7f07000a;
-        public static final int viewPagerIndicator_unselectedColor=0x7f070009;
-        public static final int vmrebooting_color_selector=0x7f07000d;
-        public static final int vmrunning_color_selector=0x7f07000e;
-        public static final int vmstarting_color_selector=0x7f07000f;
-        public static final int vmstopped_color_selector=0x7f070010;
-        public static final int vmstopping_color_selector=0x7f070011;
-        public static final int vmunknown_color_selector=0x7f070012;
+        public static final int default_circle_indicator_fill_color=0x7f060000;
+        public static final int default_circle_indicator_stroke_color=0x7f060001;
+        public static final int default_title_indicator_footer_color=0x7f060002;
+        public static final int default_title_indicator_selected_color=0x7f060003;
+        public static final int default_title_indicator_text_color=0x7f060004;
     }
     public static final class dimen {
-        public static final int default_circle_indicator_radius=0x7f090000;
-        public static final int default_circle_indicator_stroke_width=0x7f090001;
-        public static final int default_title_indicator_clip_padding=0x7f090002;
-        public static final int default_title_indicator_footer_indicator_height=0x7f090004;
-        public static final int default_title_indicator_footer_indicator_underline_padding=0x7f090005;
-        public static final int default_title_indicator_footer_line_height=0x7f090003;
-        public static final int default_title_indicator_footer_padding=0x7f090006;
-        public static final int default_title_indicator_text_size=0x7f090007;
-        public static final int default_title_indicator_title_padding=0x7f090008;
-        public static final int default_title_indicator_top_padding=0x7f090009;
+        public static final int default_circle_indicator_radius=0x7f080000;
+        public static final int default_circle_indicator_stroke_width=0x7f080001;
+        public static final int default_title_indicator_clip_padding=0x7f080002;
+        public static final int default_title_indicator_footer_indicator_height=0x7f080004;
+        public static final int default_title_indicator_footer_indicator_underline_padding=0x7f080005;
+        public static final int default_title_indicator_footer_line_height=0x7f080003;
+        public static final int default_title_indicator_footer_padding=0x7f080006;
+        public static final int default_title_indicator_text_size=0x7f080007;
+        public static final int default_title_indicator_title_padding=0x7f080008;
+        public static final int default_title_indicator_top_padding=0x7f080009;
     }
     public static final class drawable {
-        public static final int action_item_btn=0x7f020000;
-        public static final int action_item_selected=0x7f020001;
-        public static final int arrow_down=0x7f020002;
-        public static final int arrow_up=0x7f020003;
-        public static final int icon=0x7f020004;
-        public static final int menu_cancel=0x7f020005;
-        public static final int menu_down_arrow=0x7f020006;
-        public static final int menu_eraser=0x7f020007;
-        public static final int menu_info=0x7f020008;
-        public static final int menu_ok=0x7f020009;
-        public static final int menu_search=0x7f02000a;
-        public static final int menu_up_arrow=0x7f02000b;
-        public static final int popup=0x7f02000c;
+        public static final int icon=0x7f020000;
     }
     public static final class id {
-        public static final int apptitle=0x7f050013;
-        public static final int arrow_down=0x7f05002d;
-        public static final int arrow_up=0x7f05002c;
-        public static final int button1=0x7f050016;
-        public static final int cpunumber=0x7f050020;
-        public static final int cpunumberunit=0x7f050021;
-        public static final int cpuspeed=0x7f050023;
-        public static final int cpuspeedunit=0x7f050024;
-        public static final int cpustatsseperator=0x7f050022;
-        public static final int created=0x7f05000c;
-        public static final int createdatelabel=0x7f05000e;
-        public static final int createdtime=0x7f05000d;
-        public static final int cssnapshotlistitem=0x7f050008;
-        public static final int csvmlist=0x7f050012;
-        public static final int csvmlistitem=0x7f050018;
-        public static final int displayname=0x7f05001b;
-        public static final int errorLogTextView=0x7f050017;
-        public static final int horizontal=0x7f050000;
-        public static final int hypervisor=0x7f05001f;
-        public static final int id=0x7f050027;
-        public static final int iv_icon=0x7f050005;
-        public static final int memory=0x7f050025;
-        public static final int memoryunit=0x7f050026;
-        public static final int name=0x7f05000b;
-        public static final int none=0x7f050002;
-        public static final int quickactionicon=0x7f050028;
-        public static final int quickactionprogress=0x7f050029;
-        public static final int scroller=0x7f05002a;
-        public static final int serviceofferingname=0x7f05001d;
-        public static final int snapshoticon=0x7f05000a;
-        public static final int snapshoticonframe=0x7f050009;
-        public static final int state=0x7f05001c;
-        public static final int templatedisplaytext=0x7f05001e;
-        public static final int textView1=0x7f050007;
-        public static final int tracks=0x7f05002b;
-        public static final int triangle=0x7f050003;
-        public static final int tv_title=0x7f050006;
-        public static final int underline=0x7f050004;
-        public static final int vertical=0x7f050001;
-        public static final int viewpager=0x7f050014;
-        public static final int viewpagerindicator=0x7f050015;
-        public static final int vmicon=0x7f05001a;
-        public static final int vmiconframe=0x7f050019;
-        public static final int volumelabel=0x7f050011;
-        public static final int volumename=0x7f05000f;
-        public static final int volumetype=0x7f050010;
+        public static final int horizontal=0x7f040000;
+        public static final int none=0x7f040002;
+        public static final int triangle=0x7f040003;
+        public static final int underline=0x7f040004;
+        public static final int vertical=0x7f040001;
     }
     public static final class integer {
-        public static final int default_circle_indicator_orientation=0x7f080000;
-        public static final int default_title_indicator_footer_indicator_style=0x7f080001;
+        public static final int default_circle_indicator_orientation=0x7f070000;
+        public static final int default_title_indicator_footer_indicator_style=0x7f070001;
     }
     public static final class layout {
-        public static final int action_item_horizontal=0x7f030000;
-        public static final int action_item_vertical=0x7f030001;
-        public static final int cssnapshotlist=0x7f030002;
-        public static final int cssnapshotlistitem=0x7f030003;
-        public static final int csvmlist=0x7f030004;
-        public static final int csvmlistitem=0x7f030005;
-        public static final int horiz_separator=0x7f030006;
-        public static final int main=0x7f030007;
-        public static final int popup_horizontal=0x7f030008;
-        public static final int popup_vertical=0x7f030009;
+        public static final int main=0x7f030000;
     }
     public static final class string {
-        public static final int app_name=0x7f0a0001;
-        public static final int hello=0x7f0a0000;
-        public static final int status_noVms=0x7f0a0002;
+        public static final int app_name=0x7f090001;
+        public static final int hello=0x7f090000;
     }
     public static final class style {
-        public static final int Animations=0x7f0b0003;
-        /**  QuickAction3D PopDownMenu 
-         */
-        public static final int Animations_PopDownMenu=0x7f0b0004;
-        public static final int Animations_PopDownMenu_Center=0x7f0b0005;
-        public static final int Animations_PopDownMenu_Left=0x7f0b0006;
-        public static final int Animations_PopDownMenu_Reflect=0x7f0b0008;
-        public static final int Animations_PopDownMenu_Right=0x7f0b0007;
-        /**  QuickAction3D PopUpMenu 
-         */
-        public static final int Animations_PopUpMenu=0x7f0b0009;
-        public static final int Animations_PopUpMenu_Center=0x7f0b000a;
-        public static final int Animations_PopUpMenu_Left=0x7f0b000b;
-        public static final int Animations_PopUpMenu_Reflect=0x7f0b000d;
-        public static final int Animations_PopUpMenu_Right=0x7f0b000c;
-        public static final int Theme_PageIndicatorDefaults=0x7f0b0000;
-        public static final int Widget_CirclePageIndicator=0x7f0b0001;
-        /**  JakeWharton ViewPagerIndicator 
-         */
-        public static final int Widget_CsacTitlepageIndicator=0x7f0b000e;
-        public static final int Widget_TitlePageIndicator=0x7f0b0002;
+        public static final int Theme_PageIndicatorDefaults=0x7f0a0000;
+        public static final int Widget_CirclePageIndicator=0x7f0a0001;
+        public static final int Widget_TitlePageIndicator=0x7f0a0002;
     }
     public static final class styleable {
         /** Attributes that can be used with a CirclePageIndicator.
@@ -410,13 +289,13 @@ containing a value of this type.
            <colgroup align="left" />
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
-           <tr><td><code>{@link #CirclePageIndicator_centered com.creationline.cloudstack:centered}</code></td><td> Whether or not the indicators should be centered.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_fillColor com.creationline.cloudstack:fillColor}</code></td><td> Color of the filled circle that represents the current page.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_orientation com.creationline.cloudstack:orientation}</code></td><td> Orientation of the indicator.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_radius com.creationline.cloudstack:radius}</code></td><td> Radius of the circles.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_snap com.creationline.cloudstack:snap}</code></td><td> Whether or not the selected indicator snaps to the circles.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_strokeColor com.creationline.cloudstack:strokeColor}</code></td><td> Color of the open circles.</td></tr>
-           <tr><td><code>{@link #CirclePageIndicator_strokeWidth com.creationline.cloudstack:strokeWidth}</code></td><td> Width of the stroke used to draw the circles.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_centered com.viewpagerindicator:centered}</code></td><td> Whether or not the indicators should be centered.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_fillColor com.viewpagerindicator:fillColor}</code></td><td> Color of the filled circle that represents the current page.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_orientation com.viewpagerindicator:orientation}</code></td><td> Orientation of the indicator.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_radius com.viewpagerindicator:radius}</code></td><td> Radius of the circles.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_snap com.viewpagerindicator:snap}</code></td><td> Whether or not the selected indicator snaps to the circles.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_strokeColor com.viewpagerindicator:strokeColor}</code></td><td> Color of the open circles.</td></tr>
+           <tr><td><code>{@link #CirclePageIndicator_strokeWidth com.viewpagerindicator:strokeWidth}</code></td><td> Width of the stroke used to draw the circles.</td></tr>
            </table>
            @see #CirclePageIndicator_centered
            @see #CirclePageIndicator_fillColor
@@ -557,19 +436,19 @@ containing a value of this type.
            <colgroup align="left" />
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
-           <tr><td><code>{@link #TitlePageIndicator_clipPadding com.creationline.cloudstack:clipPadding}</code></td><td> Screen edge padding.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerColor com.creationline.cloudstack:footerColor}</code></td><td> Color of the footer line and indicator.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorHeight com.creationline.cloudstack:footerIndicatorHeight}</code></td><td> Height of the indicator above the footer line.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorStyle com.creationline.cloudstack:footerIndicatorStyle}</code></td><td> Style of the indicator.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorUnderlinePadding com.creationline.cloudstack:footerIndicatorUnderlinePadding}</code></td><td> Left and right padding of the underline indicator.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerLineHeight com.creationline.cloudstack:footerLineHeight}</code></td><td> Height of the footer line.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_footerPadding com.creationline.cloudstack:footerPadding}</code></td><td> Padding between the bottom of the title and the footer.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_selectedBold com.creationline.cloudstack:selectedBold}</code></td><td> Whether or not the selected item is displayed as bold.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_selectedColor com.creationline.cloudstack:selectedColor}</code></td><td> Color of the selected title.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_textColor com.creationline.cloudstack:textColor}</code></td><td> Color of regular titles.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_textSize com.creationline.cloudstack:textSize}</code></td><td> Size of title text.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_titlePadding com.creationline.cloudstack:titlePadding}</code></td><td> Padding between titles when bumping into each other.</td></tr>
-           <tr><td><code>{@link #TitlePageIndicator_topPadding com.creationline.cloudstack:topPadding}</code></td><td> Padding between titles and the top of the View.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_clipPadding com.viewpagerindicator:clipPadding}</code></td><td> Screen edge padding.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerColor com.viewpagerindicator:footerColor}</code></td><td> Color of the footer line and indicator.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorHeight com.viewpagerindicator:footerIndicatorHeight}</code></td><td> Height of the indicator above the footer line.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorStyle com.viewpagerindicator:footerIndicatorStyle}</code></td><td> Style of the indicator.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerIndicatorUnderlinePadding com.viewpagerindicator:footerIndicatorUnderlinePadding}</code></td><td> Left and right padding of the underline indicator.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerLineHeight com.viewpagerindicator:footerLineHeight}</code></td><td> Height of the footer line.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_footerPadding com.viewpagerindicator:footerPadding}</code></td><td> Padding between the bottom of the title and the footer.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_selectedBold com.viewpagerindicator:selectedBold}</code></td><td> Whether or not the selected item is displayed as bold.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_selectedColor com.viewpagerindicator:selectedColor}</code></td><td> Color of the selected title.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_textColor com.viewpagerindicator:textColor}</code></td><td> Color of regular titles.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_textSize com.viewpagerindicator:textSize}</code></td><td> Size of title text.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_titlePadding com.viewpagerindicator:titlePadding}</code></td><td> Padding between titles when bumping into each other.</td></tr>
+           <tr><td><code>{@link #TitlePageIndicator_topPadding com.viewpagerindicator:topPadding}</code></td><td> Padding between titles and the top of the View.</td></tr>
            </table>
            @see #TitlePageIndicator_clipPadding
            @see #TitlePageIndicator_footerColor
@@ -828,8 +707,8 @@ containing a value of this type.
            <colgroup align="left" />
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
-           <tr><td><code>{@link #ViewPagerIndicator_circlePageIndicatorStyle com.creationline.cloudstack:circlePageIndicatorStyle}</code></td><td> Style of the circle indicator.</td></tr>
-           <tr><td><code>{@link #ViewPagerIndicator_titlePageIndicatorStyle com.creationline.cloudstack:titlePageIndicatorStyle}</code></td><td> Style of the title indicator.</td></tr>
+           <tr><td><code>{@link #ViewPagerIndicator_circlePageIndicatorStyle com.viewpagerindicator:circlePageIndicatorStyle}</code></td><td> Style of the circle indicator.</td></tr>
+           <tr><td><code>{@link #ViewPagerIndicator_titlePageIndicatorStyle com.viewpagerindicator:titlePageIndicatorStyle}</code></td><td> Style of the title indicator.</td></tr>
            </table>
            @see #ViewPagerIndicator_circlePageIndicatorStyle
            @see #ViewPagerIndicator_titlePageIndicatorStyle

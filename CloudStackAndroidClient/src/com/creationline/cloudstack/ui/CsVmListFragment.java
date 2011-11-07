@@ -319,6 +319,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			quickActionIcon.startAnimation(fadein_decelerate);
 		}
 		quickActionIcon.setVisibility(View.VISIBLE);
+		quickActionIcon.setHapticFeedbackEnabled(true);
 		quickActionIcon.setClickable(true);
 
 		if(animate) {

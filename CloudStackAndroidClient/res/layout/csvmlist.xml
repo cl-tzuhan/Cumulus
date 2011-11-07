@@ -2,6 +2,12 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:orientation="vertical" android:layout_width="match_parent"
 	android:layout_height="match_parent" android:id="@+id/csvmlist">
+
+	<TextView android:id="@+id/apptitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:textSize="10dp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:layout_centerHorizontal="true"
+		android:text="CloudStack" />
 	
 	<!--
 	<fragment class="com.creationline.cloudstack.ui.CsVmListFragment"
@@ -12,8 +18,18 @@
 	-->
 	
 	<android.support.v4.view.ViewPager android:id="@+id/viewpager"
+		android:layout_below="@+id/viewpagerindicator"
+		android:layout_marginTop="-4dp"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_weight="1" />
+
+	<!-- viewpagerindicator is laid-out to show above viewpager, but defined below
+	     viewpager here so it appears over viewpager on the z-axis (to prevent
+	     cutting off of title text for letters that go below baseline) -->
+	<com.viewpagerindicator.TitlePageIndicator android:id="@id/viewpagerindicator"
+	 	android:layout_marginTop="2dp"
+	 	android:layout_width="fill_parent" android:layout_height="wrap_content"
+		style="@style/Widget.CsacTitlepageIndicator" />
 
 	<Button android:id="@+id/button1" android:text="Button"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -25,9 +41,8 @@
 		android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge"
 		android:text="->" android:id="@+id/textView1"
 		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_marginRight="15dp" android:layout_marginTop="18dp"
-			android:focusable="false" android:focusableInTouchMode="false"
-		
+		android:layout_marginRight="15dp" android:layout_marginTop="28dp"
+		android:focusable="false" android:focusableInTouchMode="false"
 		android:textStyle="bold"></TextView>
 		
 	<TextSwitcher android:textAppearance="?android:attr/textAppearanceSmall"

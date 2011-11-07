@@ -2,7 +2,7 @@
 <resources>
 	<style name="Animations" />
 
-	<!-- PopDownMenu -->
+	<!-- QuickAction3D PopDownMenu -->
 	<style name="Animations.PopDownMenu" />
 	
 	<style name="Animations.PopDownMenu.Center">
@@ -25,7 +25,7 @@
 		<item name="@android:windowExitAnimation">@anim/disappear</item>
 	</style>
 	
-	<!-- PopUpMenu -->
+	<!-- QuickAction3D PopUpMenu -->
 	<style name="Animations.PopUpMenu" />
 	
 	<style name="Animations.PopUpMenu.Center">
@@ -47,4 +47,19 @@
 		<item name="@android:windowEnterAnimation">@anim/pump_bottom</item>
 		<item name="@android:windowExitAnimation">@anim/disappear</item>
 	</style>
+	
+	
+	<!-- JakeWharton ViewPagerIndicator -->
+	<style parent="Widget.TitlePageIndicator" name="Widget.CsacTitlepageIndicator">
+        <item name="footerPadding">5dp</item>
+        <item name="footerIndicatorStyle">none</item>
+        <item name="footerIndicatorHeight">0dp</item>
+        <item name="footerIndicatorUnderlinePadding">25dp</item>
+        <item name="footerColor">#00000000</item>
+        <item name="textSize">30sp</item>
+        <item name="textColor">@color/viewPagerIndicator_unselectedColor</item>
+        <item name="selectedColor">@color/viewPagerIndicator_selectedColor</item>
+        <item name="selectedBold">false</item>
+        <item name="titlePadding">30dp</item>
+    </style>
 </resources>
