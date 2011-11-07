@@ -60,8 +60,14 @@ public class CsRestService extends IntentService {
 	//constants matching params used by the CS API request format
 	public static final String COMMAND = "command";
 
+	//parseAndSaveReply()-use constants
 	private static final int INSERT_DATA = 0;
 	private static final int UPDATE_DATA = 1;
+	
+	//parseReplyBody_queryAsyncJobResult()-use constants
+	private static final int ASYNCJOB_STILLINPROGRESS = 0;
+	private static final int ASYNCJOB_COMPLETEDSUCCESSFULLY = 1;
+	private static final int ASYNCJOB_FAILEDTOCOMPLETE = 2;
 	
 	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
 	private static Time time = null;
@@ -679,16 +685,16 @@ public class CsRestService extends IntentService {
 		
         
 		switch(Integer.valueOf(jobstatus)) {
-			case 0: //job still in progress
+			case ASYNCJOB_STILLINPROGRESS:
 				{
 					//we basically do nothing while we wait for the async job to finish
 					ClLog.i(TAG, "waiting for result of pending async jobid="+jobid);
 				}
 				break;
-			case 1: //job completed successfully
+			case ASYNCJOB_COMPLETEDSUCCESSFULLY:
 				{
 					//read and save jobResult object (how do we tell where it goes?!?)
-					ClLog.d(TAG, "async jobid="+jobid+"returned as success");
+					ClLog.d(TAG, "async jobid="+jobid+" returned as success");
 					
 			        endCheckAsyncJobProgress(jobid);
 
@@ -707,7 +713,7 @@ public class CsRestService extends IntentService {
 
 				}
 				break;
-			case 2: //job failed to complete
+			case ASYNCJOB_FAILEDTOCOMPLETE:
 				{
 					//read and show error
 					ClLog.d(TAG, "async jobid="+jobid+"returned as failure ;_;");

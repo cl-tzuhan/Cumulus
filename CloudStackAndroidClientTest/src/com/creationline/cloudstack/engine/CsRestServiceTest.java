@@ -238,10 +238,28 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 				};
 		
 		final String sampleBody = "{ \"startvirtualmachineresponse\" : {\"jobid\":383} }";
-		executeAndCheck_startVirtualMachines(sampleBody, columns);
+		executeAndCheck_startOrStopOrRebootVirtualMachines(sampleBody, columns);
+	}
+
+	public void testProcessAndSaveJsonReplyData_stopVirtualMachines() {
+		final String columns[] = new String[] {
+				Transactions.JOBID,
+		};
+		
+		final String sampleBody = "{ \"stopvirtualmachineresponse\" : {\"jobid\":423} }";
+		executeAndCheck_startOrStopOrRebootVirtualMachines(sampleBody, columns);
+	}
+
+	public void testProcessAndSaveJsonReplyData_rebootVirtualMachines() {
+		final String columns[] = new String[] {
+				Transactions.JOBID,
+		};
+		
+		final String sampleBody = "{ \"rebootvirtualmachineresponse\" : {\"jobid\":424} }";
+		executeAndCheck_startOrStopOrRebootVirtualMachines(sampleBody, columns);
 	}
 	
-	private void executeAndCheck_startVirtualMachines(final String jsonData, final String[] columns) {
+	private void executeAndCheck_startOrStopOrRebootVirtualMachines(final String jsonData, final String[] columns) {
 		deleteAllData();
 		
 		//insert sample record so we can test whether it is successfully updated below
@@ -278,19 +296,108 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals("Jobids do not match!", expectedJobid, retreivedJobid);
 	}
 	
-	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult() {
+	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_success() {
+		final String columns[] = new String[] {
+			Vms.ID,
+			Vms.NAME,
+			Vms.DISPLAYNAME,
+			Vms.ACCOUNT,
+			Vms.DOMAINID,
+			Vms.DOMAIN,
+			Vms.CREATED,
+			Vms.STATE,
+			Vms.HAENABLE,
+			Vms.ZONEID,
+			Vms.ZONENAME,
+			Vms.TEMPLATEID,
+			Vms.TEMPLATENAME,
+			Vms.TEMPLATEDISPLAYTEXT,
+			Vms.PASSWORDENABLED,
+			Vms.SERVICEOFFERINGID,
+			Vms.SERVICEOFFERINGNAME,
+			Vms.CPUNUMBER,
+			Vms.CPUSPEED,
+			Vms.MEMORY,
+			Vms.CPUUSED,
+			Vms.NETWORKKBSREAD,
+			Vms.NETWORKKBSWRITE,
+			Vms.GUESTOSID,
+			Vms.ROOTDEVICEID,
+			Vms.ROOTDEVICETYPE,
+			Vms.NIC,
+			Vms.HYPERVISOR,
+		};
+		
+		//sample reply from a startVirtualMachine call
+		final String vmid1 = "51";
+		final String sampleBody1 = "{ \"queryasyncjobresultresponse\" : {\"jobid\":423,\"jobstatus\":1,\"jobprocstatus\":0,\"jobresultcode\":0,\"jobresulttype\":\"object\",\"jobresult\":{\"virtualmachine\":{\"id\":"+vmid1+",\"name\":\"i-13-51-VM\",\"displayname\":\"èCìl\",\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-10-20T17:02:16+0900\",\"state\":\"Stopped\",\"haenable\":false,\"groupid\":9,\"group\":\"MMA\",\"zoneid\":2,\"zonename\":\"zone2\",\"templateid\":2,\"templatename\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"templatedisplaytext\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"passwordenabled\":false,\"serviceofferingid\":10,\"serviceofferingname\":\"mini Instance\",\"cpunumber\":1,\"cpuspeed\":140,\"memory\":256,\"cpuused\":\"0.02%\",\"networkkbsread\":154373515,\"networkkbswrite\":111849502,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"securitygroup\":[],\"nic\":[{\"id\":113,\"networkid\":220,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.45\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true,\"macaddress\":\"02:00:62:2d:00:03\"}],\"hypervisor\":\"XenServer\"}}} }";
+		executeAndCheck_queryAsyncJobResult_success(sampleBody1, columns, vmid1);
+		
+		//sample reply form a rebootVirtualMachine call
+		final String vmid2 = "49";
+		final String sampleBody2 = "{ \"queryasyncjobresultresponse\" : {\"jobid\":424,\"jobstatus\":1,\"jobprocstatus\":0,\"jobresultcode\":0,\"jobresulttype\":\"object\",\"jobresult\":{\"virtualmachine\":{\"id\":"+vmid2+",\"name\":\"i-13-49-VM\",\"displayname\":\"Brazilian Jujitsu\",\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-10-20T16:30:14+0900\",\"state\":\"Running\",\"haenable\":false,\"groupid\":9,\"group\":\"MMA\",\"zoneid\":2,\"zonename\":\"zone2\",\"templateid\":2,\"templatename\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"templatedisplaytext\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"passwordenabled\":false,\"serviceofferingid\":11,\"serviceofferingname\":\"sakaue instance\",\"cpunumber\":1,\"cpuspeed\":400,\"memory\":512,\"cpuused\":\"0.1%\",\"networkkbsread\":8957853,\"networkkbswrite\":8948577,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"securitygroup\":[],\"nic\":[{\"id\":109,\"networkid\":220,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.64\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true,\"macaddress\":\"02:00:2b:20:00:01\"}],\"hypervisor\":\"XenServer\"}}} }";
+		executeAndCheck_queryAsyncJobResult_success(sampleBody2, columns, vmid2);
+	}
+	private void executeAndCheck_queryAsyncJobResult_success(final String jsonData, final String[] columns, final String vmid) {
+		deleteAllData();
+		
+		//insert sample record so we can test whether it is successfully updated below
+		ContentValues cv = new ContentValues();
+		cv.put(Vms.ID, vmid);  //all the other data is arbitrary, but this id must match the id of the virtualmachine data in the jsonData
+		cv.put(Vms.ACCOUNT, "fake account data");
+		cv.put(Vms.CPUNUMBER, "fake CPU number data");
+		cv.put(Vms.DISPLAYNAME, "fake display name data");
+		cv.put(Vms.GUESTOSID, "fake guest OS ID data");
+		cv.put(Vms.HOSTNAME, "fake hostname data");
+		cv.put(Vms.SERVICEOFFERINGID, "fake service offering id data");
+		cv.put(Vms.STATE, "fake state data");
+		getContext().getContentResolver().insert(Vms.META_DATA.CONTENT_URI, cv);
+		
+		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the vms db for this
+		CsRestService csRestService = startCsRestService();
+		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for queryAsyncJobResult call
+		
+		//grab the data saved directly from db so we can check the saved values below
+		Cursor c = getContext().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, null, null, null);
+		c.moveToFirst();
+		
+		//parse the original sample json data into a tree so we can use it to compare individual values below
+		ObjectMapper om = new ObjectMapper();
+		JsonNode rootNode = null;
+		try {
+			rootNode = om.readTree(jsonData);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		//grab the expected virtualmachine list inside queryasyncjobresultresponse
+		JsonNode vmNode = rootNode.findPath("virtualmachine");
+		assertNotNull("virtualmachine field/objectnode in queryasyncjobresultresponse not found!", vmNode);
+		
+		for(String columnName : c.getColumnNames()) {
+			//check values of all columns and make sure read-back data match the original
+			final String expectedValue = vmNode.findValue(columnName).toString();
+			final String retrievedValue = c.getString(c.getColumnIndex(columnName));
+			assertEquals(trimDoubleQuotes(expectedValue), trimDoubleQuotes(retrievedValue));
+		}
+	}
+
+	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_failure() {
 		final String columns[] = new String[] {
 				Errors.ERRORCODE,
 				Errors.ERRORTEXT,
 				Errors.ORIGINATINGCALL,
 				};
 
-		final String sampleBody = "{ \"queryasyncjobresultresponse\" : {\"jobid\":163,\"jobstatus\":2,\"jobprocstatus\":0,\"jobresultcode\":530,\"jobresulttype\":\"object\",\"jobresult\":{\"errorcode\":530,\"errortext\":\"Internal error executing command, please contact your system administrator\"}} }";
-		executeAndCheck_queryAsyncJobResult(sampleBody, columns);
-
+		final String jobid = "163";
+		final String sampleBody = "{ \"queryasyncjobresultresponse\" : {\"jobid\":"+jobid+",\"jobstatus\":2,\"jobprocstatus\":0,\"jobresultcode\":530,\"jobresulttype\":\"object\",\"jobresult\":{\"errorcode\":530,\"errortext\":\"Internal error executing command, please contact your system administrator\"}} }";
+		executeAndCheck_queryAsyncJobResult_failure(sampleBody, columns, jobid);
 	}
-	
-	private void executeAndCheck_queryAsyncJobResult(final String jsonData, final String[] columns) {
+	private void executeAndCheck_queryAsyncJobResult_failure(final String jsonData, final String[] columns, final String jobid) {
 		deleteAllData();
 		
 		//insert sample record so we can test whether it is successfully updated below
@@ -299,7 +406,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		cv.put(Transactions.REQUEST, sampleRequest);
 		cv.put(Transactions.REQUEST_DATETIME, "test request datetime");
 		cv.put(Transactions.STATUS, "test status");
-		cv.put(Transactions.JOBID, "163");  //all the other data is arbitrary, but this jobid must match the jobid of the data in the sampleBody
+		cv.put(Transactions.JOBID, jobid);  //all the other data is arbitrary, but this jobid must match the jobid of the data in the jsonData
 		getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the errors db for this
