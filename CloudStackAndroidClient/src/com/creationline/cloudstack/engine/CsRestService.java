@@ -4,8 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.http.HttpEntity;
@@ -210,8 +214,9 @@ public class CsRestService extends IntentService {
 	}
 	
 	/**
-	 * Adapted from:
-	 *   http://download.cloud.com/releases/2.2.0/api/user/2.2api_examplecode_details.html
+	 * Builds the encoded and signed url that can be directly used to make a call to a cs server.
+	 * The returned url should work when directly typed into a web browser.
+	 * 
 	 * @param host if not null, the CS server url to connect to
 	 * @param apiCmd command to send to CS server (not including host and user api path)
 	 *   
@@ -229,9 +234,6 @@ public class CsRestService extends IntentService {
 		
 		if (specifiedHost!=null) {HOST = specifiedHost;}  //use any caller-specified host over the default value
 		
-		// Command and Parameters
-//		String apiUrl = "command=listVirtualMachines&account=thsu-account&domainid=2&response=json";
-
 		
 		/// These are the things that need to be done next!!!
 		///
@@ -246,26 +248,16 @@ public class CsRestService extends IntentService {
 			}
 			
 			//make sure we get reply in json 
-//			apiCmd += JSON_PARAM;  //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
-			apiCmd.putString("response", "json");    //(will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail)
+			apiCmd.putString("response", "json");  //will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail
 
 			ClLog.d(TAG, "constructing API call to host='" + HOST + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
 			
-			// Step 1: Make sure your APIKey is toLowerCased and URL encoded
-			String encodedApiKey = URLEncoder.encode(apiKey.toLowerCase(), "UTF-8"); //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
+			//"Step 1: Make sure your APIKey is toLowerCased and URL encoded"
+			final String encodedApiKey = URLEncoder.encode(apiKey.toLowerCase(), "UTF-8"); //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like cs prefers
 			
-			// Step 2: toLowerCase all the parameters, URL encode each parameter value, and the sort the parameters in alphabetical order
-			// Please note that if any parameters with a '&' as a value will cause this test client to fail since we are using '&' to delimit 
-			// the string
+			//"Step 2: toLowerCase all the parameters, URL encode each parameter value, and the sort the parameters in alphabetical order"
 			List<String> sortedParams = new ArrayList<String>();
 			sortedParams.add("apikey="+encodedApiKey);
-//			StringTokenizer st = new StringTokenizer(apiCmd, "&");
-//			while (st.hasMoreTokens()) {
-//				String paramValue = st.nextToken().toLowerCase();
-//				String param = paramValue.substring(0, paramValue.indexOf("="));
-//				String value = URLEncoder.encode(paramValue.substring(paramValue.indexOf("=")+1, paramValue.length()), "UTF-8");   //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
-//				sortedParams.add(param + "=" + value);
-//			}
 			Iterator<String> keySetItr = apiCmd.keySet().iterator();
 			StringBuilder apiCmdSb = new StringBuilder();
 			while(keySetItr.hasNext()) {
@@ -274,54 +266,36 @@ public class CsRestService extends IntentService {
 				final String value = apiCmd.getString(param);
 				
 				apiCmdSb.append(param).append("=").append(value).append("&");  //create the un-encoded/un-sorted version of the apiCmd that goes into the final url
-				
 				sortedParams.add(param+"="+URLEncoder.encode(value.toLowerCase(), "UTF-8"));  //compile a encoded&sorted string from the apiCmd params/values that is used to sign the request
-				   																			  //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
 			}
 			Collections.sort(sortedParams);
-			ClLog.d(TAG, "sorted Parameters= " + sortedParams);
+			ClLog.d(TAG, "sorted parameters= " + sortedParams);
 			
-			// Step 3: Construct the sorted URL and sign and URL encode the sorted URL with your secret key
-			String sortedUrl = null;
-			boolean first = true;
-			for (String param : sortedParams) {
-				if (first) {
-					sortedUrl = param;
-					first = false;
-				} else {
-					sortedUrl = sortedUrl + "&" + param;
-				}
+			//"Step 3: Construct the sorted URL and sign and URL encode the sorted URL with your secret key"
+			StringBuilder sortedParamSb = new StringBuilder(sortedParams.get(0));
+			for(int i=1; i<sortedParams.size(); i++) {
+				sortedParamSb.append("&").append(sortedParams.get(i));
 			}
-			ClLog.d(TAG, "sorted URL: " + sortedUrl);
-			final String encodedSignature = signRequest(sortedUrl, secretKey);
+			ClLog.d(TAG, "sortedParamSb= " + sortedParamSb);
+			final String encodedSignature = signRequest(sortedParamSb.toString(), secretKey);
 			
-			// Step 4: Construct the final URL we want to send to the CloudStack Management Server
-			// Final result should look like:
-			// http(s)://client/api?&apiKey=&signature=
-//			final String finalUrl = HOST + "?" + apiCmd + "&apiKey=" + apiKey + "&signature=" + encodedSignature;
+			//"Step 4: Construct the final URL we want to send to the CloudStack Management Server"
 			final String finalUrl = HOST + "?" + apiCmdSb.toString() + "apiKey=" + apiKey + "&signature=" + encodedSignature;
 			ClLog.d(TAG, "finalURL= " + finalUrl);
-//			System.out.println("CsRestService.callUserApi(): final URL: " + finalUrl);
-			
-			// Step 5: Perform a HTTP GET on this URL to execute the command
-//			doRestCall(finalUrl);
-			// Step 5: return final URL
+
 			return finalUrl;
 			
 		} catch (Throwable t) {
 			ClLog.e(TAG, "error occurred building api call: " + t.toString() + " ["+t.getMessage()+"]");
-			//ClLog.e(TAG, t);
 			throw new IllegalArgumentException("error in trying to build final url", t);
 		}
 	}
 	
 	/**
-	 * Adapted from:
-	 *   http://download.cloud.com/releases/2.2.0/api/user/2.2api_examplecode_details.html
-	 *   
-	 * 1. Signs a string with a secret key using SHA-1
-	 * 2. Base64 encode the result
-	 * 3. URL encode the final result
+	 * Signs a request based on CloudStack API spec:
+	 *   1. Signs a string with a secret key using SHA-1
+	 *   2. Base64 encode the result
+	 *   3. URL encode the final result
 	 * 
 	 * @param request data to sign
 	 * @param key secret key to sign data with
@@ -330,19 +304,29 @@ public class CsRestService extends IntentService {
 	public static String signRequest(final String request, final String key) {
 		final String TAG = "CsRestService.signRequest()";
 		
+		final SecretKey secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA1");
 		try {
-			Mac mac = Mac.getInstance("HmacSHA1");
-			SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(), "HmacSHA1");	
-			mac.init(keySpec);
-			mac.update(request.getBytes());
-			final byte[] encryptedBytes = mac.doFinal();
-			 //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like CS prefers
-			return URLEncoder.encode(Base64.encodeToString(encryptedBytes, Base64.NO_WRAP), "UTF-8"); //use NO_WRAP so no extraneous CR/LFs are added onto the end of the base64-ed string
-		} catch (Exception ex) {
-			ClLog.e(TAG, "got Exception! [" + ex.toString() +"]");
-			ClLog.e(TAG, ex);
+			final Mac mac = Mac.getInstance("HmacSHA1");
+			mac.init(secretKey);
+			final byte[] signedBytes = mac.doFinal(request.getBytes());
+			final String base64EncodedStr = Base64.encodeToString(signedBytes, Base64.DEFAULT);  //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like cs prefers
+			final String urlAndBase64EncodedStr = URLEncoder.encode(base64EncodedStr.trim(), "UTF-8");
+			
+			return urlAndBase64EncodedStr;
+			
+		} catch (NoSuchAlgorithmException e) {
+			ClLog.e(TAG, "Mac.getInstance() failed! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+			return null;
+		} catch (InvalidKeyException e) {
+			ClLog.e(TAG, "mac.init() failed! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+			return null;
+		} catch (UnsupportedEncodingException e) {
+			ClLog.e(TAG, "URLEncoder.encode() failed! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+			return null;
 		}
-		return null;
 	}
 	
 	/**
