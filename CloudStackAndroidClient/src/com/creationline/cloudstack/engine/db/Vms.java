@@ -101,7 +101,7 @@ public class Vms implements BaseColumns {
 	
 	public static final class STATE_VALUES {
 		public static final String RUNNING = "Running";
-		public static final String STOPPED = "STOPPED";
+		public static final String STOPPED = "Stopped";
 		public static final String STARTING = "Starting";
 		public static final String STOPPING = "Stopping";
 

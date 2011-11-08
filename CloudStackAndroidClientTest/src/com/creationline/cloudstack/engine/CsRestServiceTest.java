@@ -431,11 +431,55 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 		
 		final String expectedErrorCode = rootNode.findPath("jobresultcode").asText();
-		final String expectedErrorText = rootNode.findPath("errortext").asText();
+		final String expectedErrorText = rootNode.findPath("errortext").asText()+" ("+expectedErrorCode+")";
 		
 		assertEquals(expectedErrorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 		assertEquals(expectedErrorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 		assertEquals(sampleRequest, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+	}
+	
+	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_failure_failedToRebootVmInstance() {
+		final String jobid = "163";
+		final String sampleBody = "{ \"queryasyncjobresultresponse\" : {\"jobid\":"+jobid+",\"jobstatus\":2,\"jobprocstatus\":0,\"jobresultcode\":530,\"jobresulttype\":\"object\",\"jobresult\":{\"errorcode\":530,\"errortext\":\"Failed to reboot vm instance\"}} }";
+		executeAndCheck_queryAsyncJobResult_failure_failedToRebootVmInstance(sampleBody, jobid);
+	}
+	private void executeAndCheck_queryAsyncJobResult_failure_failedToRebootVmInstance(final String jsonData, final String jobid) {
+		deleteAllData();
+		
+		//insert sample record required by the process below
+		final String vmid = "51";
+		final String sampleRequest = "http://219.117.239.169:8080/client/api?response=json&command=rebootVirtualMachine&id="+vmid+"&apiKey=cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g&signature=acAL1qG0DOycLvvsbysbhlNTUrM%3D";
+		ContentValues TransactionsCv = new ContentValues();
+		TransactionsCv.put(Transactions.REQUEST, sampleRequest);
+		TransactionsCv.put(Transactions.REQUEST_DATETIME, "test request datetime");
+		TransactionsCv.put(Transactions.STATUS, "test status");
+		TransactionsCv.put(Transactions.JOBID, jobid);  //all the other data is arbitrary, but this jobid must match the jobid of the data in the jsonData
+		getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, TransactionsCv);
+		
+		//insert sample record so we can test whether it is successfully updated below
+		ContentValues VmsCv = new ContentValues();
+		VmsCv.put(Vms.ID, vmid);  //all the other data is arbitrary, but this vmid must match the vmid of the data in the sampleRequest
+		VmsCv.put(Vms.ACCOUNT, "fake account data");
+		VmsCv.put(Vms.CPUNUMBER, "fake CPU number data");
+		VmsCv.put(Vms.DISPLAYNAME, "fake display name data");
+		VmsCv.put(Vms.GUESTOSID, "fake guest OS ID data");
+		VmsCv.put(Vms.HOSTNAME, "fake hostname data");
+		VmsCv.put(Vms.SERVICEOFFERINGID, "fake service offering id data");
+		VmsCv.put(Vms.STATE, "fake state data");
+		final Uri insertedVmsRow = getContext().getContentResolver().insert(Vms.META_DATA.CONTENT_URI, VmsCv);
+		
+		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the errors & vms dbs for this
+		CsRestService csRestService = startCsRestService();
+		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for queryAsyncJobResult call
+		
+		final String[] vmsStateColumn = new String[] {
+				Vms.STATE,
+		};
+		Cursor c = getContext().getContentResolver().query(insertedVmsRow, vmsStateColumn, null, null, null);
+		c.moveToFirst();
+		
+		assertEquals(1, c.getCount());
+		assertEquals("rebooting VMs getting this error should be automatically marked as stopped", Vms.STATE_VALUES.STOPPED, c.getString(c.getColumnIndex(Vms.STATE)));
 	}
 	
 	public void testProcessAndSaveJsonReplyData_listSnapshots() {

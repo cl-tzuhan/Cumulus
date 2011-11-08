@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -726,14 +727,42 @@ public class CsRestService extends IntentService {
 					ClLog.d(TAG, "jobresult.errortext= "+errortext);
 					
 					String originatingTransactionUri = findRequestForJobid(jobid);
-
-					addToErrorLog(jobresultcode, errortext, originatingTransactionUri);
+					addToErrorLog(jobresultcode, errortext+" ("+jobresultcode+")", originatingTransactionUri);
 					
+
+					if("Failed to reboot vm instance".equalsIgnoreCase(errortext)) {
+						final String vmid = extractIdFromUriStr(originatingTransactionUri);
+						
+						//mark the vm as stopped in the case of a reboot failure
+						ContentValues cv = new ContentValues();
+						cv.put(Vms.STATE, Vms.STATE_VALUES.STOPPED);
+						final String whereClause = Vms.ID+"=?";
+						final String[] selectionArgs = new String[] { vmid };
+						getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+					}
 				}
 				break;
 			default:
 				ClLog.e(TAG, "got an unrecognized jobstatus="+jobstatus);
 		}
+	}
+	
+	/**
+	 * Extracts and returns the value portion of the "id=*" param from a uri string.
+	 * 
+	 * @param uriStr uri to parse
+	 * @return value of id as a String if found, null otherwise
+	 */
+	public String extractIdFromUriStr(final String uriStr) {
+		StringTokenizer st = new StringTokenizer(uriStr, "&");
+		while (st.hasMoreTokens()) {
+			final String paramValue = st.nextToken().toLowerCase();
+			final String param = paramValue.substring(0, paramValue.indexOf("="));
+			if(Vms.ID.equalsIgnoreCase(param)) {
+				return paramValue.substring(paramValue.indexOf("=")+1, paramValue.length());
+			}
+		}
+		return null;
 	}
 
 	public String findRequestForJobid(final String jobid) {

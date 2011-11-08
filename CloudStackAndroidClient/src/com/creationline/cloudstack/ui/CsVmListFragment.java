@@ -60,13 +60,14 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			setTextViewWithString(view, R.id.displayname, cursor, Vms.DISPLAYNAME);
 			setTextViewWithString(view, R.id.name, cursor, Vms.NAME);
 			setTextViewWithString(view, R.id.state, cursor, Vms.STATE);
-			configureAttributesBasedOnState(view, R.id.state, R.id.quickactionicon, R.id.quickactionprogress);
 			setTextViewWithString(view, R.id.serviceofferingname, cursor, Vms.SERVICEOFFERINGNAME);
 			setTextViewWithString(view, R.id.templatedisplaytext, cursor, Vms.TEMPLATEDISPLAYTEXT);
 			setTextViewWithString(view, R.id.hypervisor, cursor, Vms.HYPERVISOR);
 			setTextViewWithString(view, R.id.cpunumber, cursor, Vms.CPUNUMBER);
 			setTextViewWithString(view, R.id.cpuspeed, cursor, Vms.CPUSPEED);
 			setTextViewWithString(view, R.id.memory, cursor, Vms.MEMORY);
+
+			configureAttributesBasedOnState(view);
     	}
 
 		/**
@@ -87,46 +88,47 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		 * Currently, these states are hard-coded to "running" and "stopped", with a catch all for unrecognized values.
 		 * 
 		 * @param view View containing TextView/ImageView specified by stateTextViewId/quickactionIconId
-		 * @param stateTextViewId id of the TextView that contains the current state of the VM
-		 * @param quickActionIconId id of the ImageView to use as the icon/"button" for triggering the quickaction menu
 		 */
-		public void configureAttributesBasedOnState(View view, final int stateTextViewId, final int quickActionIconId, final int quickActionProgressId) {
+		public void configureAttributesBasedOnState(View view) {
+			//clear out the animations for the icon/progressCircle each time,
+			//otherwise, the set animation will run automatically each time the
+			//widget visibility is changed
+			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
+			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
+			quickActionIcon.clearAnimation();
+			quickActionProgress.clearAnimation();
+			
 			TextView vmidText = (TextView)view.findViewById(R.id.id);
-			TextView stateText = (TextView)view.findViewById(stateTextViewId);
+			TextView stateText = (TextView)view.findViewById(R.id.state);
 			final String vmid = vmidText.getText().toString();
 			final String state = stateText.getText().toString();
-			final String inProgressState = vmsWithInProgressRequests.getString(vmid);
 			
-			final boolean requestIsPending = inProgressState!=null;
-			final boolean isNotInProgressState = state.equalsIgnoreCase(Vms.STATE_VALUES.RUNNING) || state.equalsIgnoreCase(Vms.STATE_VALUES.STOPPED);
-			final boolean stateHasBeenUpdated = !state.equalsIgnoreCase(inProgressState);
-			if(stateHasBeenUpdated) { vmsWithInProgressRequests.remove(vmid); };
-			final boolean stateUpdated =  requestIsPending && isNotInProgressState && stateHasBeenUpdated;
+			final boolean stateUpdated = determineIfStateHasBeenUpdatedByServer(vmid, state);
 
 			//for the vm state text, we change its color depending on the current state of the vm
 			if(Vms.STATE_VALUES.RUNNING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmrunning_color_selector));
-				assignQuickActionTo(view, quickActionIconId, createRunningStateQuickAction(view));
-				animateStateTextOnUpdate(stateText, stateUpdated);
-				showQuickActionIcon(view, quickActionIconId, quickActionProgressId, stateUpdated);
+				assignQuickActionTo(view, quickActionIcon, createRunningStateQuickAction(view));
+				onVmStateUpdate(view, stateText, stateUpdated);
+				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
 				
 			} else if (Vms.STATE_VALUES.STOPPED.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstopped_color_selector));
-				assignQuickActionTo(view, quickActionIconId, createStoppedStateQuickAction(view));
-				animateStateTextOnUpdate(stateText, stateUpdated);
-				showQuickActionIcon(view, quickActionIconId, quickActionProgressId, stateUpdated);
+				assignQuickActionTo(view, quickActionIcon, createStoppedStateQuickAction(view));
+				onVmStateUpdate(view, stateText, stateUpdated);
+				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
 
 			} else if (Vms.STATE_VALUES.STARTING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstarting_color_selector));
-				showQuickActionProgress(view, quickActionIconId, quickActionProgressId, stateUpdated);
+				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			} else if (Vms.STATE_VALUES.STOPPING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstopping_color_selector));
-				showQuickActionProgress(view, quickActionIconId, quickActionProgressId, stateUpdated);
+				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			}  else if (Vms.STATE_VALUES.REBOOTING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmrebooting_color_selector));
-				showQuickActionProgress(view, quickActionIconId, quickActionProgressId, stateUpdated);
+				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			} else {
 				//if we run into an unknown state, give...
@@ -135,10 +137,23 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			}
 		}
 
-		public void animateStateTextOnUpdate(TextView stateText, final boolean stateUpdated) {
+		public boolean determineIfStateHasBeenUpdatedByServer(final String vmid, final String currentState) {
+			final String inProgressState = vmsWithInProgressRequests.getString(vmid);
+			final boolean requestIsPending = inProgressState!=null;
+			final boolean isNotInProgressState = currentState.equalsIgnoreCase(Vms.STATE_VALUES.RUNNING) || currentState.equalsIgnoreCase(Vms.STATE_VALUES.STOPPED);
+			final boolean stateHasBeenUpdated = !currentState.equalsIgnoreCase(inProgressState);
+			if(stateHasBeenUpdated) { vmsWithInProgressRequests.remove(vmid); };
+			final boolean stateUpdated =  requestIsPending && isNotInProgressState && stateHasBeenUpdated;
+			
+			return stateUpdated;
+		}
+
+		public void onVmStateUpdate(View view, TextView stateText, final boolean stateUpdated) {
 			if(stateUpdated) {
-//				Animation fadein_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein_decelerate);
 				stateText.startAnimation(fadein_decelerate);
+				
+				TextView displayNameText = (TextView)view.findViewById(R.id.displayname);
+				Toast.makeText(getActivity(), "\""+displayNameText.getText().toString()+"\" is now "+stateText.getText().toString().toLowerCase(), Toast.LENGTH_SHORT).show();
 			}
 		}
 
@@ -147,18 +162,16 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		 * quickactionIconId in the view.
 		 * 
 		 * @param view View containing ImageView specified by quickActionIconId
-		 * @param quickActionIconId id of ImageView to use as the icon/"button" trigger for this quickaction menu
+		 * @param quickActionIcon id of ImageView to use as the icon/"button" trigger for this quickaction menu
 		 * @param quickAction quickaction to assign to the onClick handler
 		 */
-		public void assignQuickActionTo(View view, int quickActionIconId, final QuickAction quickAction) {
-			ImageView quickActionIcon = (ImageView) view.findViewById(quickActionIconId);
+		public void assignQuickActionTo(View view, ImageView quickActionIcon, final QuickAction quickAction) {
 			quickActionIcon.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					quickAction.show(v);
 				}
 			});
-//			quickAction.setAnchorView(view);  //cache the view which this quickaction is attached to
 		}
 		
 ////NOTE: This code below was being used as a work-around for the listview not responding to touch "clicks".
@@ -310,38 +323,30 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 //		
 //	}
     
-	public void showQuickActionIcon(View view, final int quickActionIconId, final int quickActionProgressId, final boolean animate) {
-		ImageView quickActionIcon = (ImageView)view.findViewById(quickActionIconId);
-		ProgressBar quickActionProgress = (ProgressBar)view.findViewById(quickActionProgressId);
+	public void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
 		
 		if(animate) {
-//			Animation fadein_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein_decelerate);
 			quickActionIcon.startAnimation(fadein_decelerate);
 		}
 		quickActionIcon.setVisibility(View.VISIBLE);
-		quickActionIcon.setHapticFeedbackEnabled(true);
 		quickActionIcon.setClickable(true);
 
 		if(animate) {
-//			Animation fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
 			quickActionProgress.startAnimation(fadeout_decelerate);
 		}
 		quickActionProgress.setVisibility(View.INVISIBLE);
+
 	}
 
-	public void showQuickActionProgress(View view, final int quickActionIconId, final int quickActionProgressId, final boolean animate) {
-		ImageView quickActionIcon = (ImageView)view.findViewById(quickActionIconId);
-		ProgressBar quickActionProgress = (ProgressBar)view.findViewById(quickActionProgressId);
+	public void showQuickActionProgress(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
 
 		quickActionIcon.setClickable(false);
 		if(animate) {
-//			Animation fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
 			quickActionIcon.startAnimation(fadeout_decelerate);
 		}
 		quickActionIcon.setVisibility(View.INVISIBLE);
-		
+
 		if(animate) {
-//			Animation fadein_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein_decelerate);
 			quickActionProgress.startAnimation(fadein_decelerate);
 		}
 		quickActionProgress.setVisibility(View.VISIBLE);
@@ -363,12 +368,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		runningStateQuickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {          
 			@Override
 			public void onItemClick(QuickAction source, int pos, int actionId) {
-				//here we can filter which action item was clicked with pos or actionId parameter
-				ActionItem actionItem = source.getActionItem(pos);
-				
-				TextView tv = (TextView) view.findViewById(R.id.id);
-				Toast.makeText(getActivity(), actionItem.getTitle() + " selected [" + tv.getText() +"]", Toast.LENGTH_SHORT).show();   
-			
 				switch(actionId) {
 					case STOP_VM:
 						makeStartOrStopOrRebootVmCall(view, CsApiConstants.API.stopVirtualMachine);
@@ -389,7 +388,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 	public QuickAction createStoppedStateQuickAction(final View view) {
 		final ActionItem startVmItem = new ActionItem(START_VM, "Start VM", getResources().getDrawable(R.drawable.menu_ok));
 		
-		
 		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
 		QuickAction stoppedStateQuickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
 		
@@ -400,12 +398,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		stoppedStateQuickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {          
 			@Override
 			public void onItemClick(QuickAction source, int pos, int actionId) {
-				//here we can filter which action item was clicked with pos or actionId parameter
-				ActionItem actionItem = source.getActionItem(pos);
-				
-				TextView tv = (TextView) view.findViewById(R.id.id);
-				Toast.makeText(getActivity(), actionItem.getTitle() + " selected [" + tv.getText() +"]", Toast.LENGTH_SHORT).show(); 
-				
 				makeStartOrStopOrRebootVmCall(view, CsApiConstants.API.startVirtualMachine);
 			}
 		});
@@ -414,19 +406,18 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		return stoppedStateQuickAction;
 	}
     
-
 	///Note: for debug purposes
 	//public void onListItemClick(ListView l, View v, int position, long id) {
     //	ClLog.d("FragmentList", "Item clicked: " + id);
     //}
     
 	public void makeStartOrStopOrRebootVmCall(View itemView, final String commandName) {
-        //make the rest call to cs server to start VM represented by itemView
-		
-		showQuickActionProgress(itemView, R.id.quickactionicon, R.id.quickactionprogress, true);
-		
 		TextView idText = (TextView)itemView.findViewById(R.id.id);
 		final String vmid = idText.getText().toString();
+
+		ImageView quickActionIcon = (ImageView)itemView.findViewById(R.id.quickactionicon);
+		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
+		showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 
 		String inProgressState = null;
 		if(CsApiConstants.API.startVirtualMachine.equalsIgnoreCase(commandName)) {
@@ -440,7 +431,9 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		updateVmStateOnDb(vmid, inProgressState);  //update vm data with in-progress state
 		vmsWithInProgressRequests.putString(vmid, inProgressState);  //cache in-progress state, so we compare and know when it has been updated by the server reply
 		
-		//make the *vm call
+		
+		
+        //make the rest call to cs server to start/stop/reboot vm represented by itemView
         final String action = CsRestService.TEST_CALL;   
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);

@@ -159,7 +159,10 @@ public class CsRestContentProvider extends ContentProvider {
 			}
 			
 			//create full uri appended with newly added row id for return
-			returnUri = ContentUris.appendId(Transactions.META_DATA.CONTENT_URI.buildUpon(), rowId).build();
+			returnUri = ContentUris.appendId(uri.buildUpon(), rowId).build();  //NOTE: this will return a returnUri with double row ids post-pended if the incoming uri specifies a specific row
+																			   //(probably not how this should work (I think sqlDb.insert() will add a new row no
+																			   // matter whether uri specifies a row or not), but since we don't need the ability right now,
+																			   // leaving as is to save unnecessary coding/processing for the time being)
 			getContext().getContentResolver().notifyChange(uri, null);  //signal observers that something was added
 		} catch (SQLiteException e) {
 			ClLog.e(TAG, "insert(): getWritableDatabase() failed for "+uri);

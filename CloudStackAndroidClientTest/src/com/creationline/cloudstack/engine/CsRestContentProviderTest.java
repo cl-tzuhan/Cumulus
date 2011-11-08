@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.test.AndroidTestCase;
 
 import com.creationline.cloudstack.engine.db.Errors;
+import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 
@@ -26,15 +27,10 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 	
 	protected void deleteAllData() {
-//		//Completely remove the db if it exists
-//		if (getContext().databaseList().length<=0) {
-//			return; //do nothing if there is no db to start with
-//		}
-//		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
-		
 		//erase all data from each table
 		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
 		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		getContext().getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
 		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
 	}
 
@@ -127,6 +123,46 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		assertEquals(1, resultOfQueryForAllRecords.getCount());  //there should be only 1 record in the db
 		resultOfQueryForAllRecords.close();
 		
+	}
+	
+	public void testInsert_returnUri() {
+		{//testing inserting into transactions table
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, "test request");
+			final Uri insertedRowUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			final Uri expectedUri = Uri.withAppendedPath(Transactions.META_DATA.CONTENT_URI, insertedRowUri.getLastPathSegment());
+			assertEquals("insertedRowUri should be from the transactions table", insertedRowUri, expectedUri);
+
+			cv.put(Transactions.REQUEST, "test request2");
+			final Uri insertedRowUri2 = getContext().getContentResolver().insert(insertedRowUri, cv);
+			final Uri expectedUri2 = Uri.withAppendedPath(expectedUri, insertedRowUri2.getLastPathSegment());  //expects the row id for the 2nd insert post-pended after the row id for the first insert
+																											   //(probably not how this should work, but checking like this until we change implementation)
+			assertEquals("insertedRowUri2 should be from the transactions table", insertedRowUri2, expectedUri2);
+		}
+
+		{//testing inserting into vms table
+			ContentValues cv = new ContentValues();
+			cv.put(Vms.ID, "test id");
+			final Uri insertedRowUri = getContext().getContentResolver().insert(Vms.META_DATA.CONTENT_URI, cv);
+			final Uri expectedUri = Uri.withAppendedPath(Vms.META_DATA.CONTENT_URI, insertedRowUri.getLastPathSegment());
+			assertEquals("insertedRowUri should be from the vms table", insertedRowUri, expectedUri);
+		}
+
+		{//testing inserting into vms table
+			ContentValues cv = new ContentValues();
+			cv.put(Snapshots.ID, "test id");
+			final Uri insertedRowUri = getContext().getContentResolver().insert(Snapshots.META_DATA.CONTENT_URI, cv);
+			final Uri expectedUri = Uri.withAppendedPath(Snapshots.META_DATA.CONTENT_URI, insertedRowUri.getLastPathSegment());
+			assertEquals("insertedRowUri should be from the snapshots table", insertedRowUri, expectedUri);
+		}
+
+		{//testing inserting into errors table
+			ContentValues cv = new ContentValues();
+			cv.put(Errors.ERRORCODE, "test errorcode");
+			final Uri insertedRowUri = getContext().getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+			final Uri expectedUri = Uri.withAppendedPath(Errors.META_DATA.CONTENT_URI, insertedRowUri.getLastPathSegment());
+			assertEquals("insertedRowUri should be from the errors table", insertedRowUri, expectedUri);
+		}
 	}
 	
 	public void testQuery_edgeCases() {
@@ -269,7 +305,6 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		assertEquals(0, emptyResult.getCount());
 		emptyResult.close();
 	}
-
 	
 	public void testDelete() {
 		deleteAllData();

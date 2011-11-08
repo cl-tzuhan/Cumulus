@@ -109,6 +109,7 @@
 	<ImageView android:id="@+id/quickactionicon" android:src="@android:drawable/ic_menu_revert"
 		android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:hapticFeedbackEnabled="true"
 		android:visibility="invisible"
 		android:background="@android:color/transparent" />
 	<ProgressBar android:id="@+id/quickactionprogress" style="?android:attr/progressBarStyleSmall"
