@@ -51,6 +51,7 @@ import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
+import com.creationline.cloudstack.ui.CsSnapshotListFragment;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
@@ -71,7 +72,7 @@ public class CsRestService extends IntentService {
 	
 	//parseReplyBody_queryAsyncJobResult()-use constants
 	private static final int ASYNCJOB_STILLINPROGRESS = 0;
-	private static final int ASYNCJOB_COMPLETEDSUCCESSFULLY = 1;
+	private static final int ASYNCJOB_COMPLETED = 1;
 	private static final int ASYNCJOB_FAILEDTOCOMPLETE = 2;
 	
 	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
@@ -449,19 +450,24 @@ public class CsRestService extends IntentService {
 		if(callReturnedOk) {
 			processAndSaveJsonReplyData(uriToUpdate, replyBody.toString());
 		} else {
-			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody);
+			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody.toString());
 		}
 	}
 
-	public void parseErrorAndAddToDb(final Uri uriToUpdate, final int statusCode, final StringBuilder replyBody) {
+	public void parseErrorAndAddToDb(final Uri uriToUpdate, final int statusCode, final String replyBody) {
 		final String TAG = "CsRestService.parseErrorAndAddToDb()";
 
 		//extract the error details from the reply, defaulting to unknown if parse fails
+		String responseName = null;
 		String errorText = "unknown error";
 		ObjectMapper om = new ObjectMapper();
 		try {
 			JsonNode errorObj = om.readTree(replyBody.toString());
 			errorText = errorObj.findValue("errortext").asText();
+			Iterator<String> fieldNameItr = errorObj.getFieldNames();
+			if(fieldNameItr.hasNext()) {
+				responseName = fieldNameItr.next();  //we are assuming all responses are contained within a "*response" object, where * is the name of the api call
+			}
 		} catch (JsonParseException e) {
 			ClLog.e(TAG, "expected errorresponse not well-formed! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
@@ -471,6 +477,24 @@ public class CsRestService extends IntentService {
 		}
 		
 		addToErrorLog(String.valueOf(statusCode), errorText, uriToUpdate.toString());
+		informCallerOfResult(uriToUpdate, responseName);
+	}
+
+	public void informCallerOfResult(final Uri uriToUpdate, String responseName) {
+		final String truncatedResponseName = responseName.substring(0, responseName.lastIndexOf("response"));
+		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(truncatedResponseName)) {
+			final String originalRequest = findTransactionRequestForRow(uriToUpdate);
+			final String snapshotId = extractParamValueFromUriStr(originalRequest, Vms.ID);
+			
+			informSnapshotFragmentOfCallFailure(snapshotId);
+		}
+	}
+
+	public void informSnapshotFragmentOfCallFailure(final String snapshotId) {
+		//inform CsSnapshotListFragment that the call failed
+		Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND);
+		broadcastIntent.putExtra(CsRestService.RESPONSE, snapshotId);
+		sendBroadcast(broadcastIntent);
 	}
 
 	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {
@@ -577,6 +601,9 @@ public class CsRestService extends IntentService {
 		} else if("listSnapshotsResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listSnapshots results and save to snapshots table
 			parseReplyBody_listSnapshots(responseData.getValueNode());
+		} else if("deleteSnapshotResponse".equalsIgnoreCase(responseData.getFieldName())) {
+			//parse deleteSnapshot results and update snapshots table
+			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
 			
 			
 			
@@ -660,7 +687,6 @@ public class CsRestService extends IntentService {
 		}
 	}
 	
-
 	
 	private void parseReplyBody_queryAsyncJobResult(JsonNode responseDataNode) {
 		final String TAG = "CsRestService.parseReplyBody_queryAsyncJobResult()";
@@ -676,7 +702,7 @@ public class CsRestService extends IntentService {
 					ClLog.i(TAG, "waiting for result of pending async jobid="+jobid);
 				}
 				break;
-			case ASYNCJOB_COMPLETEDSUCCESSFULLY:
+			case ASYNCJOB_COMPLETED:
 				{
 					//read and save jobResult object (how do we tell where it goes?!?)
 					ClLog.d(TAG, "async jobid="+jobid+" returned as success");
@@ -692,6 +718,13 @@ public class CsRestService extends IntentService {
 						//update vms row with returned data
 						final JsonParser nodeParser = jobresult.getValueNode().traverse();
 						parseAndSaveReply(nodeParser, Vms.META_DATA.CONTENT_URI, UPDATE_DATA);
+					} else if("success".equalsIgnoreCase(jobresult.getFieldName())) {
+						//there are multiple apis that return a jobresult with "success" field:
+						//  e.g. "jobresult":{"success":true}}
+						//we need to determine which api command produced this result and take appropriate action
+						final String successValue = jobresult.getValueNode().asText();
+						final boolean jobSucceeded = "true".equalsIgnoreCase(successValue)? true : false;
+						handleJobresultBasedOnApi(jobid, jobSucceeded);
 					} else {
 						ClLog.e(TAG, "got jobresult with unrecognized data.  jobresult fieldname="+jobresult.getFieldName());
 					}
@@ -710,19 +743,19 @@ public class CsRestService extends IntentService {
 					ClLog.d(TAG, "jobresultcode= "+jobresultcode);
 					ClLog.d(TAG, "jobresult.errortext= "+errortext);
 					
-					String originatingTransactionUri = findRequestForJobid(jobid);
+					String originatingTransactionUri = findTransactionRequestForJobid(jobid);
 					addToErrorLog(jobresultcode, errortext+" ("+jobresultcode+")", originatingTransactionUri);
 					
-
-					if("Failed to reboot vm instance".equalsIgnoreCase(errortext)) {
-						final String vmid = extractIdFromUriStr(originatingTransactionUri);
-						
+					if(errortext==null) {
+						; //null check
+					} else if(errortext.contains("Failed to reboot vm instance")) {
+						final String vmid = extractParamValueFromUriStr(originatingTransactionUri, Vms.ID);
 						//mark the vm as stopped in the case of a reboot failure
-						ContentValues cv = new ContentValues();
-						cv.put(Vms.STATE, Vms.STATE_VALUES.STOPPED);
-						final String whereClause = Vms.ID+"=?";
-						final String[] selectionArgs = new String[] { vmid };
-						getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+						updateVmState(vmid, Vms.STATE_VALUES.STOPPED);
+					} else { 
+						// if (errortext.contains("due to it is not in BackedUp Status")) {
+						//inform snapshot fragment command failed
+						handleJobresultBasedOnApi(jobid, false);
 					}
 				}
 				break;
@@ -730,35 +763,86 @@ public class CsRestService extends IntentService {
 				ClLog.e(TAG, "got an unrecognized jobstatus="+jobstatus);
 		}
 	}
+
+	public void handleJobresultBasedOnApi(final String jobid, final boolean jobSucceeded) {
+		final String TAG = "CsRestService.handleJobresultBasedOnApi()";
+
+		final String originalRequestUri = findTransactionRequestForJobid(jobid);
+		final String apiCmd = extractParamValueFromUriStr(originalRequestUri, CsRestService.COMMAND);
+
+		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(apiCmd)) {
+			final String snapshotId = extractParamValueFromUriStr(originalRequestUri, Snapshots.ID);
+			if(jobSucceeded) {
+				deleteSnapshotWithId(snapshotId);
+			} else {
+				informSnapshotFragmentOfCallFailure(snapshotId);
+			}
+		} else {
+			ClLog.e(TAG, "retrieved invalid apiCmd="+apiCmd);
+		}
+	}
+	
+	public void updateVmState(final String vmid, final String newState) {
+		ContentValues cv = new ContentValues();
+		cv.put(Vms.STATE, newState);
+		final String whereClause = Vms.ID+"=?";
+		final String[] selectionArgs = new String[] { vmid };
+		getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+	}
+
+	public void deleteSnapshotWithId(final String snapshotId) {
+		final String whereClause = Snapshots.ID+"=?";
+		final String[] selectionArgs = new String[] { snapshotId };
+		getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, whereClause, selectionArgs);
+	}
 	
 	/**
-	 * Extracts and returns the value portion of the "id=*" param from a uri string.
+	 * Extracts and returns the value portion of the specified parameter from an uri string.
 	 * 
 	 * @param uriStr uri to parse
-	 * @return value of id as a String if found, null otherwise
+	 * @param paramValueToExtract name of param whose value to return
+	 * @return value of param as a String if found, null otherwise
 	 */
-	public String extractIdFromUriStr(final String uriStr) {
+	public String extractParamValueFromUriStr(final String uriStr, final String paramValueToExtract) {
+		if(paramValueToExtract==null) {
+			return null;
+		}
+		
 		StringTokenizer st = new StringTokenizer(uriStr, "&");
 		while (st.hasMoreTokens()) {
 			final String paramValue = st.nextToken().toLowerCase();
-			final String param = paramValue.substring(0, paramValue.indexOf("="));
-			if(Vms.ID.equalsIgnoreCase(param)) {
-				return paramValue.substring(paramValue.indexOf("=")+1, paramValue.length());
+			final int indexOfEqualsSign = paramValue.indexOf("=");
+			if(indexOfEqualsSign!=-1) {
+				final String param = paramValue.substring(0, indexOfEqualsSign);
+				if(paramValueToExtract.equalsIgnoreCase(param)) {
+					return paramValue.substring(indexOfEqualsSign+1, paramValue.length());
+				}
 			}
 		}
 		return null;
 	}
 
-	public String findRequestForJobid(final String jobid) {
-		
+	public String findTransactionRequestForJobid(final String jobid) {
 		if(jobid==null) {
 			return null;
 		}
 		
+		return findTransactionRequest(Transactions.META_DATA.CONTENT_URI, jobid);
+	}
+	
+	public String findTransactionRequestForRow(final Uri uriWithRowId) {
+		return findTransactionRequest(uriWithRowId, null);
+	}
+	
+	public String findTransactionRequest(final Uri transactionsUri, final String jobid) {
 		final String[] columns = new String[] { Transactions.REQUEST };
-		final String whereClause = Transactions.JOBID+"=?";
-		final String[] selectionArgs = new String[] { jobid };
-		Cursor c = getContentResolver().query(Transactions.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+		String whereClause = null;
+		String[] selectionArgs =null;
+		if(jobid!=null) { 
+			whereClause = Transactions.JOBID+"=?";
+			selectionArgs = new String[] { jobid };
+		};
+		Cursor c = getContentResolver().query(transactionsUri, columns, whereClause, selectionArgs, null);
 		
 		if(c==null || c.getCount()<1) {
 			return null;
@@ -768,6 +852,7 @@ public class CsRestService extends IntentService {
 		final String originatingTransactionUri = c.getString(c.getColumnIndex(Transactions.REQUEST));
 		return originatingTransactionUri;
 	}
+	
 
 	public void startCheckAsyncJobProgress(final String jobid) {
 		//set up a task to repeatedly check with cs server whether this jobid has completed

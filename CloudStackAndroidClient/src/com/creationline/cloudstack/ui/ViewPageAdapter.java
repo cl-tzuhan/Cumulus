@@ -26,7 +26,7 @@ public class ViewPageAdapter extends FragmentPagerAdapter implements TitleProvid
 			case 0:
 				return new CsVmListFragment();
 			case 1:
-				return new CsSnapshotList();
+				return new CsSnapshotListFragment();
 			default:
 				ClLog.e("ViewPageAdapter.getItem()", "Trying to swtich to non-existant position="+position);
 				return null;

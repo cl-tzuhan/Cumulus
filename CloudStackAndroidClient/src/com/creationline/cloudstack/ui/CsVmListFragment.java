@@ -221,7 +221,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         final String action = CsRestService.TEST_CALL;   
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
-        apiCmd.putString("account", "rickson");
+        apiCmd.putString(Vms.ACCOUNT, "rickson");
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
         getActivity().startService(csRestServiceIntent);
       
@@ -430,8 +430,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		
 		updateVmStateOnDb(vmid, inProgressState);  //update vm data with in-progress state
 		vmsWithInProgressRequests.putString(vmid, inProgressState);  //cache in-progress state, so we compare and know when it has been updated by the server reply
-		
-		
 		
         //make the rest call to cs server to start/stop/reboot vm represented by itemView
         final String action = CsRestService.TEST_CALL;   

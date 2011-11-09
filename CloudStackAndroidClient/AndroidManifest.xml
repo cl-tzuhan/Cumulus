@@ -17,7 +17,7 @@
         <activity android:name=".ui.CsVmList"
                   android:label="@string/app_name" />
 
-        <activity android:name=".ui.CsSnapshotList"
+        <activity android:name=".ui.CsSnapshotListFragment"
                   android:label="Snapshots" />
         
         <service android:name=".engine.CsRestService" />

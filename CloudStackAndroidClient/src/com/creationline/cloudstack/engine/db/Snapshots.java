@@ -32,6 +32,11 @@ public class Snapshots implements BaseColumns {
 	public static final String VOLUMENAME = "volumename";
 	public static final String VOLUMETYPE = "volumetype";
 	
+	public static final class STATE_VALUES {
+		public static final String CREATING = "Creating";
+		public static final String BACKINGUP = "BackingUp";
+		public static final String BACKEDUP = "BackedUp";
+	}
 	
 	public static final class META_DATA {
 		public static final String TABLE_NAME = "snapshots";

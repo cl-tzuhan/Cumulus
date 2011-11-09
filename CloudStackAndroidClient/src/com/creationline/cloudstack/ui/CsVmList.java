@@ -25,6 +25,7 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Transactions;
+import com.creationline.cloudstack.util.QuickActionUtil;
 import com.viewpagerindicator.TitlePageIndicator;
 
 public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory {
@@ -82,6 +83,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         registerForErrorsDbUpdate();
         //registerForVmsDbUpdate();
         
+        new QuickActionUtil(this);
     }
 
     

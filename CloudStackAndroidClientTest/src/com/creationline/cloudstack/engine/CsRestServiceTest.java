@@ -566,7 +566,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		//ask CsRestService to parse the sample error response; CsRestService will actually go and update the errors db for this
 		CsRestService csRestService = startCsRestService();
-		csRestService.parseErrorAndAddToDb(Uri.parse(sampleUriToUpdate), sampleStatusCode, new StringBuilder(sampleErrorResponseJson));
+		csRestService.parseErrorAndAddToDb(Uri.parse(sampleUriToUpdate), sampleStatusCode, sampleErrorResponseJson);
 		
 		final String columns[] = new String[] {
 				 Errors.ERRORCODE,
@@ -672,10 +672,10 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	public void testFindRequestForJobid_edegeCases() {
 		CsRestService csRestService = startCsRestService();
 		
-		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findRequestForJobid(null));
+		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findTransactionRequestForJobid(null));
 		
 		deleteAllData();
-		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findRequestForJobid("63934"));
+		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findTransactionRequestForJobid("63934"));
 		
 	}
 	
