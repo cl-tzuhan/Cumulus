@@ -23,13 +23,15 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
-import com.creationline.cloudstack.util.QuickActionUtil;
 import com.creationline.cloudstack.util.ClLog;
+import com.creationline.cloudstack.util.QuickActionUtil;
 
 public class CsSnapshotListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 	private static final int CSSNAPSHOT_LIST_LOADER = 0x02;
@@ -40,7 +42,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     private static final int IDLE = 0;
     private static final int IN_PROGRESS = 1;
     private static final int SHOW_ICON = 2;
-
 
     public static class INTENT_ACTION {
     	public static final String FAIL_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.FAIL_COMMAND";
@@ -93,18 +94,18 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			final String snapshotId = snapshotIdText.getText().toString();
 			final int progress = snapshotsWithInProgressRequests.getInt(snapshotId);
 			switch(progress) {
-			case IDLE:
-				QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-				QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
-				break;
-			case IN_PROGRESS:
-				QuickActionUtil.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
-				break;
-			case SHOW_ICON:
-				QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-				QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
-				snapshotsWithInProgressRequests.remove(snapshotId);
-				break;
+				case IDLE:
+					QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+					QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
+					break;
+				case IN_PROGRESS:
+					QuickActionUtil.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+					break;
+				case SHOW_ICON:
+					QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+					QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
+					snapshotsWithInProgressRequests.remove(snapshotId);
+					break;
 			}
 		}
 
@@ -156,6 +157,18 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 				ClLog.e("setTextViewWithString():", e);
 			}
 		}
+
+		@Override
+		public void notifyDataSetChanged() {
+			//update the current #-of-snapshots count
+			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
+			if(footersnapshotnum!=null) {
+				final int count = getCursor().getCount();
+				footersnapshotnum.setText(String.valueOf(count));
+			}
+			
+			super.notifyDataSetChanged();
+		}
 		
     }
     
@@ -168,6 +181,27 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        broadcastReceiver = new BroadcastReceiver(){
+        	//This handles intents broadcasted by CsRestService
+        	@Override
+        	public void onReceive(Context contenxt, Intent intent) {
+        		Bundle bundle = intent.getExtras();
+        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
+        		final String snapshotId = bundle.getString(Snapshots.ID);
+        		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
+        			//if deleteSnapshot failed, revert the progress-circle back to icon again
+        			snapshotsWithInProgressRequests.putInt(snapshotId, CsSnapshotListFragment.SHOW_ICON);
+        			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
+        		} else {
+        			//if deleteSnapshot succeeded, CsRestService has already done the deletion wor for us, so just stop tracking this id
+        			snapshotsWithInProgressRequests.remove(snapshotId);
+    				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
+        		}
+        	}
+        };
+        getActivity().registerReceiver(broadcastReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND));  //activity will now get intents broadcast by CsRestService (filtered by FAIL_COMMAND action)
+        
+
         //make the rest call to cs server for data
         final String action = CsRestService.TEST_CALL;   
         Bundle apiCmd = new Bundle();
@@ -175,26 +209,26 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         apiCmd.putString(Snapshots.ACCOUNT, "rickson");
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
         getActivity().startService(csRestServiceIntent);
-      
+    }
+	
+	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		//add the custom footer to the list
+        View footerView = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistfooter, null, false);
+        ViewSwitcher vs = (ViewSwitcher)footerView.findViewById(R.id.footerviewswitcher);
+        vs.setDisplayedChild(0);
+        vs.setAnimateFirstView(true);
+        getListView().addFooterView(footerView, null, false);
+        
         //set-up the loader & adapter for populating this list
         getLoaderManager().initLoader(CSSNAPSHOT_LIST_LOADER, null, this);
         adapter = new CsSnapshotListAdapter(getActivity().getApplicationContext(), R.layout.cssnapshotlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
         setListAdapter(adapter);
         
-        broadcastReceiver = new BroadcastReceiver(){
-        	//This handles intents broadcasted by CsRestService
-        	@Override
-        	public void onReceive(Context arg0, Intent arg1) {
-        		String responseString = arg1.getStringExtra(CsRestService.RESPONSE);
-				snapshotsWithInProgressRequests.putInt(responseString, CsSnapshotListFragment.SHOW_ICON);
-				adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
-        	}
-        };
-        getActivity().registerReceiver(broadcastReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND));  //activity will now get intents broadcast by CsRestService (filtered by FAIL_COMMAND action)
-        
-    }
-	
-	
+        super.onActivityCreated(savedInstanceState);
+	}
+
 	public QuickAction createQuickAction(final View view) {
 		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.menu_eraser));
 		

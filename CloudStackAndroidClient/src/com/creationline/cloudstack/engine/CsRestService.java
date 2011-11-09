@@ -65,7 +65,12 @@ public class CsRestService extends IntentService {
 	
 	//constants matching params used by the CS API request format
 	public static final String COMMAND = "command";
-
+	public static final String CALL_STATUS = "call_status";  //used with CALL_STATUS_VALUES
+	public static class CALL_STATUS_VALUES {
+		public static final int CALL_FAILURE = 0;
+		public static final int CALL_SUCCESS = 1;
+	}
+	
 	//parseAndSaveReply()-use constants
 	private static final int INSERT_DATA = 0;
 	private static final int UPDATE_DATA = 1;
@@ -477,23 +482,27 @@ public class CsRestService extends IntentService {
 		}
 		
 		addToErrorLog(String.valueOf(statusCode), errorText, uriToUpdate.toString());
-		informCallerOfResult(uriToUpdate, responseName);
+		informCallerOfFailure(uriToUpdate, responseName);
 	}
 
-	public void informCallerOfResult(final Uri uriToUpdate, String responseName) {
+	public void informCallerOfFailure(final Uri uriToUpdate, String responseName) {
 		final String truncatedResponseName = responseName.substring(0, responseName.lastIndexOf("response"));
 		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(truncatedResponseName)) {
 			final String originalRequest = findTransactionRequestForRow(uriToUpdate);
 			final String snapshotId = extractParamValueFromUriStr(originalRequest, Vms.ID);
 			
-			informSnapshotFragmentOfCallFailure(snapshotId);
+			informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
 		}
 	}
 
-	public void informSnapshotFragmentOfCallFailure(final String snapshotId) {
-		//inform CsSnapshotListFragment that the call failed
+	public void informSnapshotFragmentOfCallCompletion(final String snapshotId, final int successOrFailure) {
+		//inform CsSnapshotListFragment of the result of the call
 		Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND);
-		broadcastIntent.putExtra(CsRestService.RESPONSE, snapshotId);
+		Bundle bundle = new Bundle();
+		bundle.putString(Snapshots.ID, snapshotId);
+		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
+		broadcastIntent.putExtras(bundle);
+//		broadcastIntent.putExtra(CsRestService.RESPONSE, snapshotId);
 		sendBroadcast(broadcastIntent);
 	}
 
@@ -774,8 +783,9 @@ public class CsRestService extends IntentService {
 			final String snapshotId = extractParamValueFromUriStr(originalRequestUri, Snapshots.ID);
 			if(jobSucceeded) {
 				deleteSnapshotWithId(snapshotId);
+				informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS);
 			} else {
-				informSnapshotFragmentOfCallFailure(snapshotId);
+				informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
 			}
 		} else {
 			ClLog.e(TAG, "retrieved invalid apiCmd="+apiCmd);

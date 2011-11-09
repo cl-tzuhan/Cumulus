@@ -21,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
@@ -47,11 +48,8 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     public class CsVmListAdapter extends ResourceCursorAdapter {
     	//This adaptor use strictly for use with the CsVmList class/layout, and expects specific data to fill its contents.
     	
-//    	private int _layout;  //unused as the onClickListner-related code is currently unncessary
-
     	public CsVmListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
-//			_layout = layout;
 		}
 
 		@Override
@@ -173,36 +171,39 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 				}
 			});
 		}
-		
-////NOTE: This code below was being used as a work-around for the listview not responding to touch "clicks".
-////      As that problem was traced to being a result of using a ImageButton inside the row (ImageView
-////      causes no problems), both touches and enter key presses are now working properly.  So the code
-////      below is commented out as possible reference for the future.  If you think this is no longer
-////      necessary, feel free to delete it.
-//		@Override
-//		public View getView(int position, View convertView, ViewGroup parent) {
-//            if (null == convertView) {
-//                    convertView = getLayoutInflater(null).inflate(_layout, null);
-//            }
-//
-//            //sets a custom touch listener for the whole row (does not respond to enter key presses)
-//            convertView.setOnClickListener(new OnItemClickListener(position));
-//
-//            return convertView;
-//		}
-//		
-//		private class OnItemClickListener implements OnClickListener{
-//			private int _position;
-//	        OnItemClickListener(int position){
-//	        	_position = position;
-//	        }
-//	        @Override
-//	        public void onClick(View arg0) {
-//	        	ClLog.i("FragmentList", "onItemClick at position "+_position);                      
-//	        }               
-//	    }
-		
-		
+
+		@Override
+		public void notifyDataSetChanged() {
+			//update the current #-of-vm count
+			TextView footervmnum = (TextView)getListView().findViewById(R.id.footervmnum);
+			if(footervmnum!=null) {
+				final int count = getCursor().getCount();
+				footervmnum.setText(String.valueOf(count));
+			}
+			
+			final String[] columns = new String[] { Vms.ID };
+			final String whereClause = Vms.STATE+"=?";
+			
+			//update the current #-of-running-vm count
+			TextView footerrunningvmnum = (TextView)getListView().findViewById(R.id.footerrunningvmnum);
+			if(footerrunningvmnum!=null) {
+				final String[] selectionArgs = new String[] { Vms.STATE_VALUES.RUNNING };
+				Cursor runningVms = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+				final int runningVmCount = runningVms.getCount();
+				footerrunningvmnum.setText(String.valueOf(runningVmCount));
+			}
+
+			//update the current #-of-stopped-vm count
+			TextView footerstoppedvmnum = (TextView)getListView().findViewById(R.id.footerstoppedvmnum);
+			if(footerstoppedvmnum!=null) {
+				final String[] selectionArgs = new String[] { Vms.STATE_VALUES.STOPPED };
+				Cursor stoppedVms = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+				final int stoppedVmCount = stoppedVms.getCount();
+				footerstoppedvmnum.setText(String.valueOf(stoppedVmCount));
+			}
+			
+			super.notifyDataSetChanged();
+		}
 		
     }
 
@@ -212,19 +213,33 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     	//empty constructor is needed by Android for automatically creating fragments from XML declarations
     }
     
-    /** Called when the activity is first created. */
+    
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        //make the rest call to cs server for data
+	public void onCreate(Bundle savedInstanceState) {
+    	super.onCreate(savedInstanceState);
+
+    	//make the rest call to cs server for data
         final String action = CsRestService.TEST_CALL;   
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
         apiCmd.putString(Vms.ACCOUNT, "rickson");
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
         getActivity().startService(csRestServiceIntent);
-      
+	}
+
+
+	/** Called when the activity is first created. */
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        //add the custom footer to the list
+        View footerView = getLayoutInflater(savedInstanceState).inflate(R.layout.csvmlistfooter, null, false);
+        ViewSwitcher vs = (ViewSwitcher)footerView.findViewById(R.id.footerviewswitcher);
+        vs.setDisplayedChild(0);
+        vs.setAnimateFirstView(true);
+        getListView().addFooterView(footerView, null, false);
+        
         //set-up the loader & adapter for populating this list
         getLoaderManager().initLoader(CSVM_LIST_LOADER, null, this);
         adapter = new CsVmListAdapter(getActivity().getApplicationContext(), R.layout.csvmlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
@@ -235,94 +250,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
     }
 
-//	public void createQuickAction() {
-//        final ActionItem startVmItem = new ActionItem(0, "Start VM", getResources().getDrawable(R.drawable.menu_ok));
-//        final ActionItem stopVmItem = new ActionItem(1, "Stop VM", getResources().getDrawable(R.drawable.menu_cancel));
-//        final ActionItem restartVmItem = new ActionItem(2, "Restart VM", getResources().getDrawable(android.R.drawable.ic_lock_power_off));
-//        
-//        //use setSticky(true) to disable QuickAction dialog being dismissed after an item is clicked
-////        prevItem.setSticky(true);
-////        nextItem.setSticky(true);
-//
-//        //create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout 
-//        //orientation
-//        quickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
-//        
-//        //add action items into QuickAction
-//        quickAction.addActionItem(startVmItem);
-//        quickAction.addActionItem(stopVmItem);
-//        quickAction.addActionItem(restartVmItem);
-//        
-//        //Set listener for action item clicked
-//        quickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {          
-//            @Override
-//            public void onItemClick(QuickAction source, int pos, int actionId) {
-//                //here we can filter which action item was clicked with pos or actionId parameter
-//                ActionItem actionItem = quickAction.getActionItem(pos);
-//
-//                Toast.makeText(getActivity(), actionItem.getTitle() + " selected", Toast.LENGTH_SHORT).show();                
-//            }
-//        });
-//        
-//	}
-	
-//	public void createRunningAndStoppedStateQuickActions() {
-//		final ActionItem startVmItem = new ActionItem(0, "Start VM", getResources().getDrawable(R.drawable.menu_ok));
-//		final ActionItem stopVmItem = new ActionItem(1, "Stop VM", getResources().getDrawable(R.drawable.menu_cancel));
-//		final ActionItem restartVmItem = new ActionItem(2, "Restart VM", getResources().getDrawable(android.R.drawable.ic_lock_power_off));
-//		
-//		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
-//		runningStateQuickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
-//		
-//		//add action items into QuickAction
-//		runningStateQuickAction.addActionItem(stopVmItem);
-//		runningStateQuickAction.addActionItem(restartVmItem);
-/////DEBUG
-//		runningStateQuickAction.addActionItem(startVmItem);
-/////endDEBUG
-//		
-//		//Set listener for action item clicked
-//		runningStateQuickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {          
-//			@Override
-//			public void onItemClick(QuickAction source, int pos, int actionId) {
-//				//here we can filter which action item was clicked with pos or actionId parameter
-//				ActionItem actionItem = source.getActionItem(pos);
-//				
-//				TextView tv = (TextView)source.getAnchorView().findViewById(R.id.id);
-//				Toast.makeText(getActivity(), actionItem.getTitle() + " selected [" + tv.getText() +"]", Toast.LENGTH_SHORT).show();   
-//				
-/////DEBUG
-//				System.out.println("tv.getText="+tv.getText());
-////makeStartVmCall(source.getAnchorView());
-/////endDEBUG
-//			}
-//		});
-//		runningStateQuickAction.setAnimStyle(QuickAction.ANIM_GROW_FROM_RIGHT);
-//		
-//		
-//		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
-//		stoppedStateQuickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
-//		
-//		//add action items into QuickAction
-//		stoppedStateQuickAction.addActionItem(startVmItem);
-//		
-//		//Set listener for action item clicked
-//		stoppedStateQuickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {          
-//			@Override
-//			public void onItemClick(QuickAction source, int pos, int actionId) {
-//				//here we can filter which action item was clicked with pos or actionId parameter
-//				ActionItem actionItem = source.getActionItem(pos);
-//				
-//				TextView tv = (TextView)source.getAnchorView().findViewById(R.id.id);
-//				Toast.makeText(getActivity(), actionItem.getTitle() + " selected [" + tv.getText() +"]", Toast.LENGTH_SHORT).show(); 
-//				
-//				makeStartVmCall(source.getAnchorView());
-//			}
-//		});
-//		stoppedStateQuickAction.setAnimStyle(QuickAction.ANIM_GROW_FROM_RIGHT);
-//		
-//	}
-    
 	public void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
 		
 		if(animate) {
@@ -406,11 +333,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		return stoppedStateQuickAction;
 	}
     
-	///Note: for debug purposes
-	//public void onListItemClick(ListView l, View v, int position, long id) {
-    //	ClLog.d("FragmentList", "Item clicked: " + id);
-    //}
-    
 	public void makeStartOrStopOrRebootVmCall(View itemView, final String commandName) {
 		TextView idText = (TextView)itemView.findViewById(R.id.id);
 		final String vmid = idText.getText().toString();
@@ -448,7 +370,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		getActivity().getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
 	}
 	
-    
+
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] columns = new String[] {

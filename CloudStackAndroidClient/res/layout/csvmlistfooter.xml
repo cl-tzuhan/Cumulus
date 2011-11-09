@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewSwitcher android:id="@+id/footerviewswitcher"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content" android:layout_width="wrap_content"
+	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+	android:inAnimation="@anim/fadein" android:outAnimation="@anim/fadeout_decelerate" >
+
+	<!-- child==0 of ViewSwitcher: RelativeLayout composing the footer we usually want to show -->
+	<RelativeLayout android:id="@+id/cssnapshotlistfooter"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="30dp"
+		android:minHeight="?android:attr/listPreferredItemHeight">
+		
+		<RelativeLayout android:id="@+id/footertitle" 
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true" >
+			<TextView android:id="@+id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textSize="17sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text="Z" />
+			<TextView android:id="@+id/footervmnumlabel"
+				android:layout_toRightOf="@id/footervmnum" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+		    	android:layout_marginLeft="3dp"
+				android:textSize="13sp" android:layout_centerHorizontal="true"
+				android:textColor="@color/grey_a5"
+				android:text="VMs" />
+				
+			<TextView android:id="@+id/parenthesischaracter_open"
+				android:layout_toRightOf="@id/footervmnumlabel" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:textSize="12sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text="(" />
+			<TextView android:id="@+id/footerrunningvmnum"
+				android:layout_toRightOf="@id/parenthesischaracter_open" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textSize="15sp"
+				android:textColor="#95c595" android:typeface="monospace"
+				android:text="X" />
+			<TextView android:id="@+id/footerrunningvmnumlabel"
+				android:layout_toRightOf="@id/footerrunningvmnum" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+		    	android:layout_marginLeft="3dp"
+				android:textSize="12sp" android:layout_centerHorizontal="true"
+				android:textColor="#95c595"
+				android:text="running" />
+				
+			<TextView android:id="@+id/andcharacter"
+			android:layout_toRightOf="@id/footerrunningvmnumlabel" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text="&amp;" />
+				
+			<TextView android:id="@+id/footerstoppedvmnum"
+				android:layout_toRightOf="@id/andcharacter" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+		    	android:layout_marginLeft="3dp"
+				android:textSize="15sp"
+				android:textColor="#c59595" android:typeface="monospace"
+				android:text="Y" />
+			<TextView android:id="@+id/footerstoppedvmnumlabel"
+				android:layout_toRightOf="@id/footerstoppedvmnum" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+		    	android:layout_marginLeft="3dp"
+				android:textSize="12sp" android:layout_centerHorizontal="true"
+				android:textColor="#c59595"
+				android:text="stopped" />
+			<TextView android:id="@+id/parenthesischaracter_close"
+				android:layout_toRightOf="@id/footerstoppedvmnumlabel" android:layout_alignBaseline="@id/footervmnum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginLeft="1dp"
+				android:textSize="12sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text=")" />
+		</RelativeLayout>
+	    <TextView android:id="@+id/footermessage"
+	    	android:layout_below="@id/footertitle"
+	    	android:layout_width="fill_parent" android:layout_height="wrap_content"
+	    	android:layout_marginTop="2dp"
+			android:textSize="10sp" android:layout_centerHorizontal="true"
+			android:textColor="@color/grey_66"
+			android:text="This screen displays your virtual machine instances on the CloudStack.  Select the list item to see instance details, or use the pop-up menu on each item for quick actions you can take on each instance." />
+	</RelativeLayout>
+
+	<!-- child==1 of ViewSwitcher: using empty TextView here to show blank space -->
+	<TextView
+    	android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:text=" " />
+		
+</ViewSwitcher>
+
+	
