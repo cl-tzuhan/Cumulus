@@ -686,8 +686,10 @@ public class CsRestService extends IntentService {
 		final int num = getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
 		ClLog.i(TAG, "clearing snapshots db before adding new data; num of records deleted=" + num);
 
-		parseAndSaveReply(snapshotListParser, Snapshots.META_DATA.CONTENT_URI, INSERT_DATA);
-
+		if(!snapshotNode.isMissingNode()) {  ///snapshotNode will be a MissingNode if the server returned 0 results
+			parseAndSaveReply(snapshotListParser, Snapshots.META_DATA.CONTENT_URI, INSERT_DATA);
+		}
+		
 		try {
 			snapshotListParser.close();
 		} catch (IOException e) {
