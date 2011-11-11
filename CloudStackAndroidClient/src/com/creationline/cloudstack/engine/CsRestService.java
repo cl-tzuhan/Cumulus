@@ -72,8 +72,8 @@ public class CsRestService extends IntentService {
 	}
 	
 	//parseAndSaveReply()-use constants
-	private static final int INSERT_DATA = 0;
-	private static final int UPDATE_DATA = 1;
+	public static final int INSERT_DATA = 0;
+	public static final int UPDATE_DATA_WITH_ID = 1;
 	
 	//parseReplyBody_queryAsyncJobResult()-use constants
 	private static final int ASYNCJOB_STILLINPROGRESS = 0;
@@ -88,7 +88,7 @@ public class CsRestService extends IntentService {
 	private String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
 	private String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
 	
-	private class JsonNameNodePair {
+	public class JsonNameNodePair {
 		private String responseName;
 		private JsonNode responseData;
 		
@@ -309,7 +309,6 @@ public class CsRestService extends IntentService {
 	 */
 	public static String signRequest(final String request, final String key) {
 		final String TAG = "CsRestService.signRequest()";
-		
 		final SecretKey secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA1");
 		try {
 			final Mac mac = Mac.getInstance("HmacSHA1");
@@ -382,12 +381,12 @@ public class CsRestService extends IntentService {
 		return null;
 	}
 
-	public void addToErrorLog(final String errorCode, final String errorText, final String originatingTransactionUri) {
+	public Uri addToErrorLog(final String errorCode, final String errorText, final String originatingTransactionUri) {
 		ContentValues cv = new ContentValues();
 		if(errorCode!=null) { cv.put(Errors.ERRORCODE, errorCode); };
 		if(errorText!=null) { cv.put(Errors.ERRORTEXT, errorText); };
 		if(originatingTransactionUri!=null) { cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString()); };
-		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
+		return getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
 	public StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
@@ -489,7 +488,7 @@ public class CsRestService extends IntentService {
 		final String truncatedResponseName = responseName.substring(0, responseName.lastIndexOf("response"));
 		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(truncatedResponseName)) {
 			final String originalRequest = findTransactionRequestForRow(uriToUpdate);
-			final String snapshotId = extractParamValueFromUriStr(originalRequest, Vms.ID);
+			final String snapshotId = extractParamValueFromUriStr(originalRequest, Snapshots.ID);
 			
 			informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
 		}
@@ -502,7 +501,6 @@ public class CsRestService extends IntentService {
 		bundle.putString(Snapshots.ID, snapshotId);
 		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
 		broadcastIntent.putExtras(bundle);
-//		broadcastIntent.putExtra(CsRestService.RESPONSE, snapshotId);
 		sendBroadcast(broadcastIntent);
 	}
 
@@ -631,7 +629,10 @@ public class CsRestService extends IntentService {
 	
 	public JsonNameNodePair extractFirstFieldValuePair(JsonNode node) {
 		Iterator<String> fieldNameIterator = node.getFieldNames();
-
+		if(fieldNameIterator.hasNext()==false) {
+			return null;
+		}
+		
 		final String apiResponseName = fieldNameIterator.next();
 		final JsonNode responseDataNode = node.path(apiResponseName);
 
@@ -647,7 +648,9 @@ public class CsRestService extends IntentService {
 		final int num = getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
 		ClLog.i(TAG, "clearing vms db before adding new data; num of records deleted=" + num);
 
-		parseAndSaveReply(vmListParser, Vms.META_DATA.CONTENT_URI, INSERT_DATA);
+		if(!vmNode.isMissingNode()) {  //vmNode will be a MissingNode if the server returned 0 results
+			parseAndSaveReply(vmListParser, Vms.META_DATA.CONTENT_URI, INSERT_DATA);
+		}
 
 		try {
 			vmListParser.close();
@@ -686,7 +689,7 @@ public class CsRestService extends IntentService {
 		final int num = getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
 		ClLog.i(TAG, "clearing snapshots db before adding new data; num of records deleted=" + num);
 
-		if(!snapshotNode.isMissingNode()) {  ///snapshotNode will be a MissingNode if the server returned 0 results
+		if(!snapshotNode.isMissingNode()) {  //snapshotNode will be a MissingNode if the server returned 0 results
 			parseAndSaveReply(snapshotListParser, Snapshots.META_DATA.CONTENT_URI, INSERT_DATA);
 		}
 		
@@ -727,8 +730,11 @@ public class CsRestService extends IntentService {
 					
 					if("virtualmachine".equalsIgnoreCase(jobresult.getFieldName())) {
 						//update vms row with returned data
-						final JsonParser nodeParser = jobresult.getValueNode().traverse();
-						parseAndSaveReply(nodeParser, Vms.META_DATA.CONTENT_URI, UPDATE_DATA);
+						final JsonNode valueNode = jobresult.getValueNode();
+						if(!valueNode.isMissingNode()) { //valueNode will be a MissingNode if the server returned 0 results
+							final JsonParser nodeParser = valueNode.traverse();
+							parseAndSaveReply(nodeParser, Vms.META_DATA.CONTENT_URI, UPDATE_DATA_WITH_ID);
+						}
 					} else if("success".equalsIgnoreCase(jobresult.getFieldName())) {
 						//there are multiple apis that return a jobresult with "success" field:
 						//  e.g. "jobresult":{"success":true}}
@@ -794,18 +800,18 @@ public class CsRestService extends IntentService {
 		}
 	}
 	
-	public void updateVmState(final String vmid, final String newState) {
+	public int updateVmState(final String vmid, final String newState) {
 		ContentValues cv = new ContentValues();
 		cv.put(Vms.STATE, newState);
 		final String whereClause = Vms.ID+"=?";
 		final String[] selectionArgs = new String[] { vmid };
-		getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+		return getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
 	}
 
-	public void deleteSnapshotWithId(final String snapshotId) {
+	public int deleteSnapshotWithId(final String snapshotId) {
 		final String whereClause = Snapshots.ID+"=?";
 		final String[] selectionArgs = new String[] { snapshotId };
-		getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, whereClause, selectionArgs);
+		return getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, whereClause, selectionArgs);
 	}
 	
 	/**
@@ -816,13 +822,19 @@ public class CsRestService extends IntentService {
 	 * @return value of param as a String if found, null otherwise
 	 */
 	public String extractParamValueFromUriStr(final String uriStr, final String paramValueToExtract) {
-		if(paramValueToExtract==null) {
+		if(uriStr==null || paramValueToExtract==null) {
 			return null;
 		}
 		
-		StringTokenizer st = new StringTokenizer(uriStr, "&");
+		final int paramDelimiter = uriStr.indexOf('?');
+		String params = uriStr;
+		if(paramDelimiter>-1) {
+			params = uriStr.substring(paramDelimiter+1);  //remove any host/path info from the uri, leaving only params
+		}
+		
+		StringTokenizer st = new StringTokenizer(params, "&");
 		while (st.hasMoreTokens()) {
-			final String paramValue = st.nextToken().toLowerCase();
+			final String paramValue = st.nextToken();
 			final int indexOfEqualsSign = paramValue.indexOf("=");
 			if(indexOfEqualsSign!=-1) {
 				final String param = paramValue.substring(0, indexOfEqualsSign);
@@ -847,6 +859,10 @@ public class CsRestService extends IntentService {
 	}
 	
 	public String findTransactionRequest(final Uri transactionsUri, final String jobid) {
+		if(transactionsUri==null) {
+			return null;
+		}
+		
 		final String[] columns = new String[] { Transactions.REQUEST };
 		String whereClause = null;
 		String[] selectionArgs =null;
@@ -890,7 +906,7 @@ public class CsRestService extends IntentService {
 	public PendingIntent createCheckAsyncJobProgressPendingIntent(final String jobid) {
 		Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, "queryAsyncJobResult");
-        apiCmd.putString("jobid", jobid);
+        apiCmd.putString(Transactions.JOBID, jobid);
         
         Intent checkAsyncJobProgressIntent = new Intent(getApplicationContext(), CheckAsyncJobProgress.class);
         checkAsyncJobProgressIntent.putExtras(apiCmd);
@@ -900,6 +916,17 @@ public class CsRestService extends IntentService {
 	}
 	
 
+	/**
+	 * Parses a JasonParser, looking for an object or a list of objects, persisting each parsed object to the specified database.
+	 * If INSERT_DATA is specified, all parsed object(s) will be inserted into the database.
+	 * If UPDATE_DATA_WITH_ID is specified, the row in the database with an id value equal to the parsed object's id value
+	 * will be updated with the parsed data.  If a row with the same id value cannot be found, nothing is done with the
+	 * parsed object.
+	 * 
+	 * @param listObjectParser JsonParser object representing the object/list-of-objects to parse
+	 * @param targetDbTable database table to insert/update to
+	 * @param insertOrUpdate CsRestService.INSERT_DATA to add data as new row, or CsRestService.UPDATE_DATA_WITH_ID to update existing row with parsed data
+	 */
 	public void parseAndSaveReply(final JsonParser listObjectParser, final Uri targetDbTable, final int insertOrUpdate) {
 		final String TAG = "CsRestService.parseAndSaveReply()";
 
@@ -919,7 +946,7 @@ public class CsRestService extends IntentService {
 				}
 
 				if(token==JsonToken.END_OBJECT) {
-					if(insertOrUpdate==UPDATE_DATA) {
+					if(insertOrUpdate==UPDATE_DATA_WITH_ID) {
 						//update only the row with the same id as the parsed data
 						final String whereClause = Vms.ID+"=?"; //using Vms.ID here, but assumed that all ID fieldnames for all tables are the same, i.e. "id"
 						final String[] selectionArgs = new String[] {contentValues.getAsString("id")};

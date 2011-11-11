@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -16,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.test.ServiceTestCase;
 
+import com.creationline.cloudstack.engine.CsRestService.JsonNameNodePair;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
@@ -69,13 +72,25 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testSignRequest() {
-		///Tests for a specific request+key signing with pre-determined result
-		final String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";
-		final String sortedUrl = "account=thsu-account&apikey=namomngz8qt5dunfuwf3qpglqmb4650ty36wforhutrzk13d66qnpttkw52brj02dbtihs01y-lclz1uoztxvq&command=listvirtualmachines&domainid=2&response=json";
-		final String expectedSignedResult = "anoAR%2FAaugrU6uemcuRUw%2Fma0RI%3D";
-		
-		String signedResult = CsRestService.signRequest(sortedUrl, apiKey);
-		assertEquals(expectedSignedResult, signedResult);
+		{
+			///Tests for a specific request+key signing with pre-determined result
+			final String apiKey = "namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ";
+			final String sortedUrl = "account=thsu-account&apikey=namomngz8qt5dunfuwf3qpglqmb4650ty36wforhutrzk13d66qnpttkw52brj02dbtihs01y-lclz1uoztxvq&command=listvirtualmachines&domainid=2&response=json";
+			final String expectedSignedResult = "anoAR%2FAaugrU6uemcuRUw%2Fma0RI%3D";
+
+			String signedResult = CsRestService.signRequest(sortedUrl, apiKey);
+			assertEquals(expectedSignedResult, signedResult);
+		}
+
+		{
+			///Tests for a specific request+key signing with pre-determined result
+			final String apiKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q";
+			final String sortedUrl = "account=rickson&apikey=cqltndmdyaeiz6zdzqg2qinye5sx4m914eseb-rsjtewtvcccglrme-zh_ipqqkmcigjznba_ugrldhs_ley-g&command=listsnapshots&response=json";
+			final String expectedSignedResult = "3%2BkXi7q6hcOlD4oQFX1w6iCuabQ%3D";
+			
+			String signedResult = CsRestService.signRequest(sortedUrl, apiKey);
+			assertEquals(expectedSignedResult, signedResult);
+		}
 	}
 	
 	public void testInputStreamToString() {
@@ -669,6 +684,87 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		//we'll consider this a pass if we don't crash
 	}
 	
+	public void testFindTransactionRequest() {
+		deleteAllData();
+		CsRestService csRestService = startCsRestService();
+
+		//set up data in transactions db
+		Bundle testData = new Bundle();
+		testData.putString("1", "http://ja.wikipedia.org/wiki/%E3%83%A2%E3%83%B3%E3%82%AD%E3%83%BC%E3%83%BBD%E3%83%BB%E3%83%AB%E3%83%95%E3%82%A3");
+		testData.putString("2", "http://ja.wikipedia.org/wiki/%E3%83%AD%E3%83%AD%E3%83%8E%E3%82%A2%E3%83%BB%E3%82%BE%E3%83%AD");
+		testData.putString("3", "http://ja.wikipedia.org/wiki/%E3%83%8A%E3%83%9F_(ONE_PIECE)");
+		testData.putString("4", "http://ja.wikipedia.org/wiki/%E3%82%A6%E3%82%BD%E3%83%83%E3%83%97");
+		testData.putString("5", "http://ja.wikipedia.org/wiki/%E3%82%B5%E3%83%B3%E3%82%B8");
+		testData.putString("6", "http://ja.wikipedia.org/wiki/%E3%83%88%E3%83%8B%E3%83%BC%E3%83%88%E3%83%8B%E3%83%BC%E3%83%BB%E3%83%81%E3%83%A7%E3%83%83%E3%83%91%E3%83%BC");
+		testData.putString("7", "http://ja.wikipedia.org/wiki/%E3%83%8B%E3%82%B3%E3%83%BB%E3%83%AD%E3%83%93%E3%83%B3");
+		testData.putString("8", "http://ja.wikipedia.org/wiki/%E3%83%95%E3%83%A9%E3%83%B3%E3%82%AD%E3%83%BC_(ONE_PIECE)");
+		testData.putString("9", "http://ja.wikipedia.org/wiki/%E3%83%96%E3%83%AB%E3%83%83%E3%82%AF_(ONE_PIECE)");
+		testData.putString("100", "http://shonenjump.com/j/rensai/onepiece/index.html");
+		testData.putString("200", "http://www.j-onepiece.com/");
+		testData.putString("300", "http://www.toei-anim.co.jp/tv/onep/");
+		testData.putString("400", "http://www.fujitv.co.jp/b_hp/onepiece/");
+		testData.putString("500", "http://mv.avex.jp/onepiece/");
+		testData.putString("600", "http://www.bandaigames.channel.or.jp/list/one_main/");
+		Set<String> keys = testData.keySet();
+		for(String key : keys) {
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.JOBID, key);
+			cv.put(Transactions.REQUEST, testData.getString(key));
+			getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+		}
+		//for good measure, insert some data that have no jobid
+		for(int i=0; i<7; i++) {
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, "http://world.gov/"+i);
+			getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+		}
+		
+		//test each jobid to see if the fetched request is correct
+		for(String key : keys) {
+			final String request = csRestService.findTransactionRequest(Transactions.META_DATA.CONTENT_URI, key);
+			assertEquals(testData.getString(key), request);
+		}
+	}
+	
+	public void testFindTransactionRequestForRow() {
+		CsRestService csRestService = startCsRestService();
+
+		{
+			final String request = "http://www.oricon.co.jp/news/ranking/81934/full/";
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			assertEquals(request, retrievedRequest);
+		}
+
+		{
+			final String request = "http://www.geocities.jp/wj_log/rank/";
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.JOBID, "meaningless jobid");
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			assertEquals(request, retrievedRequest);
+		}
+
+		{
+			final String request = "http://mantan-web.jp/2011/11/04/20111104dog00m200003000c.html";
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.REPLY, "meaningless reply");
+			cv.put(Transactions.JOBID, "meaningless jobid");
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			assertEquals(request, retrievedRequest);
+		}
+
+		{
+			final String retrievedRequest = csRestService.findTransactionRequestForRow(null);
+			assertNull(retrievedRequest);
+		}
+	}
+	
 	public void testFindRequestForJobid_edegeCases() {
 		CsRestService csRestService = startCsRestService();
 		
@@ -676,9 +772,571 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		deleteAllData();
 		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findTransactionRequestForJobid("63934"));
+	}
+	
+	public void testAddToErrorLog() {
+		{
+			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
+			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
+			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			assertEquals(1, c.getCount());
+			c.moveToFirst();
+			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
+			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+		}
+
+		{
+			final String errorCode = null;
+			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
+			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			assertEquals(1, c.getCount());
+			c.moveToFirst();
+			assertTrue("no errorCode value should have been inserted", c.isNull(c.getColumnIndex((Errors.ERRORCODE))));
+			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+		}
+
+		{
+			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
+			final String errorText = null;
+			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			assertEquals(1, c.getCount());
+			c.moveToFirst();
+			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
+			assertTrue("no errorText value should have been inserted", c.isNull(c.getColumnIndex((Errors.ERRORTEXT))));
+			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+		}
+		
+		{
+			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
+			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
+			final String originatingTransactionUri = null;
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			assertEquals(1, c.getCount());
+			c.moveToFirst();
+			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
+			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+			assertTrue("no originatingTransactionUri value should have been inserted", c.isNull(c.getColumnIndex((Errors.ORIGINATINGCALL))));
+		}
+	}
+	public Cursor addToErrorLogAndReturnQueryFromErrorsDb(
+			final String errorCode, final String errorText,
+			final String originatingTransactionUri) {
+		deleteAllData();
+		CsRestService csRestService = startCsRestService();
+		
+		final Uri uri = csRestService.addToErrorLog(errorCode, errorText, originatingTransactionUri);
+		assertNotNull(uri);
+		assertTrue("returned uri is not for errors db table!", uri.toString().contains(Errors.META_DATA.CONTENT_URI.toString()));
+		
+		final String[] columns = new String[] {
+				Errors.ERRORCODE,
+				Errors.ERRORTEXT,
+				Errors.ORIGINATINGCALL,
+		};
+		Cursor c = getContext().getContentResolver().query(uri, columns, null, null, null);
+		return c;
+	}
+	
+	public void testExtractFirstFieldValuePair_simpleEmbeddedObject() {
+		final String valueJson = "{\"samplevalue\" : \"some text\" }";
+		final String topFieldName = "sampleresponse";
+		final String jsonToExtractFieldValuePairFrom = "{\""+topFieldName+"\" : "+valueJson+" }";
+		
+		ObjectMapper om = new ObjectMapper();
+	    JsonNode dataNode = null;
+	    JsonNode valueNode = null;
+		try {
+			dataNode = om.readTree(jsonToExtractFieldValuePairFrom);
+			valueNode = om.readTree(valueJson);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		CsRestService csRestService = startCsRestService();
+		JsonNameNodePair nodePair = csRestService.extractFirstFieldValuePair(dataNode);
+		
+		assertEquals(topFieldName, nodePair.getFieldName());
+		assertEquals(valueNode, nodePair.getValueNode());
+	}
+
+	public void testExtractFirstFieldValuePair_embeddedList() {
+		final String valueJson = "[{\"samplevalue1\" : \"some text\" } , {\"samplevalue2\" : 123456789 } , {\"samplevalue3\" : {\"embeddedObject\" : 31} }]";
+		final String topFieldName = "sampleresponsethatisreallyreallyreallyreallyreallyreallyreallyreallylong with some spaces as well";
+		final String jsonToExtractFieldValuePairFrom = "{\""+topFieldName+"\" : "+valueJson+" }";
+		
+		ObjectMapper om = new ObjectMapper();
+		JsonNode dataNode = null;
+		JsonNode valueNode = null;
+		try {
+			dataNode = om.readTree(jsonToExtractFieldValuePairFrom);
+			valueNode = om.readTree(valueJson);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		CsRestService csRestService = startCsRestService();
+		JsonNameNodePair nodePair = csRestService.extractFirstFieldValuePair(dataNode);
+		
+		assertEquals(topFieldName, nodePair.getFieldName());
+		assertEquals(valueNode, nodePair.getValueNode());
+	}
+
+	public void testExtractFirstFieldValuePair_emptyEmbeddedList() {
+		final String valueJson = "[ ]";
+		final String topFieldName = "a   b   c    d      e        f             g                h";
+		final String jsonToExtractFieldValuePairFrom = "{\""+topFieldName+"\" : "+valueJson+" }";
+		
+		ObjectMapper om = new ObjectMapper();
+		JsonNode dataNode = null;
+		JsonNode valueNode = null;
+		try {
+			dataNode = om.readTree(jsonToExtractFieldValuePairFrom);
+			valueNode = om.readTree(valueJson);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		CsRestService csRestService = startCsRestService();
+		JsonNameNodePair nodePair = csRestService.extractFirstFieldValuePair(dataNode);
+		
+		assertEquals(topFieldName, nodePair.getFieldName());
+		assertEquals(valueNode, nodePair.getValueNode());
+	}
+
+	public void testExtractFirstFieldValuePair_topLevelList() {
+		final String jsonToExtractFieldValuePairFrom = "[ {\"firstObj\" : \"qwerty\" } , {\"secondObj\" : 123} ]";
+		
+		ObjectMapper om = new ObjectMapper();
+		JsonNode dataNode = null;
+		try {
+			dataNode = om.readTree(jsonToExtractFieldValuePairFrom);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		CsRestService csRestService = startCsRestService();
+		JsonNameNodePair nodePair = csRestService.extractFirstFieldValuePair(dataNode);
+
+		assertNull("a list has no top-level field/valule pair, so extractFirstFieldValuePair should return null", nodePair);
+	}
+
+	public void testExtractFirstFieldValuePair_emptyList() {
+		final String jsonToExtractFieldValuePairFrom = "[ ]";
+		
+		ObjectMapper om = new ObjectMapper();
+		JsonNode dataNode = null;
+		try {
+			dataNode = om.readTree(jsonToExtractFieldValuePairFrom);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		
+		CsRestService csRestService = startCsRestService();
+		JsonNameNodePair nodePair = csRestService.extractFirstFieldValuePair(dataNode);
+		
+		assertNull("an empty list has no top-level field/valule pair, so extractFirstFieldValuePair should return null", nodePair);
+	}
+	
+	public void testHandleJobresultBasedOnApi_deleteSnapshot() {
+		final String snapshotId = "25";
+		final String request = " http://219.117.239.169:8080/client/api?response=json&command=deleteSnapshot&id="+snapshotId+"&apiKey=cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g&signature=YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D";
+		final String jobIdOfRequest = "591";
+
+		//set up test data needed by handleJobresultBasedOnApi()
+		deleteAllData();
+		ContentValues transactionsCv = new ContentValues();
+		transactionsCv.put(Transactions.REQUEST, request);
+		transactionsCv.put(Transactions.JOBID, jobIdOfRequest);
+		getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, transactionsCv);
+
+		//set up test data needed by handleJobresultBasedOnApi()
+		ContentValues snapshotsCv = new ContentValues();
+		snapshotsCv.put(Snapshots.ID, snapshotId);  //the other fields are arbitrary, only this id field needs to match the id in the request
+		snapshotsCv.put(Snapshots.NAME, "sample snapshot");
+		Uri snapshotUri = getContext().getContentResolver().insert(Snapshots.META_DATA.CONTENT_URI, snapshotsCv);
+		
+		
+		CsRestService csRestService = startCsRestService();
+		
+		csRestService.handleJobresultBasedOnApi(jobIdOfRequest, false);  //handling a failed result resets animations on the ui, but should not affect the db
+		Cursor c = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
+		assertNotNull(c);
+		assertEquals(1, c.getCount());
+		c.moveToFirst();
+		assertEquals(snapshotId, c.getString(c.getColumnIndex(Snapshots.ID)));
+
+		csRestService.handleJobresultBasedOnApi(jobIdOfRequest, true);  //handling a success result should remove the snapshot from db
+		Cursor shouldBeEmpty = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
+		assertEquals("the previously saved snapshot should no longer exist", 0, shouldBeEmpty.getCount());
+		final String whereClause = Snapshots.ID+"="+snapshotId;
+		shouldBeEmpty = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, whereClause, null, null);
+		assertEquals("double checking a snapshot with the same id does not exist", 0, shouldBeEmpty.getCount());
+	}
+	
+	public void testUpdateVmState() {
+		final String columns[] = new String[] {
+				Vms.ID,
+				Vms.NAME,
+				Vms.DISPLAYNAME,
+				Vms.ACCOUNT,
+				Vms.DOMAINID,
+				Vms.DOMAIN,
+				Vms.CREATED,
+				Vms.STATE,
+				Vms.HAENABLE,
+				Vms.ZONEID,
+				Vms.ZONENAME,
+				Vms.TEMPLATEID,
+				Vms.TEMPLATENAME,
+				Vms.TEMPLATEDISPLAYTEXT,
+				Vms.PASSWORDENABLED,
+				Vms.SERVICEOFFERINGID,
+				Vms.SERVICEOFFERINGNAME,
+				Vms.CPUNUMBER,
+				Vms.CPUSPEED,
+				Vms.MEMORY,
+				Vms.CPUUSED,
+				Vms.NETWORKKBSREAD,
+				Vms.NETWORKKBSWRITE,
+				Vms.GUESTOSID,
+				Vms.ROOTDEVICEID,
+				Vms.ROOTDEVICETYPE,
+				Vms.NIC,
+				Vms.HYPERVISOR,
+			};
+		final String sampleText = "sample snapshot text";
+		final String vmid = "123456789";
+		
+		//set up test data needed by updateVmState()
+		ContentValues cv = new ContentValues();
+		for(String field : columns) {
+			cv.put(field, sampleText);
+		}
+		cv.put(Vms.ID, vmid);  //the other fields are arbitrary, only this id field needs to be specific
+		Uri uri = getContext().getContentResolver().insert(Vms.META_DATA.CONTENT_URI, cv);
+		
+		CsRestService csRestService = startCsRestService();
+		
+		{ //updating to meaningless state and checking whether it took
+			final String luffyState = "Gear Third";
+			final int numUpdated = csRestService.updateVmState(vmid, luffyState);
+			assertEquals(1, numUpdated);
+			Cursor c = getContext().getContentResolver().query(uri, null, null, null, null);
+			c.moveToFirst();
+			for(String field : columns) {
+				final String retrievedValue = c.getString(c.getColumnIndex(field));
+				if(Vms.ID.equals(field)) {
+					assertEquals(vmid, retrievedValue);
+				} else if(Vms.STATE.equals(field)) {
+					assertEquals(luffyState, retrievedValue);
+				} else {
+					assertEquals(sampleText, retrievedValue);
+				}
+			}
+		}
+
+		{ //updating again to meaningless state and checking whether it took
+			final String roronoaState = "Oni giri";
+			final int numUpdated = csRestService.updateVmState(vmid, roronoaState);
+			assertEquals(1, numUpdated);
+			Cursor c = getContext().getContentResolver().query(uri, null, null, null, null);
+			c.moveToFirst();
+			for(String field : columns) {
+				final String retrievedValue = c.getString(c.getColumnIndex(field));
+				if(Vms.ID.equals(field)) {
+					assertEquals(vmid, retrievedValue);
+				} else if(Vms.STATE.equals(field)) {
+					assertEquals(roronoaState, retrievedValue);
+				} else {
+					assertEquals(sampleText, retrievedValue);
+				}
+			}
+		}
+		
+		{ //updating again to no state and checking whether it took
+			final int numUpdated = csRestService.updateVmState(vmid, null);
+			assertEquals(1, numUpdated);
+			Cursor c = getContext().getContentResolver().query(uri, null, null, null, null);
+			c.moveToFirst();
+			for(String field : columns) {
+				final String retrievedValue = c.getString(c.getColumnIndex(field));
+				if(Vms.ID.equals(field)) {
+					assertEquals(vmid, retrievedValue);
+				} else if(Vms.STATE.equals(field)) {
+					assertNull("the state field should no longer have a value after this udpate", retrievedValue);
+				} else {
+					assertEquals(sampleText, retrievedValue);
+				}
+			}
+		}
 		
 	}
 	
+	public void testDeleteSnapshotWithId() {
+		CsRestService csRestService = startCsRestService();
+
+		{
+			//set up test data needed by handleJobresultBasedOnApi()
+			final String snapshotId = "0";
+			ContentValues snapshotsCv = new ContentValues();
+			snapshotsCv.put(Snapshots.ID, snapshotId);  //the other fields are arbitrary, only this id field needs to match the id in the request
+			snapshotsCv.put(Snapshots.NAME, "sample snapshot");
+			Uri snapshotUri = getContext().getContentResolver().insert(Snapshots.META_DATA.CONTENT_URI, snapshotsCv);
+
+			final int numDeleted = csRestService.deleteSnapshotWithId(snapshotId);
+			assertEquals(1, numDeleted);
+			Cursor c = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
+			assertEquals(0, c.getCount());
+		}
+
+		{
+			//set up test data needed by handleJobresultBasedOnApi()
+			final String snapshotId = "100000000000000000000000000";
+			ContentValues snapshotsCv = new ContentValues();
+			snapshotsCv.put(Snapshots.ID, snapshotId);  //the other fields are arbitrary, only this id field needs to match the id in the request
+			snapshotsCv.put(Snapshots.NAME, "sample snapshot");
+			Uri snapshotUri = getContext().getContentResolver().insert(Snapshots.META_DATA.CONTENT_URI, snapshotsCv);
+			
+			final int numDeleted = csRestService.deleteSnapshotWithId(snapshotId);
+			assertEquals(1, numDeleted);
+			Cursor c = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
+			assertEquals(0, c.getCount());
+		}
+	}
+
+	public void testDeleteSnapshotWithId_multipleRows() {
+		deleteAllData();
+		CsRestService csRestService = startCsRestService();
+		
+		//insert multiple rows of data
+		final int numRowsCap = 21;
+		for(int i=0; i<=numRowsCap; i++) {
+			ContentValues cv = new ContentValues();
+			cv.put(Snapshots.ID, String.valueOf(i));
+			cv.put(Snapshots.NAME, "sample snapshot "+i);
+			getContext().getContentResolver().insert(Snapshots.META_DATA.CONTENT_URI, cv);
+		}
+		
+		//execute deleteSnapshopWithId() on one at a time and check
+		//to see that the remaining data still exists at each step
+		for(int i=0; i<=numRowsCap; i++) {
+			final int numDeleted = csRestService.deleteSnapshotWithId(String.valueOf(i));
+			assertEquals(1, numDeleted);
+			Cursor c = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, null, null, null);
+			assertEquals("move than 1 row was deleted by deleteSnapshotWithId()!", numRowsCap-i, c.getCount());
+			c.moveToFirst();
+			for(int k=i+1; k<=numRowsCap; k++) {
+				//go through each remaining row and check to see the id what we expect to be undeleted
+				final String whereClause = Snapshots.ID+"=?";
+				final String[] selectionArgs = new String[] { String.valueOf(k) };
+				Cursor specificRow = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, whereClause, selectionArgs, null);
+				assertEquals("row for this specific id was deleted when it shouldn't have been", 1, specificRow.getCount());
+			}
+		}
+	}
+	
+	public void testExtractParamValueFromUriStr() {
+		CsRestService csRestService = startCsRestService();
+		
+		String testUri1 = "http://192.168.3.11:8080/client/api?response=json&command=listVirtualMachines&account=thsu-account&domainid=2&apiKey=namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ&signature=AZW5TbyF8QY07lPWxk0JZyMwFx0%3D";
+		assertEquals("json", csRestService.extractParamValueFromUriStr(testUri1, "response"));
+		assertEquals("listVirtualMachines", csRestService.extractParamValueFromUriStr(testUri1, "command"));
+		assertEquals("thsu-account", csRestService.extractParamValueFromUriStr(testUri1, "account"));
+		assertEquals("2", csRestService.extractParamValueFromUriStr(testUri1, "domainid"));
+		assertEquals("namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ", csRestService.extractParamValueFromUriStr(testUri1, "apiKey"));
+		assertEquals("AZW5TbyF8QY07lPWxk0JZyMwFx0%3D", csRestService.extractParamValueFromUriStr(testUri1, "signature"));
+
+		String testUri2 = "response=json&command=deleteSnapshot&id=25&apiKey=cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g&signature=YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D";
+		assertEquals("json", csRestService.extractParamValueFromUriStr(testUri2, "response"));
+		assertEquals("deleteSnapshot", csRestService.extractParamValueFromUriStr(testUri2, "command"));
+		assertEquals("25", csRestService.extractParamValueFromUriStr(testUri2, "id"));
+		assertEquals("cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g", csRestService.extractParamValueFromUriStr(testUri2, "apiKey"));
+		assertEquals("YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D", csRestService.extractParamValueFromUriStr(testUri2, "signature"));
+
+		assertNull(csRestService.extractParamValueFromUriStr(testUri1, "non-existent field"));
+		assertNull(csRestService.extractParamValueFromUriStr(null, "response"));
+		assertNull(csRestService.extractParamValueFromUriStr(null, null));
+	}
+	
+	public void testparseAndSaveReply_returnedErrorResult() {
+		deleteAllData();
+		CsRestService csRestService = startCsRestService();
+		
+		final String errorObjJson = "{\"errorcode\":530,\"errortext\":\"Internal error executing command, please contact your system administrator\"}";
+		ObjectMapper om = new ObjectMapper();
+		JsonNode dataNode = null;
+		try {
+			dataNode = om.readTree(errorObjJson);
+		} catch (JsonProcessingException e) {
+			fail("om.readTree() processing failed!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail("om.readTree() failed!");
+			e.printStackTrace();
+		}
+		csRestService.parseAndSaveReply(dataNode.traverse(), Errors.META_DATA.CONTENT_URI, CsRestService.INSERT_DATA);
+		
+		Cursor c = getContext().getContentResolver().query(Errors.META_DATA.CONTENT_URI, null, null, null, null);
+		assertEquals(1, c.getCount());
+		c.moveToFirst();
+		
+		assertEquals("530", c.getString(c.getColumnIndex(Errors.ERRORCODE)));
+		assertEquals("Internal error executing command, please contact your system administrator", c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+	}
+
+	public void testParseAndSaveReply_vmList() {
+		deleteAllData();
+		CsRestService csRestService = startCsRestService();
+		
+		{ //do the insertion test first
+			final String listOfVmsJson = "[  " +
+			"{\"id\":2027,\"name\":\"i-39-2027-VM\",\"displayname\":\"i-39-2027-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-09-10T02:49:42-0700\",\"state\":\"Running\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":259,\"templatename\":\"CentOS 5.3 (64 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.3 (64 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":101,\"serviceofferingname\":\"Smallest Instance\",\"cpunumber\":1,\"cpuspeed\":500,\"memory\":512,\"cpuused\":\"0%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware\"} , " +
+			"{\"id\":2028,\"name\":\"i-39-2028-VM\",\"displayname\":\"i-39-2028-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-01-11T08:00:42-0700\",\"state\":\"Stopped\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":300,\"templatename\":\"CentOS 5.4 (128 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.4 (128 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":102,\"serviceofferingname\":\"Smaller Instance\",\"cpunumber\":10,\"cpuspeed\":5000,\"memory\":12,\"cpuused\":\"10%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.130\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware N'xt\"} , " +
+			"{\"id\":2029,\"name\":\"i-39-2029-VM\",\"displayname\":\"i-39-2029-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2000-11-10T12:52:42-0700\",\"state\":\"Stopping\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":25,\"templatename\":\"CentOS 5.5 (256 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.5 (256 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":103,\"serviceofferingname\":\"Small Instance\",\"cpunumber\":100,\"cpuspeed\":50000,\"memory\":52,\"cpuused\":\"100%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.131\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware B'yond\"}   " +
+			"]";
+			ObjectMapper om = new ObjectMapper();
+			JsonNode dataNode = null;
+			try {
+				dataNode = om.readTree(listOfVmsJson);
+			} catch (JsonProcessingException e) {
+				fail("om.readTree() processing failed!");
+				e.printStackTrace();
+			} catch (IOException e) {
+				fail("om.readTree() failed!");
+				e.printStackTrace();
+			}
+			dataNode.traverse();
+			csRestService.parseAndSaveReply(dataNode.traverse(), Vms.META_DATA.CONTENT_URI, CsRestService.INSERT_DATA);
+
+			Cursor c = getContext().getContentResolver().query(Vms.META_DATA.CONTENT_URI, null, null, null, Vms.ID);
+			assertEquals(3, c.getCount());
+
+			{ //the cursor results are ordered by id, so go through and check some fields to make sure they are what we expect
+				c.moveToFirst();
+				assertEquals("2027", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2027-VM", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2011-09-10T02:49:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.3 (64 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("1", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("500", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+
+				c.moveToNext();
+				assertEquals("2028", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2028-VM", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2011-01-11T08:00:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.4 (128 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("10", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("5000", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.130\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware N'xt", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+
+				c.moveToNext();
+				assertEquals("2029", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2029-VM", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2000-11-10T12:52:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.5 (256 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("100", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("50000", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.131\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware B'yond", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+			}
+		}
+		
+		{ //after vms have been inserted above, now do the update tests
+			final String listOfUpdatedVmsJson = "[  " +
+				"{\"id\":2027,\"name\":\"i-39-2027-VM edited!\",\"displayname\":\"i-39-2027-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-09-10T02:49:42-0700\",\"state\":\"Unknown\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":259,\"templatename\":\"CentOS 5.3 (64 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.3 (64 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":101,\"serviceofferingname\":\"Smallest Instance\",\"cpunumber\":2,\"cpuspeed\":2500,\"memory\":512,\"cpuused\":\"0%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware\"} , " +
+				"{\"id\":2028,\"name\":\"i-39-2028-VM edited!\",\"displayname\":\"i-39-2028-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-01-11T08:00:42-0700\",\"state\":\"Unknown\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":300,\"templatename\":\"CentOS 5.4 (128 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.4 (128 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":102,\"serviceofferingname\":\"Smaller Instance\",\"cpunumber\":20,\"cpuspeed\":25000,\"memory\":12,\"cpuused\":\"10%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.130\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware N'xt\"} , " +
+				"{\"id\":2029,\"name\":\"i-39-2029-VM edited!\",\"displayname\":\"i-39-2029-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2000-11-10T12:52:42-0700\",\"state\":\"Unknown\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":25,\"templatename\":\"CentOS 5.5 (256 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.5 (256 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":103,\"serviceofferingname\":\"Small Instance\",\"cpunumber\":200,\"cpuspeed\":250000,\"memory\":52,\"cpuused\":\"100%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.131\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware B'yond\"}   " +
+				"]";
+			
+			ObjectMapper om = new ObjectMapper();
+			JsonNode dataNode = null;
+			try {
+				dataNode = om.readTree(listOfUpdatedVmsJson);
+			} catch (JsonProcessingException e) {
+				fail("om.readTree() processing failed!");
+				e.printStackTrace();
+			} catch (IOException e) {
+				fail("om.readTree() failed!");
+				e.printStackTrace();
+			}
+			dataNode.traverse();
+			csRestService.parseAndSaveReply(dataNode.traverse(), Vms.META_DATA.CONTENT_URI, CsRestService.UPDATE_DATA_WITH_ID);
+			
+			Cursor c = getContext().getContentResolver().query(Vms.META_DATA.CONTENT_URI, null, null, null, Vms.ID);
+			assertEquals(3, c.getCount());
+
+			{ //the cursor results are ordered by id, so go through and check some fields to make sure they are what we expect
+				c.moveToFirst();
+				assertEquals("2027", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2027-VM edited!", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2011-09-10T02:49:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.3 (64 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("2", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("2500", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+				assertEquals("Unknown", c.getString(c.getColumnIndex(Vms.STATE)));
+
+				c.moveToNext();
+				assertEquals("2028", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2028-VM edited!", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2011-01-11T08:00:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.4 (128 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("20", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("25000", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.130\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware N'xt", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+				assertEquals("Unknown", c.getString(c.getColumnIndex(Vms.STATE)));
+
+				c.moveToNext();
+				assertEquals("2029", c.getString(c.getColumnIndex(Vms.ID)));
+				assertEquals("i-39-2029-VM edited!", c.getString(c.getColumnIndex(Vms.NAME)));
+				assertEquals("2000-11-10T12:52:42-0700", c.getString(c.getColumnIndex(Vms.CREATED)));
+				assertEquals("San Jose", c.getString(c.getColumnIndex(Vms.ZONENAME)));
+				assertEquals("CentOS 5.5 (256 bit) vSphere Password enabled", c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
+				assertEquals("200", c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
+				assertEquals("250000", c.getString(c.getColumnIndex(Vms.CPUSPEED)));
+				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.131\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
+				assertEquals("VMware B'yond", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
+				assertEquals("Unknown", c.getString(c.getColumnIndex(Vms.STATE)));
+			}
+		}
+	}
+	
+
 	/**
 	 * Copied from:
 	 *   http://www.java2s.com/Code/Java/Data-Type/Trimsthequotes.htm
