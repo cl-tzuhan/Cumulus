@@ -92,7 +92,17 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
 			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
 			final String snapshotId = snapshotIdText.getText().toString();
-			final int progress = snapshotsWithInProgressRequests.getInt(snapshotId);
+			int progress = snapshotsWithInProgressRequests.getInt(snapshotId);
+			if(progress==0) {
+				//If a snapshot is created on the server-side w/out csac knowing, then we have no IDLE/IN_PROGRESS info for it.
+				//Since you can't issue commands to a creating/backing-up snapshot, we will show the progress-circle for
+				//these states as well to handle these server-created snapshots.
+				TextView stateText = (TextView)view.findViewById(R.id.state);
+				final String state = stateText.getText().toString();
+				if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state) || Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
+					progress = IN_PROGRESS;
+				}
+			}
 			switch(progress) {
 				case IDLE:
 					QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
@@ -230,7 +240,8 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	}
 
 	public QuickAction createQuickAction(final View view) {
-		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.menu_eraser));
+//		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.menu_eraser));
+		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.bin));
 		
 		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
 		QuickAction quickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);

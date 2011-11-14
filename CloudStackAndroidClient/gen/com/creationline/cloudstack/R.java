@@ -30,13 +30,11 @@ public final class R {
         public static final int shrink_from_topleft_to_bottomright=0x7f040012;
         public static final int shrink_from_topright_to_bottomleft=0x7f040013;
         public static final int slide_bottomtotop=0x7f040014;
-        public static final int slide_bottomtotop_layoutanim=0x7f040015;
-        public static final int slide_lefttoright_slow=0x7f040016;
-        public static final int slide_righttoleft=0x7f040017;
-        public static final int slide_righttoleft_layoutanim=0x7f040018;
-        public static final int slide_righttoleft_slow=0x7f040019;
-        public static final int slide_toptobottom=0x7f04001a;
-        public static final int slide_toptobottom_layoutanim=0x7f04001b;
+        public static final int slide_lefttoright_slow=0x7f040015;
+        public static final int slide_righttoleft=0x7f040016;
+        public static final int slide_righttoleft_layoutanim=0x7f040017;
+        public static final int slide_righttoleft_slow=0x7f040018;
+        public static final int slide_toptobottom=0x7f040019;
     }
     public static final class attr {
         /**  Whether or not the indicators should be centered. 
@@ -308,21 +306,25 @@ containing a value of this type.
         public static final int action_item_selected=0x7f020001;
         public static final int arrow_down=0x7f020002;
         public static final int arrow_up=0x7f020003;
-        public static final int device_and_hardware_w=0x7f020004;
-        public static final int device_and_hardware_w_alpha15_truncated=0x7f020005;
-        public static final int folder_picture_w=0x7f020006;
-        public static final int folder_picture_w_alpha15_truncated=0x7f020007;
-        public static final int hard_drive_download=0x7f020008;
-        public static final int icon=0x7f020009;
-        public static final int menu_cancel=0x7f02000a;
-        public static final int menu_down_arrow=0x7f02000b;
-        public static final int menu_eraser=0x7f02000c;
-        public static final int menu_info=0x7f02000d;
-        public static final int menu_ok=0x7f02000e;
-        public static final int menu_search=0x7f02000f;
-        public static final int menu_up_arrow=0x7f020010;
-        public static final int popup=0x7f020011;
-        public static final int toggle_menu=0x7f020012;
+        public static final int bin=0x7f020004;
+        public static final int button_play=0x7f020005;
+        public static final int button_stop=0x7f020006;
+        public static final int button_synchronize=0x7f020007;
+        public static final int device_and_hardware_w=0x7f020008;
+        public static final int device_and_hardware_w_alpha15_truncated=0x7f020009;
+        public static final int folder_picture_w=0x7f02000a;
+        public static final int folder_picture_w_alpha15_truncated=0x7f02000b;
+        public static final int hard_drive_download=0x7f02000c;
+        public static final int icon=0x7f02000d;
+        public static final int menu_cancel=0x7f02000e;
+        public static final int menu_down_arrow=0x7f02000f;
+        public static final int menu_eraser=0x7f020010;
+        public static final int menu_info=0x7f020011;
+        public static final int menu_ok=0x7f020012;
+        public static final int menu_search=0x7f020013;
+        public static final int menu_up_arrow=0x7f020014;
+        public static final int popup=0x7f020015;
+        public static final int toggle_menu=0x7f020016;
     }
     public static final class id {
         public static final int account=0x7f050031;

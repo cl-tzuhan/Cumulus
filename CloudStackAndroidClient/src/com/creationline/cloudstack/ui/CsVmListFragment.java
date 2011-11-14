@@ -296,8 +296,10 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 	}
 
 	public QuickAction createRunningStateQuickAction(final View view) {
-        final ActionItem stopVmItem = new ActionItem(STOP_VM, "Stop VM", getResources().getDrawable(R.drawable.menu_cancel));
-        final ActionItem rebootVmItem = new ActionItem(REBOOT_VM, "Reboot VM", getResources().getDrawable(android.R.drawable.ic_lock_power_off));
+//		final ActionItem stopVmItem = new ActionItem(STOP_VM, "Stop VM", getResources().getDrawable(R.drawable.menu_cancel));
+//		final ActionItem rebootVmItem = new ActionItem(REBOOT_VM, "Reboot VM", getResources().getDrawable(android.R.drawable.ic_lock_power_off));
+        final ActionItem stopVmItem = new ActionItem(STOP_VM, "Stop VM", getResources().getDrawable(R.drawable.button_stop));
+        final ActionItem rebootVmItem = new ActionItem(REBOOT_VM, "Reboot VM", getResources().getDrawable(R.drawable.button_synchronize));
 		
 		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
 		QuickAction runningStateQuickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
@@ -328,7 +330,8 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 	}
 
 	public QuickAction createStoppedStateQuickAction(final View view) {
-		final ActionItem startVmItem = new ActionItem(START_VM, "Start VM", getResources().getDrawable(R.drawable.menu_ok));
+//		final ActionItem startVmItem = new ActionItem(START_VM, "Start VM", getResources().getDrawable(R.drawable.menu_ok));
+		final ActionItem startVmItem = new ActionItem(START_VM, "Start VM", getResources().getDrawable(R.drawable.button_play));
 		
 		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
 		QuickAction stoppedStateQuickAction = new QuickAction(getActivity(), QuickAction.HORIZONTAL);
