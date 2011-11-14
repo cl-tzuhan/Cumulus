@@ -29,6 +29,7 @@ import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
+import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsVmListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final int CSVM_LIST_LOADER = 0x01;
@@ -43,7 +44,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     
     //animation caches (so we don't need to continually re-created these same animations)
     private static Animation fadein_decelerate = null;
-    private static Animation fadeout_decelerate = null;
+//    private static Animation fadeout_decelerate = null;
     
 
     public class CsVmListAdapter extends ResourceCursorAdapter {
@@ -107,27 +108,34 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			//for the vm state text, we change its color depending on the current state of the vm
 			if(Vms.STATE_VALUES.RUNNING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmrunning_color_selector));
-				assignQuickActionTo(view, quickActionIcon, createRunningStateQuickAction(view));
+//				assignQuickActionTo(view, quickActionIcon, createRunningStateQuickAction(view));
+				QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createRunningStateQuickAction(view));
 				onVmStateUpdate(view, stateText, stateUpdated);
-				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
+//				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
+				QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
 				
 			} else if (Vms.STATE_VALUES.STOPPED.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstopped_color_selector));
-				assignQuickActionTo(view, quickActionIcon, createStoppedStateQuickAction(view));
+//				assignQuickActionTo(view, quickActionIcon, createStoppedStateQuickAction(view));
+				QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createStoppedStateQuickAction(view));
 				onVmStateUpdate(view, stateText, stateUpdated);
-				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
+//				showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
+				QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, stateUpdated);
 
 			} else if (Vms.STATE_VALUES.STARTING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstarting_color_selector));
-				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+//				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			} else if (Vms.STATE_VALUES.STOPPING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmstopping_color_selector));
-				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+//				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			}  else if (Vms.STATE_VALUES.REBOOTING.equalsIgnoreCase(state)) {
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmrebooting_color_selector));
-				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+//				showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, stateUpdated);
 			
 			} else {
 				//if we run into an unknown state, give...
@@ -248,7 +256,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         
         //init global animation cache
         fadein_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein_decelerate);
-        fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
+//        fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
     }
 
 	@Override
@@ -265,35 +273,35 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		startActivity(intent);
 	}
 
-	public void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
-		
-		if(animate) {
-			quickActionIcon.startAnimation(fadein_decelerate);
-		}
-		quickActionIcon.setVisibility(View.VISIBLE);
-		quickActionIcon.setClickable(true);
-
-		if(animate) {
-			quickActionProgress.startAnimation(fadeout_decelerate);
-		}
-		quickActionProgress.setVisibility(View.INVISIBLE);
-
-	}
-
-	public void showQuickActionProgress(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
-
-		quickActionIcon.setClickable(false);
-		if(animate) {
-			quickActionIcon.startAnimation(fadeout_decelerate);
-		}
-		quickActionIcon.setVisibility(View.INVISIBLE);
-
-		if(animate) {
-			quickActionProgress.startAnimation(fadein_decelerate);
-		}
-		quickActionProgress.setVisibility(View.VISIBLE);
-		
-	}
+//	public void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
+//		
+//		if(animate) {
+//			quickActionIcon.startAnimation(fadein_decelerate);
+//		}
+//		quickActionIcon.setVisibility(View.VISIBLE);
+//		quickActionIcon.setClickable(true);
+//
+//		if(animate) {
+//			quickActionProgress.startAnimation(fadeout_decelerate);
+//		}
+//		quickActionProgress.setVisibility(View.INVISIBLE);
+//
+//	}
+//
+//	public void showQuickActionProgress(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
+//
+//		quickActionIcon.setClickable(false);
+//		if(animate) {
+//			quickActionIcon.startAnimation(fadeout_decelerate);
+//		}
+//		quickActionIcon.setVisibility(View.INVISIBLE);
+//
+//		if(animate) {
+//			quickActionProgress.startAnimation(fadein_decelerate);
+//		}
+//		quickActionProgress.setVisibility(View.VISIBLE);
+//		
+//	}
 
 	public QuickAction createRunningStateQuickAction(final View view) {
 //		final ActionItem stopVmItem = new ActionItem(STOP_VM, "Stop VM", getResources().getDrawable(R.drawable.menu_cancel));
@@ -357,7 +365,8 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 
 		ImageView quickActionIcon = (ImageView)itemView.findViewById(R.id.quickactionicon);
 		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
-		showQuickActionProgress(quickActionIcon, quickActionProgress, true);
+//		showQuickActionProgress(quickActionIcon, quickActionProgress, true);
+		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 
 		String inProgressState = null;
 		if(CsApiConstants.API.startVirtualMachine.equalsIgnoreCase(commandName)) {

@@ -12,6 +12,7 @@ import android.widget.RelativeLayout;
 import android.widget.PopupWindow.OnDismissListener;
 
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.creationline.cloudstack.R;
+import com.creationline.cloudstack.util.QuickActionUtils;
 
 /**
  * QuickAction dialog, shows action list as icon and text like the one in Gallery3D app. Currently supports vertical 
@@ -195,6 +197,9 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
                 }
 			}
 		});
+		
+		///thsu edit [2011-11-14]: added code block to perform haptic feedback when a quickation menu button is pressed
+		container.setOnTouchListener( new QuickActionUtils.HapticTouchListener(HapticFeedbackConstants.KEYBOARD_TAP) );
 		
 		container.setFocusable(true);
 		container.setClickable(true);

@@ -496,7 +496,7 @@ public class CsRestService extends IntentService {
 
 	public void informSnapshotFragmentOfCallCompletion(final String snapshotId, final int successOrFailure) {
 		//inform CsSnapshotListFragment of the result of the call
-		Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND);
+		Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
 		Bundle bundle = new Bundle();
 		bundle.putString(Snapshots.ID, snapshotId);
 		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);

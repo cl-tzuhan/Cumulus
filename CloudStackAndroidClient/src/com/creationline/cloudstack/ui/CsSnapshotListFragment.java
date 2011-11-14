@@ -31,7 +31,7 @@ import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.util.ClLog;
-import com.creationline.cloudstack.util.QuickActionUtil;
+import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsSnapshotListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 	private static final int CSSNAPSHOT_LIST_LOADER = 0x02;
@@ -44,7 +44,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     private static final int SHOW_ICON = 2;
 
     public static class INTENT_ACTION {
-    	public static final String FAIL_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.FAIL_COMMAND";
+    	public static final String DELETESNAPSHOT_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.FAIL_COMMAND";
     }
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
@@ -105,15 +105,15 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			}
 			switch(progress) {
 				case IDLE:
-					QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-					QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
+					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
 					break;
 				case IN_PROGRESS:
-					QuickActionUtil.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+					QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
 					break;
 				case SHOW_ICON:
-					QuickActionUtil.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-					QuickActionUtil.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
+					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
 					snapshotsWithInProgressRequests.remove(snapshotId);
 					break;
 			}
@@ -209,7 +209,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		}
         	}
         };
-        getActivity().registerReceiver(broadcastReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.FAIL_COMMAND));  //activity will now get intents broadcast by CsRestService (filtered by FAIL_COMMAND action)
+        getActivity().registerReceiver(broadcastReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND));  //activity will now get intents broadcast by CsRestService (filtered by DELETESNAPSHOT_COMMAND action)
         
 
         //make the rest call to cs server for data
@@ -267,7 +267,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 
 		ImageView quickActionIcon = (ImageView)itemView.findViewById(R.id.quickactionicon);
 		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
-		QuickActionUtil.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
+		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 		
 		snapshotsWithInProgressRequests.putInt(snapshotId, CsSnapshotListFragment.IN_PROGRESS);
 

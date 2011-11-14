@@ -2,8 +2,11 @@ package com.creationline.cloudstack.util;
 
 import net.londatiga.android.QuickAction;
 import android.content.Context;
+import android.view.HapticFeedbackConstants;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -11,13 +14,42 @@ import android.widget.ProgressBar;
 
 import com.creationline.cloudstack.R;
 
-public class QuickActionUtil {
+public class QuickActionUtils {
 
     //animation caches (so we don't need to continually re-created these same animations)
     private static Animation fadein_decelerate = null;
     private static Animation fadeout_decelerate = null;
     
-	public QuickActionUtil(Context context) {
+    
+    /*
+     * Copied from:
+     *   http://androidcookbook.com/Recipe.seam;jsessionid=96AABBB097E371280776B227D746ED26?recipeId=1242&recipeFrom=ViewTOC
+     * Haptic feedback set-up code for Android by Adrian Cowham is licensed under AndroidCookbook.com's
+     * Creative Commons CC-BY license.
+     */
+    // Class to handle touch events and respond with haptic feedback
+    public static class HapticTouchListener implements OnTouchListener {
+
+        private final int feedbackType;
+         
+        public HapticTouchListener( int type ) { feedbackType = type; }
+         
+        public int feedbackType() { return feedbackType; }
+         
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            // only perform feedback when the user touches the view, as opposed
+            // to lifting a finger off the view
+            if( event.getAction() == MotionEvent.ACTION_DOWN ){
+                // perform the feedback
+                v.performHapticFeedback( feedbackType() );
+            }
+            return false;  //thsu edit [2011-11-14]: returning false so onClick listener also has a chance to handle the input
+        }
+    }
+    
+    
+	public QuickActionUtils(Context context) {
         //init global animation cache
         fadein_decelerate = AnimationUtils.loadAnimation(context, R.anim.fadein_decelerate);
         fadeout_decelerate = AnimationUtils.loadAnimation(context, R.anim.fadeout_decelerate);
@@ -33,12 +65,16 @@ public class QuickActionUtil {
 	 * @param quickAction quickaction to assign to the onClick handler
 	 */
 	public static void assignQuickActionTo(View view, ImageView quickActionIcon, final QuickAction quickAction) {
+		//set-up onclick listener to show the quickaction menu
 		quickActionIcon.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				quickAction.show(v);
 			}
 		});
+		
+		//set-up ontouch listener solely for producing haptic feedback
+		quickActionIcon.setOnTouchListener( new HapticTouchListener(HapticFeedbackConstants.KEYBOARD_TAP) );   
 	}
 	
 	public static void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
