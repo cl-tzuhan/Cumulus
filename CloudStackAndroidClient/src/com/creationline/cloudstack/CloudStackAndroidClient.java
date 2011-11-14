@@ -11,6 +11,7 @@ public class CloudStackAndroidClient extends FragmentActivity {
         super.onCreate(savedInstanceState);
 
         Intent startCsVmList = new Intent(getApplicationContext(), com.creationline.cloudstack.ui.CsVmList.class);
+        startCsVmList.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(startCsVmList);
         
     }

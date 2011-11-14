@@ -7,7 +7,9 @@
 
     <application android:icon="@drawable/icon" android:theme="@android:style/Theme.NoTitleBar" android:label="@string/app_name">
         <activity android:name=".CloudStackAndroidClient"
-                  android:label="@string/app_name">
+                  android:label="@string/app_name"
+                  android:launchMode="singleTask"
+                  android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -17,8 +19,8 @@
         <activity android:name=".ui.CsVmList"
                   android:label="@string/app_name" />
 
-        <activity android:name=".ui.CsSnapshotListFragment"
-                  android:label="Snapshots" />
+        <activity android:name=".ui.CsVmDetailsFragmentActivity"
+                  android:label="Instance Details" />
         
         <service android:name=".engine.CsRestService" />
 		<receiver android:name=".engine.CheckAsyncJobProgress" />

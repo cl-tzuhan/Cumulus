@@ -18,6 +18,7 @@ import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -249,6 +250,20 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         fadein_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein_decelerate);
         fadeout_decelerate = AnimationUtils.loadAnimation(getActivity(), R.anim.fadeout_decelerate);
     }
+
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		final TextView vmIdText = (TextView)v.findViewById(R.id.id);
+//		Bundle activityArgs = new Bundle();
+//		activityArgs.putString(Vms.ID, vmIdText.getText().toString());
+//		intent.putExtras(activityArgs);
+		
+		//start details view activity with id of selected vm
+		Intent intent = new Intent();
+		intent.setClass(getActivity(), CsVmDetailsFragmentActivity.class);
+		intent.putExtra(Vms.class.toString()+Vms.ID, vmIdText.getText().toString());
+		startActivity(intent);
+	}
 
 	public void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
 		

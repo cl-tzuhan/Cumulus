@@ -159,6 +159,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 		super.onDestroy();
 	}
 
+
 	@Override
 	public View makeView() {
 		TextView t = new TextView(this);

@@ -46,9 +46,6 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 	
 	private boolean mDidAction;
 	
-	///Modification: Tzu-Han Hsu [2011-10-27]
-//	private View anchorView;  //Cache for the view which this QuickAction is attached to.  Useful for finding out which list item, say, a QuickAction is attached to
-	
 	private int mChildPos;
     private int mInsertPos;
     private int mAnimStyle;
@@ -272,7 +269,9 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		int dyTop			= anchorRect.top;
 		int dyBottom		= screenHeight - anchorRect.bottom;
 
-		boolean onTop		= (dyTop > dyBottom) ? true : false;
+		///thsu edit [2011-11-14]: changed behavior to always try to pop-up above the anchor unless there is not enough room to accommodate the pop-up
+		//boolean onTop		= (dyTop > dyBottom) ? true : false;
+		boolean onTop = (rootHeight <= dyTop);
 
 		if (onTop) {
 			if (rootHeight > dyTop) {
