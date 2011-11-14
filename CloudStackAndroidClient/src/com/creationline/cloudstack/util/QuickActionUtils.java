@@ -22,12 +22,12 @@ public class QuickActionUtils {
     
     
     /*
+     * Class to handle touch events and respond with haptic feedback.
      * Copied from:
      *   http://androidcookbook.com/Recipe.seam;jsessionid=96AABBB097E371280776B227D746ED26?recipeId=1242&recipeFrom=ViewTOC
      * Haptic feedback set-up code for Android by Adrian Cowham is licensed under AndroidCookbook.com's
      * Creative Commons CC-BY license.
      */
-    // Class to handle touch events and respond with haptic feedback
     public static class HapticTouchListener implements OnTouchListener {
 
         private final int feedbackType;
