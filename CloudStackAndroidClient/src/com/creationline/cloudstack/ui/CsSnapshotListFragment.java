@@ -30,6 +30,7 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
+import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.QuickActionUtils;
 
@@ -44,7 +45,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     private static final int SHOW_ICON = 2;
 
     public static class INTENT_ACTION {
-    	public static final String DELETESNAPSHOT_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.FAIL_COMMAND";
+    	public static final String DELETESNAPSHOT_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.DELETESNAPSHOT_COMMAND";
     }
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
@@ -291,6 +292,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Snapshots.ID, snapshotId);
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}

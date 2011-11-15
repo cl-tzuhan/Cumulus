@@ -51,7 +51,6 @@ import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
-import com.creationline.cloudstack.ui.CsSnapshotListFragment;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
@@ -140,9 +139,9 @@ public class CsRestService extends IntentService {
 		
 		performRestRequest(apiCmd);
 		
-		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
-		broadcastIntent.putExtra(CsRestService.RESPONSE, apiCmd+"Response");
-		sendBroadcast(broadcastIntent);
+//		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
+//		broadcastIntent.putExtra(CsRestService.RESPONSE, apiCmd+"Response");
+//		sendBroadcast(broadcastIntent);
 
 	}
 	
@@ -165,7 +164,7 @@ public class CsRestService extends IntentService {
 			String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
 
 			//save the request to db
-			inProgressTransaction = saveRequestToDb(finalUrl);
+			inProgressTransaction = saveRequestToDb(finalUrl, apiCmd);
 
 			//send request to cs
 			HttpResponse reply = doRestCall(finalUrl, inProgressTransaction);
@@ -197,7 +196,7 @@ public class CsRestService extends IntentService {
 		
 	}
 
-	public Uri saveRequestToDb(String request) {
+	public Uri saveRequestToDb(final String request, Bundle apiCmd) {
 		final String TAG = "CsRestService.saveRequestToDb()";
 		
 		if(request==null) {
@@ -213,6 +212,7 @@ public class CsRestService extends IntentService {
 		//    Time readTime = new Time();
 		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
 		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+		contentValues.put(Transactions.CALLBACK_INTENT_FILTER, apiCmd.getString(Transactions.CALLBACK_INTENT_FILTER));
 		
 		Uri newUri = getBaseContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, contentValues);
 		ClLog.d(TAG, "added new API request to db at " + newUri);
@@ -487,21 +487,30 @@ public class CsRestService extends IntentService {
 	public void informCallerOfFailure(final Uri uriToUpdate, String responseName) {
 		final String truncatedResponseName = responseName.substring(0, responseName.lastIndexOf("response"));
 		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(truncatedResponseName)) {
-			final String originalRequest = findTransactionRequestForRow(uriToUpdate);
-			final String snapshotId = extractParamValueFromUriStr(originalRequest, Snapshots.ID);
-			
-			informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+			informSnapshotFragmentOfCallFailure(uriToUpdate);
 		}
 	}
 
-	public void informSnapshotFragmentOfCallCompletion(final String snapshotId, final int successOrFailure) {
+	public void informSnapshotFragmentOfCallFailure(final Uri uriToUpdate) {
+		Bundle bundle = findTransactionRequestAndCallbackForRow(uriToUpdate);
+		final String originalRequest = bundle.getString(Transactions.REQUEST);
+		final String snapshotId = extractParamValueFromUriStr(originalRequest, Snapshots.ID);
+		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+
+		informCallerFragmentOfCallCompletion(callbackIntentFilter, snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+	}
+
+	public void informCallerFragmentOfCallCompletion(final String callbackIntentFilter, final String snapshotId, final int successOrFailure) {
 		//inform CsSnapshotListFragment of the result of the call
-		Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
-		Bundle bundle = new Bundle();
-		bundle.putString(Snapshots.ID, snapshotId);
-		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
-		broadcastIntent.putExtras(bundle);
-		sendBroadcast(broadcastIntent);
+//				Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
+		if(callbackIntentFilter!=null) {
+			Intent broadcastIntent = new Intent(callbackIntentFilter);
+			Bundle bundle = new Bundle();
+			bundle.putString(Snapshots.ID, snapshotId);
+			bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
+			broadcastIntent.putExtras(bundle);
+			sendBroadcast(broadcastIntent);
+		}
 	}
 
 	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {
@@ -536,14 +545,9 @@ public class CsRestService extends IntentService {
 		int rowsUpdated = getContentResolver().update(uriToUpdate, cvForTransactionsTable, null, null);
 		assert(rowsUpdated==1);  //sanity check: this should only ever update a single row
 		
-		
-		//add error msg to errors table so user sees an error msg
-//		ContentValues cvForErrorsTable = new ContentValues();
-//		cvForErrorsTable.put(Errors.ERRORTEXT, "Connection could not be made; transaction aborted.");
-//		cvForErrorsTable.put(Errors.ORIGINATINGCALL, uriToUpdate.toString());
-//		getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cvForErrorsTable);
-		
 		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
+		
+		informSnapshotFragmentOfCallFailure(uriToUpdate);
 	}
 
 	/**
@@ -760,7 +764,8 @@ public class CsRestService extends IntentService {
 					ClLog.d(TAG, "jobresultcode= "+jobresultcode);
 					ClLog.d(TAG, "jobresult.errortext= "+errortext);
 					
-					String originatingTransactionUri = findTransactionRequestForJobid(jobid);
+					Bundle bundle = findTransactionRequestAndCallbackForJobid(jobid);
+					String originatingTransactionUri = bundle.getString(Transactions.REQUEST);
 					addToErrorLog(jobresultcode, errortext+" ("+jobresultcode+")", originatingTransactionUri);
 					
 					if(errortext==null) {
@@ -784,16 +789,18 @@ public class CsRestService extends IntentService {
 	public void handleJobresultBasedOnApi(final String jobid, final boolean jobSucceeded) {
 		final String TAG = "CsRestService.handleJobresultBasedOnApi()";
 
-		final String originalRequestUri = findTransactionRequestForJobid(jobid);
+		Bundle bundle = findTransactionRequestAndCallbackForJobid(jobid);
+		final String originalRequestUri = bundle.getString(Transactions.REQUEST);
 		final String apiCmd = extractParamValueFromUriStr(originalRequestUri, CsRestService.COMMAND);
+		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
 
 		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(apiCmd)) {
 			final String snapshotId = extractParamValueFromUriStr(originalRequestUri, Snapshots.ID);
 			if(jobSucceeded) {
 				deleteSnapshotWithId(snapshotId);
-				informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS);
+				informCallerFragmentOfCallCompletion(callbackIntentFilter, snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS);
 			} else {
-				informSnapshotFragmentOfCallCompletion(snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+				informCallerFragmentOfCallCompletion(callbackIntentFilter, snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
 			}
 		} else {
 			ClLog.e(TAG, "retrieved invalid apiCmd="+apiCmd);
@@ -801,6 +808,10 @@ public class CsRestService extends IntentService {
 	}
 	
 	public int updateVmState(final String vmid, final String newState) {
+//		Bundle bundle = findTransactionRequestForJobid(jobid);
+//		String originatingTransactionUri = bundle.getString(Transactions.REQUEST);
+//		final String vmid = extractParamValueFromUriStr(originatingTransactionUri, Vms.ID);
+		
 		ContentValues cv = new ContentValues();
 		cv.put(Vms.STATE, newState);
 		final String whereClause = Vms.ID+"=?";
@@ -846,24 +857,24 @@ public class CsRestService extends IntentService {
 		return null;
 	}
 
-	public String findTransactionRequestForJobid(final String jobid) {
+	public Bundle findTransactionRequestAndCallbackForJobid(final String jobid) {
 		if(jobid==null) {
 			return null;
 		}
 		
-		return findTransactionRequest(Transactions.META_DATA.CONTENT_URI, jobid);
+		return findTransactionRequestAndCallback(Transactions.META_DATA.CONTENT_URI, jobid);
 	}
 	
-	public String findTransactionRequestForRow(final Uri uriWithRowId) {
-		return findTransactionRequest(uriWithRowId, null);
+	public Bundle findTransactionRequestAndCallbackForRow(final Uri uriWithRowId) {
+		return findTransactionRequestAndCallback(uriWithRowId, null);
 	}
 	
-	public String findTransactionRequest(final Uri transactionsUri, final String jobid) {
+	public Bundle findTransactionRequestAndCallback(final Uri transactionsUri, final String jobid) {
 		if(transactionsUri==null) {
 			return null;
 		}
 		
-		final String[] columns = new String[] { Transactions.REQUEST };
+		final String[] columns = new String[] { Transactions.REQUEST, Transactions.CALLBACK_INTENT_FILTER };
 		String whereClause = null;
 		String[] selectionArgs =null;
 		if(jobid!=null) { 
@@ -877,8 +888,17 @@ public class CsRestService extends IntentService {
 		}
 		
 		c.moveToFirst();
-		final String originatingTransactionUri = c.getString(c.getColumnIndex(Transactions.REQUEST));
-		return originatingTransactionUri;
+//		final String originatingTransactionUri = c.getString(c.getColumnIndex(Transactions.REQUEST));
+		Bundle returnBundle = new Bundle();
+		returnBundle.putString(Transactions.REQUEST, c.getString(c.getColumnIndex(Transactions.REQUEST)));
+		
+		final int callbackIntentFilterColumnIndex = c.getColumnIndex(Transactions.CALLBACK_INTENT_FILTER);
+		final boolean hasValidCallbackIntentFilter = callbackIntentFilterColumnIndex!=-1;
+		if(hasValidCallbackIntentFilter) {
+			returnBundle.putString(Transactions.CALLBACK_INTENT_FILTER, c.getString(callbackIntentFilterColumnIndex));
+		}
+
+		return returnBundle;
 	}
 	
 

@@ -17,6 +17,7 @@ public class Transactions implements BaseColumns {
 	public static final String REQUEST_DATETIME = "request_dateTime";
 	public static final String REPLY_DATETIME = "reply_dateTime";
 	public static final String JOBID = "jobid";
+	public static final String CALLBACK_INTENT_FILTER = "callback_intent_filter";
 
 	
 	//allowed values for the status column

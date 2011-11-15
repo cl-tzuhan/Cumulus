@@ -683,7 +683,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		//we'll consider this a pass if we don't crash
 	}
 	
-	public void testFindTransactionRequest() {
+	public void testFindTransactionRequestAndCallback() {
 		deleteAllData();
 		CsRestService csRestService = startCsRestService();
 
@@ -704,11 +704,13 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		testData.putString("400", "http://www.fujitv.co.jp/b_hp/onepiece/");
 		testData.putString("500", "http://mv.avex.jp/onepiece/");
 		testData.putString("600", "http://www.bandaigames.channel.or.jp/list/one_main/");
+		final String callbackIntentFilterBase = "com.test.callback.intent.filter.OP";
 		Set<String> keys = testData.keySet();
 		for(String key : keys) {
 			ContentValues cv = new ContentValues();
 			cv.put(Transactions.JOBID, key);
 			cv.put(Transactions.REQUEST, testData.getString(key));
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilterBase+key);
 			getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
 		}
 		//for good measure, insert some data that have no jobid
@@ -720,8 +722,11 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		//test each jobid to see if the fetched request is correct
 		for(String key : keys) {
-			final String request = csRestService.findTransactionRequest(Transactions.META_DATA.CONTENT_URI, key);
+			Bundle bundle = csRestService.findTransactionRequestAndCallback(Transactions.META_DATA.CONTENT_URI, key);
+			final String request = bundle.getString(Transactions.REQUEST);
 			assertEquals(testData.getString(key), request);
+			final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertEquals(callbackIntentFilterBase+key, callbackIntentFilter);
 		}
 	}
 	
@@ -730,47 +735,116 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 
 		{
 			final String request = "http://www.oricon.co.jp/news/ranking/81934/full/";
+			final String callbackIntentFilter = "www.oricon.co.jp.callback";
 			ContentValues cv = new ContentValues();
 			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
 			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
-			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
 			assertEquals(request, retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertEquals(callbackIntentFilter, retrievedcallbackIntentFilter);
 		}
 
 		{
 			final String request = "http://www.geocities.jp/wj_log/rank/";
+			final String callbackIntentFilter = "www.geocities.jp.callback";
 			ContentValues cv = new ContentValues();
 			cv.put(Transactions.REQUEST, request);
 			cv.put(Transactions.JOBID, "meaningless jobid");
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
 			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
-			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
 			assertEquals(request, retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertEquals(callbackIntentFilter, retrievedcallbackIntentFilter);
 		}
 
 		{
 			final String request = "http://mantan-web.jp/2011/11/04/20111104dog00m200003000c.html";
+			final String callbackIntentFilter = "mantan-web.jp/2011/11/04/20111104dog00m200003000c.callback";
 			ContentValues cv = new ContentValues();
 			cv.put(Transactions.REQUEST, request);
 			cv.put(Transactions.REPLY, "meaningless reply");
 			cv.put(Transactions.JOBID, "meaningless jobid");
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
 			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
-			final String retrievedRequest = csRestService.findTransactionRequestForRow(insertUri);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
 			assertEquals(request, retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertEquals(callbackIntentFilter, retrievedcallbackIntentFilter);
 		}
 
 		{
-			final String retrievedRequest = csRestService.findTransactionRequestForRow(null);
+			final String request = "something non-null";
+			final String callbackIntentFilter = null;
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.REPLY, "meaningless reply");
+			cv.put(Transactions.JOBID, "meaningless jobid");
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
+			assertEquals(request, retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertNull(retrievedcallbackIntentFilter);
+		}
+		
+		{
+			final String request = null;
+			final String callbackIntentFilter = "something non-null";
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.REPLY, "meaningless reply");
+			cv.put(Transactions.JOBID, "meaningless jobid");
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
 			assertNull(retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertEquals(callbackIntentFilter, retrievedcallbackIntentFilter);
+		}
+		
+		{
+			final String request = null;
+			final String callbackIntentFilter = null;
+			ContentValues cv = new ContentValues();
+			cv.put(Transactions.REQUEST, request);
+			cv.put(Transactions.REPLY, "meaningless reply");
+			cv.put(Transactions.JOBID, "meaningless jobid");
+			cv.put(Transactions.CALLBACK_INTENT_FILTER, callbackIntentFilter);
+			Uri insertUri = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
+			
+			Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(insertUri);
+			final String retrievedRequest = bundle.getString(Transactions.REQUEST);
+			assertNull(retrievedRequest);
+			final String retrievedcallbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			assertNull(retrievedcallbackIntentFilter);
+		}
+
+		{
+			final Bundle bundle = csRestService.findTransactionRequestAndCallbackForRow(null);
+			assertNull(bundle);
 		}
 	}
 	
 	public void testFindRequestForJobid_edegeCases() {
 		CsRestService csRestService = startCsRestService();
 		
-		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findTransactionRequestForJobid(null));
+		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findTransactionRequestAndCallbackForJobid(null));
 		
 		deleteAllData();
-		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findTransactionRequestForJobid("63934"));
+		assertNull("findRequestForJobid() should fail gracefully with non-existent jobid", csRestService.findTransactionRequestAndCallbackForJobid("63934"));
 	}
 	
 	public void testAddToErrorLog() {
