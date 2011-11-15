@@ -25,7 +25,6 @@ import android.widget.ViewSwitcher;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
-import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.util.QuickActionUtils;
 import com.viewpagerindicator.TitlePageIndicator;
 
@@ -141,10 +140,10 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when vms db is changed
     }
 
-    protected void onclick_sideMenu(View view) {
-    	//TODO: do something with me or remove!!
-    	Toast.makeText(getBaseContext(), "-> got clicked!", Toast.LENGTH_SHORT).show();
-    }
+//    protected void onclick_sideMenu(View view) {
+//    	//TODO: do something with me or remove!!
+//    	Toast.makeText(getBaseContext(), "-> got clicked!", Toast.LENGTH_SHORT).show();
+//    }
 
 	@Override
 	protected void onPause() {
