@@ -738,6 +738,8 @@ public class CsRestService extends IntentService {
 						if(!valueNode.isMissingNode()) { //valueNode will be a MissingNode if the server returned 0 results
 							final JsonParser nodeParser = valueNode.traverse();
 							parseAndSaveReply(nodeParser, Vms.META_DATA.CONTENT_URI, UPDATE_DATA_WITH_ID);
+							
+							//no need to notify CsVmListFragment of successes as it will determine the correct action from the change in state
 						}
 					} else if("success".equalsIgnoreCase(jobresult.getFieldName())) {
 						//there are multiple apis that return a jobresult with "success" field:
@@ -774,11 +776,9 @@ public class CsRestService extends IntentService {
 						final String vmid = extractParamValueFromUriStr(originatingTransactionUri, Vms.ID);
 						//mark the vm as stopped in the case of a reboot failure
 						updateVmState(vmid, Vms.STATE_VALUES.STOPPED);
-					} else { 
-						// if (errortext.contains("due to it is not in BackedUp Status")) {
-						//inform snapshot fragment command failed
-						handleJobresultBasedOnApi(jobid, false);
 					}
+					//inform calling fragment that the command failed
+					handleJobresultBasedOnApi(jobid, false);
 				}
 				break;
 			default:
@@ -794,7 +794,14 @@ public class CsRestService extends IntentService {
 		final String apiCmd = extractParamValueFromUriStr(originalRequestUri, CsRestService.COMMAND);
 		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
 
-		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(apiCmd)) {
+		if(CsApiConstants.API.startVirtualMachine.equalsIgnoreCase(apiCmd)
+				|| CsApiConstants.API.stopVirtualMachine.equalsIgnoreCase(apiCmd)
+						|| CsApiConstants.API.rebootVirtualMachine.equalsIgnoreCase(apiCmd)) {
+			final String vmId = extractParamValueFromUriStr(originalRequestUri, Vms.ID);
+			final int successOrFailure = (jobSucceeded)? CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS : CsRestService.CALL_STATUS_VALUES.CALL_FAILURE;
+			informCallerFragmentOfCallCompletion(callbackIntentFilter, vmId, successOrFailure);
+			
+		} else if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(apiCmd)) {
 			final String snapshotId = extractParamValueFromUriStr(originalRequestUri, Snapshots.ID);
 			if(jobSucceeded) {
 				deleteSnapshotWithId(snapshotId);

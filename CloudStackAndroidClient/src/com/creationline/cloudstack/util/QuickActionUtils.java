@@ -78,6 +78,10 @@ public class QuickActionUtils {
 	}
 	
 	public static void showQuickActionIcon(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
+		if(animate==false && quickActionIcon.getVisibility()==View.VISIBLE && quickActionProgress.getVisibility()==View.INVISIBLE) {
+			return;
+		}
+
 		if(animate) {
 			quickActionIcon.startAnimation(fadein_decelerate);
 		}
@@ -91,6 +95,10 @@ public class QuickActionUtils {
 	}
 
 	public static void showQuickActionProgress(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
+		if(animate==false && quickActionIcon.getVisibility()==View.INVISIBLE && quickActionProgress.getVisibility()==View.VISIBLE) {
+			return;
+		}
+		
 		quickActionIcon.setClickable(false);
 		if(animate) {
 			quickActionIcon.startAnimation(fadeout_decelerate);
