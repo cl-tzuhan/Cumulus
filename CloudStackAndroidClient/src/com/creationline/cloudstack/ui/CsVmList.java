@@ -1,9 +1,6 @@
 package com.creationline.cloudstack.ui;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -19,7 +16,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.R;
@@ -30,7 +26,7 @@ import com.viewpagerindicator.TitlePageIndicator;
 
 public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory {
 	
-	private BroadcastReceiver broadcastReceiver = null;
+//	private BroadcastReceiver broadcastReceiver = null;
 	
 	
 	//class to cache the currently-shown page of the ViewPager
@@ -78,17 +74,16 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         ts.setInAnimation(in);
         ts.setOutAnimation(out);
                 
-        final String action = CsRestService.TEST_CALL;     
-        broadcastReceiver = new BroadcastReceiver(){
-        	//This handles intents broadcasted by CsRestService
-        	@Override
-        	public void onReceive(Context arg0, Intent arg1) {
-        		String responseString = arg1.getStringExtra(CsRestService.RESPONSE);
-        		Toast.makeText(getBaseContext(), "CsRestService: request "+responseString+" initiated...", Toast.LENGTH_SHORT).show();
-        	}
-        };
-        registerReceiver(broadcastReceiver, new IntentFilter(action));  //activity will now get intents broadcast by CsRestService (filtered by action str)
-        
+//        final String action = CsRestService.TEST_CALL;     
+//        broadcastReceiver = new BroadcastReceiver(){
+//        	//This handles intents broadcasted by CsRestService
+//        	@Override
+//        	public void onReceive(Context arg0, Intent arg1) {
+//        		String responseString = arg1.getStringExtra(CsRestService.RESPONSE);
+//        		Toast.makeText(getBaseContext(), "CsRestService: request "+responseString+" initiated...", Toast.LENGTH_SHORT).show();
+//        	}
+//        };
+//        registerReceiver(broadcastReceiver, new IntentFilter(action));  //activity will now get intents broadcast by CsRestService (filtered by action str)
         
         registerForErrorsDbUpdate();
         //registerForVmsDbUpdate();
@@ -175,15 +170,15 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 	@Override
 	protected void onDestroy() {
 		
-		if(broadcastReceiver!=null) {
-			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-			try {
-				unregisterReceiver(broadcastReceiver);
-			} catch (IllegalArgumentException e) {
-				//will get this exception if broadcastReceiver has already been unregistered (or was never registered); will just ignore here
-				;
-			}
-		}
+//		if(broadcastReceiver!=null) {
+//			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
+//			try {
+//				unregisterReceiver(broadcastReceiver);
+//			} catch (IllegalArgumentException e) {
+//				//will get this exception if broadcastReceiver has already been unregistered (or was never registered); will just ignore here
+//				;
+//			}
+//		}
 		super.onDestroy();
 	}
 
