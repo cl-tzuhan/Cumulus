@@ -239,6 +239,21 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         super.onActivityCreated(savedInstanceState);
 	}
 
+	@Override
+	public void onDestroy() {
+		
+		if(broadcastReceiver!=null) {
+			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
+			try {
+				getActivity().unregisterReceiver(broadcastReceiver);
+			} catch (IllegalArgumentException e) {
+				//will get this exception if broadcastReceiver has already been unregistered (or was never registered); will just ignore here
+				;
+			}
+		}
+		super.onDestroy();
+	}
+
 	public QuickAction createQuickAction(final View view) {
 //		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.menu_eraser));
 		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.bin));

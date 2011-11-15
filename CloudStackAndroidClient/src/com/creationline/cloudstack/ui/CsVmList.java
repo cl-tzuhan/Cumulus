@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.SimpleOnPageChangeListener;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
@@ -32,17 +33,26 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
 	
 	private BroadcastReceiver broadcastReceiver = null;
 	
+	
+	//class to cache the currently-shown page of the ViewPager
+	private static class CurrentPageListener extends SimpleOnPageChangeListener {
+		public static String CURRENT_PAGE = "com.creationline.cloudstack.ui.CurrentPageListener.CURRENT_PAGE";
+		private static int currentPage;
+		
+		public static int getCurrentPage() {
+			return currentPage;
+		}
+
+		public void onPageSelected(int page) {
+			currentPage = page;
+		}
+	}
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.csvmlist);
-        
-        // Create the list fragment and add it as our sole content.
-//        if (getSupportFragmentManager().findFragmentById(R.id.listfragment) == null) {
-//            CsVmListFragment list = new CsVmListFragment();
-//            getSupportFragmentManager().beginTransaction().add(R.id.listfragment, list).commit();
-//        }
         
         //bind the viewpager to the backing adaptor
         ViewPageAdapter vpa = new ViewPageAdapter(getSupportFragmentManager());
@@ -52,6 +62,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         //bind the titlepageindicator to the viewpager
         TitlePageIndicator tpi = (TitlePageIndicator)findViewById(R.id.viewpagerindicator);
         tpi.setViewPager(vp, 0);
+        tpi.setOnPageChangeListener(new CurrentPageListener());
         final Animation slide_leftToRight_slow = AnimationUtils.loadAnimation(this, R.anim.slide_lefttoright_slow);
         tpi.setAnimation(slide_leftToRight_slow);
         
@@ -108,16 +119,16 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     	registerForDbUpdate(Errors.META_DATA.CONTENT_URI, updatedUiWithResults);
     }
     
-    private void registerForVmsDbUpdate() {
-    	final Runnable updatedUiWithResults = new Runnable() {
-    		//This handles notifs from CsRestContentProvider upon changes in db
-    		public void run() {
-    			Toast.makeText(getBaseContext(), "Got a notif from vms!!!!!!", Toast.LENGTH_SHORT).show();
-    		}
-    	};
-    	
-    	registerForDbUpdate(Transactions.META_DATA.CONTENT_URI, updatedUiWithResults);
-    }
+//    private void registerForVmsDbUpdate() {
+//    	final Runnable updatedUiWithResults = new Runnable() {
+//    		//This handles notifs from CsRestContentProvider upon changes in db
+//    		public void run() {
+//    			Toast.makeText(getBaseContext(), "Got a notif from vms!!!!!!", Toast.LENGTH_SHORT).show();
+//    		}
+//    	};
+//    	
+//    	registerForDbUpdate(Transactions.META_DATA.CONTENT_URI, updatedUiWithResults);
+//    }
     
     private void registerForDbUpdate(final Uri contentUriToObserve, final Runnable updatedUiWithResults) {
     	final Handler handler = new Handler();
@@ -135,7 +146,6 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     	Toast.makeText(getBaseContext(), "-> got clicked!", Toast.LENGTH_SHORT).show();
     }
 
-    
 	@Override
 	protected void onPause() {
 		Intent csRestServiceIntent = new Intent(this, CsRestService.class);
@@ -143,6 +153,25 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         
 		super.onPause();
 	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle savedInstanceState) {
+		//save the currently shown page index so we can show it again when app resumes
+		savedInstanceState.putInt(CurrentPageListener.CURRENT_PAGE, CurrentPageListener.getCurrentPage());
+
+		super.onSaveInstanceState(savedInstanceState);
+	}
+
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+
+		//if resuming, show the last page shown when app went into pause
+		final int currentPage = savedInstanceState.getInt(CurrentPageListener.CURRENT_PAGE);
+		ViewPager vp = (ViewPager)findViewById(R.id.viewpager);
+		vp.setCurrentItem(currentPage);
+	}
+
 
 	@Override
 	protected void onDestroy() {
