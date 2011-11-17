@@ -1,5 +1,7 @@
 package com.creationline.cloudstack.ui;
 
+import android.content.ContentValues;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -8,10 +10,16 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.creationline.cloudstack.R;
+import com.creationline.cloudstack.engine.CsApiConstants;
+import com.creationline.cloudstack.engine.CsRestService;
+import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.DateTimeParser;
@@ -29,9 +37,7 @@ public class CsVmDetailsFragment extends Fragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		///DEBUG
-		System.out.println("we are in onCraete()!!!!!!!");
-		///endDEBUG
+		
 	}
 
 	@Override
@@ -39,10 +45,7 @@ public class CsVmDetailsFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 		
 		registerForVmsDbUpdate();
-		
-		///DEBUG
-		System.out.println("we registered for Vms db updates!!!!!!!");
-		///endDEBUG
+
 	}
 
 	@Override
@@ -58,15 +61,30 @@ public class CsVmDetailsFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.csvmdetailsfragment, container);
 		
-		setTextViewValues(view);
+		setDisplayWidgetsAndConfigure(view);
 		
-		TextView stateText = (TextView)view.findViewById(R.id.state);
-		setStateColor(stateText);
+		setStartVmButtonClickHandler(view);
+		setStopVmButtonClickHandler(view);
+		setRebootVmButtonClickHandler(view);
 		
 		return view;
 	}
 
+	public void setDisplayWidgetsAndConfigure(View view) {
+		setTextViewValues(view);
+		configureAttributesBasedOnState(view);
+	}
+
 	public void setTextViewValues(View view) {
+		
+		final String selectedVmId = getActivity().getIntent().getStringExtra(Vms.class.toString()+Vms.ID);
+		if(selectedVmId==null) {
+			//Null check to guard against cases when CsVmDetailsFragment is called with outdated (i.e. null) vmid.
+			//Since we can't do anything with this view w/out vm data, just refuse to start in this case.
+			getActivity().finish();
+			return;
+		}
+		
 		final String columns[] = new String[] {
 				Vms.ID,
 				Vms.NAME,
@@ -102,7 +120,6 @@ public class CsVmDetailsFragment extends Fragment {
 //				Vms.NIC,
 				Vms.HYPERVISOR};
 		final String whereClause = Vms.ID+"=?";
-		final String selectedVmId = getActivity().getIntent().getStringExtra(Vms.class.toString()+Vms.ID);
 		ClLog.d("CsVmDetailsFragment.onActivityCreated()", "starting with selectedVmId= "+selectedVmId);
 		final String[] selectionArgs = new String[] { selectedVmId };
 		Cursor c = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
@@ -171,49 +188,83 @@ public class CsVmDetailsFragment extends Fragment {
 		}
 	}
 
-	public void setStateColor(TextView stateText) {
+	public void configureAttributesBasedOnState(View view) {
+		TextView stateText = (TextView)view.findViewById(R.id.state);
 		final String state = stateText.getText().toString();
 		
 		//for the vm state text, we change its color depending on the current state of the vm
 		if(Vms.STATE_VALUES.RUNNING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmrunning_color_selector));
 			stateText.startAnimation(QuickActionUtils.getFadein_decelerate());
+			setButtonEnabledDisabled(view, false, true, true);
+			makeProgressInvisible(view);
 			
 		} else if (Vms.STATE_VALUES.STOPPED.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstopped_color_selector));
 			stateText.startAnimation(QuickActionUtils.getFadein_decelerate());
+			setButtonEnabledDisabled(view, true, false, false);
+			makeProgressInvisible(view);
 			
 		} else if (Vms.STATE_VALUES.STARTING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstarting_color_selector));
+			setButtonEnabledDisabled(view, false, false, false);
+			makeProgressVisible(view);
 			
 		} else if (Vms.STATE_VALUES.STOPPING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstopping_color_selector));
+			setButtonEnabledDisabled(view, false, false, false);
+			makeProgressVisible(view);
 			
 		}  else if (Vms.STATE_VALUES.REBOOTING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmrebooting_color_selector));
+			setButtonEnabledDisabled(view, false, false, false);
+			makeProgressVisible(view);
 			
 		} else {
 			//if we run into an unknown state, give...
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmunknown_color_selector));  //...state a default color
-			//...and no quickaction (perhaps change the icon to something looking unclick-able here?)
+			setButtonEnabledDisabled(view, false, false, false);  //...and no buttons to be safe since we don't know which commands may/not work
+			makeProgressInvisible(view);
 		}
 	}
 
+	public void makeProgressVisible(View view) {
+		ProgressBar progresscircle = (ProgressBar)view.findViewById(R.id.progresscircle);
+		if(progresscircle.getVisibility()==View.INVISIBLE) {
+			progresscircle.startAnimation(QuickActionUtils.getFadein_decelerate());
+			progresscircle.setVisibility(View.VISIBLE);
+		}
+	}
+
+	public void makeProgressInvisible(View view) {
+		ProgressBar progresscircle = (ProgressBar)view.findViewById(R.id.progresscircle);
+		if(progresscircle.getVisibility()==View.VISIBLE) {
+			progresscircle.startAnimation(QuickActionUtils.getFadeout_decelerate());
+			progresscircle.setVisibility(View.INVISIBLE);
+		}
+	}
+
+	public void setButtonEnabledDisabled(View view, boolean startVmEnabled, boolean stopVmEnabled, boolean rebootVmEnabled) {
+		Button startVmButton = (Button)view.findViewById(R.id.startvmbutton);
+		startVmButton.setEnabled(startVmEnabled);
+		Button stopVmButton = (Button)view.findViewById(R.id.stopvmbutton);
+		stopVmButton.setEnabled(stopVmEnabled);
+		Button rebootVmButton = (Button)view.findViewById(R.id.rebootvmbutton);
+		rebootVmButton.setEnabled(rebootVmEnabled);
+	}
 
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		
+
 	}
 	
 	private void registerForVmsDbUpdate() {
 		final Runnable updatedUiWithResults = new Runnable() {
 			//This handles notifs from CsRestContentProvider upon changes in db
 			public void run() {
-				View csvmdetailview = (View) getActivity().findViewById(R.id.csvmdetailview);
-				setTextViewValues(csvmdetailview);
-				TextView stateText = (TextView)getActivity().findViewById(R.id.state);
-				setStateColor(stateText);
+				View csvmdetailsfragment = (View)getActivity().findViewById(R.id.csvmdetailsfragment);
+				setDisplayWidgetsAndConfigure(csvmdetailsfragment);
 			}
 		};
 
@@ -235,6 +286,74 @@ public class CsVmDetailsFragment extends Fragment {
 		if(vmsContentObserver!=null) {
 			getActivity().getContentResolver().unregisterContentObserver(vmsContentObserver);
 		}
+	}
+
+	public void makeStartOrStopOrRebootVmCall(View itemView, final String commandName) {
+		TextView idText = (TextView)itemView.findViewById(R.id.id);
+		final String vmid = idText.getText().toString();
+
+//		ImageView quickActionIcon = (ImageView)itemView.findViewById(R.id.quickactionicon);
+//		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
+//		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
+
+		String inProgressState = null;
+		if(CsApiConstants.API.startVirtualMachine.equalsIgnoreCase(commandName)) {
+			inProgressState = Vms.STATE_VALUES.STARTING;
+		} else if(CsApiConstants.API.stopVirtualMachine.equalsIgnoreCase(commandName)) {
+			inProgressState = Vms.STATE_VALUES.STOPPING;
+		} else if(CsApiConstants.API.rebootVirtualMachine.equalsIgnoreCase(commandName)) {
+			inProgressState = Vms.STATE_VALUES.REBOOTING;
+		}
+		
+		updateVmStateOnDb(vmid, inProgressState);  //update vm data with in-progress state
+//		vmsWithInProgressRequests.putString(vmid, inProgressState);  //cache in-progress state, so we compare and know when it has been updated by the server reply
+		
+        //make the rest call to cs server to start/stop/reboot vm represented by itemView
+        final String action = CsRestService.TEST_CALL;   
+        Bundle apiCmd = new Bundle();
+        apiCmd.putString(CsRestService.COMMAND, commandName);
+        apiCmd.putString(Vms.ID, vmid);
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.CALLBACK_VMLIST);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_VMLIST
+        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
+        getActivity().startService(csRestServiceIntent);
+	}
+	
+	public void updateVmStateOnDb(final String vmid, String state) {
+		ContentValues cv = new ContentValues();
+		cv.put(Vms.STATE, state);
+		final String whereClause = Vms.ID+"=?";
+		final String[] selectionArgs = new String[] { vmid };
+		getActivity().getContentResolver().update(Vms.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+	}
+	
+	public void setStartVmButtonClickHandler(final View view) {
+		Button startvmbutton = (Button)view.findViewById(R.id.startvmbutton);
+		startvmbutton.setOnClickListener(new OnClickListener() {
+		    @Override
+		    public void onClick(View v) {
+		      makeStartOrStopOrRebootVmCall(view, CsApiConstants.API.startVirtualMachine);
+		    }
+		  });
+	}
+	
+	public void setStopVmButtonClickHandler(final View view) {
+		Button stopvmbutton = (Button)view.findViewById(R.id.stopvmbutton);
+		stopvmbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				makeStartOrStopOrRebootVmCall(view, CsApiConstants.API.stopVirtualMachine);
+			}
+		});
+	}
+	
+	public void setRebootVmButtonClickHandler(final View view) {
+		Button rebootvmbutton = (Button)view.findViewById(R.id.rebootvmbutton);
+		rebootvmbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				makeStartOrStopOrRebootVmCall(view, CsApiConstants.API.rebootVirtualMachine);
+			}
+		});
 	}
 
 	

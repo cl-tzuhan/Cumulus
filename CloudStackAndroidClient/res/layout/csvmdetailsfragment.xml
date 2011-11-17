@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<RelativeLayout android:id="@+id/csvmdetailsfragment"
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="wrap_content" >
 	<LinearLayout android:id="@+id/logotitle"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
 		android:layout_centerHorizontal="true" >
-		<TextView android:id="@+id/apptitle"
+		<TextView android:id="@+id/apptitle_pt1"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:textSize="10dp" android:textColor="#39caff"
+			android:text="Cloud" />
+		<TextView android:id="@+id/apptitle_pt2"
+			android:layout_width="wrap_content" android:layout_height="8sp"
+			android:layout_marginLeft="-28sp"
+			android:textSize="10dp" android:textColor="#1e8eee"
 			android:text="Cloud" />
 		<TextView
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -20,16 +25,22 @@
 		android:layout_marginLeft="28px"
 		android:layoutAnimation="@anim/fadein_layoutanim">
 		<ImageView android:id="@+id/vmicon" android:src="@drawable/device_and_hardware_w"
-			android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
-			android:layout_height="wrap_content" android:layout_width="wrap_content"
-			android:layout_marginLeft="0dp" android:layout_marginRight="10dp"
-			android:background="@android:color/transparent" />
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="0dp" android:layout_marginRight="10dp"
+		android:background="@android:color/transparent" />
 	</LinearLayout>
 	<TextView android:id="@+id/displayname"
 		android:layout_toRightOf="@id/vmiconframe" android:layout_alignTop="@id/vmiconframe"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:text="Display Name" />
+	<ProgressBar android:id="@+id/progresscircle"
+		android:layout_alignParentRight="true" android:layout_alignTop="@id/displayname"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginTop="10dp" android:layout_marginRight="20dp"
+		android:visibility="invisible" 
+		style="?android:attr/progressBarStyleSmall" />
 	<TextView android:id="@+id/name" android:layout_alignLeft="@id/displayname"
 		android:layout_below="@id/displayname" android:layout_height="wrap_content"
 		android:layout_width="wrap_content" android:layout_marginTop="-4dp"
@@ -49,9 +60,8 @@
 		android:layout_width="match_parent" android:layout_height="wrap_content" >
 
 		<RelativeLayout android:id="@+id/csvmdetailview"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingTop="10dp" android:paddingLeft="25dp" android:paddingRight="25dp" android:paddingBottom="30dp"
-			android:minHeight="?android:attr/listPreferredItemHeight">
+			android:layout_width="fill_parent" android:paddingTop="10dp" android:paddingLeft="25dp" android:paddingRight="25dp" android:paddingBottom="30dp"
+			android:minHeight="?android:attr/listPreferredItemHeight" android:layout_height="wrap_content">
 
 			<TextView android:id="@+id/cpustatslinetitle"
 			android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/vmiconframe"
@@ -373,20 +383,41 @@
 				android:text="created on" />
 		
 		
-		
-				
-			<ImageView android:id="@+id/quickactionicon" android:src="@android:drawable/ic_menu_revert"
-				android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:hapticFeedbackEnabled="true"
-				android:visibility="invisible"
-				android:background="@android:color/transparent" />
-			<ProgressBar android:id="@+id/quickactionprogress" style="?android:attr/progressBarStyleSmall"
-				android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
-				android:layout_height="wrap_content"  android:layout_width="wrap_content"
-				android:layout_marginRight="15dp" android:paddingBottom="15dp"
-				android:visibility="invisible"
-				/>
+			<LinearLayout android:id="@+id/commandbuttonline"
+			android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/created"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:gravity="center_horizontal" >
+			<Button android:id="@+id/startvmbutton"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginTop="30dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/button_play_selector"
+				android:drawablePadding="-10dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:text="Start VM"
+				android:onClick="onStartVmClick" />
+			<Button android:id="@+id/stopvmbutton"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginTop="30dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/button_stop_selector"
+				android:drawablePadding="-10dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:text="Stop VM"
+				android:onClick="onStopVmClick" />
+			<Button android:id="@+id/rebootvmbutton"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginTop="30dp" android:layout_marginLeft="30dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/button_synchronize_selector"
+				android:drawablePadding="-10dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:text="Reboot VM"
+				android:onClick="onRebootVmClick" />
+			</LinearLayout>
 
 		</RelativeLayout>
 

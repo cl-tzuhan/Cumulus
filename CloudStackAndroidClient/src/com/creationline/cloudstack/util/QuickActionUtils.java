@@ -58,6 +58,10 @@ public class QuickActionUtils {
 	public static Animation getFadein_decelerate() {
 		return fadein_decelerate;
 	}
+
+	public static Animation getFadeout_decelerate() {
+		return fadeout_decelerate;
+	}
 	
 	/**
 	 * Sets the supplied quickAction as the onClick handler for the ImageView specified by
@@ -84,19 +88,19 @@ public class QuickActionUtils {
 		if(animate==false && quickActionIcon.getVisibility()==View.VISIBLE && quickActionProgress.getVisibility()==View.INVISIBLE) {
 			return;
 		}
-
+		
 		if(animate) {
 			quickActionIcon.startAnimation(fadein_decelerate);
 		}
 		quickActionIcon.setVisibility(View.VISIBLE);
 		quickActionIcon.setClickable(true);
-
+		
 		if(animate) {
 			quickActionProgress.startAnimation(fadeout_decelerate);
 		}
 		quickActionProgress.setVisibility(View.INVISIBLE);
 	}
-
+	
 	public static void showQuickActionProgress(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
 		if(animate==false && quickActionIcon.getVisibility()==View.INVISIBLE && quickActionProgress.getVisibility()==View.VISIBLE) {
 			return;
@@ -107,12 +111,13 @@ public class QuickActionUtils {
 			quickActionIcon.startAnimation(fadeout_decelerate);
 		}
 		quickActionIcon.setVisibility(View.INVISIBLE);
-
+		
 		if(animate) {
 			quickActionProgress.startAnimation(fadein_decelerate);
 		}
 		quickActionProgress.setVisibility(View.VISIBLE);
 	}
+
 	
 	
 	

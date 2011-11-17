@@ -62,9 +62,11 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         tpi.setAnimation(slide_leftToRight_slow);
         
         //set animation for apptitle
-        TextView tv = (TextView)findViewById(R.id.apptitle);
+        TextView apptitle_pt1 = (TextView)findViewById(R.id.apptitle_pt1);
+        TextView apptitle_pt2 = (TextView)findViewById(R.id.apptitle_pt2);
         Animation slide_rightToLeft_slow = AnimationUtils.loadAnimation(this, R.anim.slide_righttoleft_slow);
-        tv.setAnimation(slide_rightToLeft_slow);
+        apptitle_pt1.setAnimation(slide_rightToLeft_slow);
+        apptitle_pt2.setAnimation(slide_rightToLeft_slow);
         
         //set-up error log view to update with animation
         TextSwitcher ts = (TextSwitcher) findViewById(R.id.errorLogTextView);
