@@ -83,7 +83,7 @@
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/cpuspeed"
 		android:layout_marginLeft="1dp"
 		android:textSize="16sp" android:textColor="@color/label"
-		android:text="Ghz" />
+		android:text="Mhz" />
 	<TextView android:id="@+id/memory" android:layout_toRightOf="@id/cpuspeedunit"
 		android:layout_below="@id/hypervisor" android:layout_height="wrap_content"
 		android:layout_width="wrap_content"

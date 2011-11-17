@@ -18,7 +18,7 @@ public class QuickActionUtils {
 
     //animation caches (so we don't need to continually re-created these same animations)
     private static Animation fadein_decelerate = null;
-    private static Animation fadeout_decelerate = null;
+	private static Animation fadeout_decelerate = null;
     
     
     /*
@@ -55,6 +55,9 @@ public class QuickActionUtils {
         fadeout_decelerate = AnimationUtils.loadAnimation(context, R.anim.fadeout_decelerate);
 	}
 	
+	public static Animation getFadein_decelerate() {
+		return fadein_decelerate;
+	}
 	
 	/**
 	 * Sets the supplied quickAction as the onClick handler for the ImageView specified by
