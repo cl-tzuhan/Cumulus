@@ -42,6 +42,7 @@ public class DateTimeParser {
 			//in the case of an un-parse-able datetime str, we will just display the str as is instead of trying to prettify it
 			ClLog.e("setTextViewWithString():", "created timestamp could not be parsed; skipping");
 			ClLog.e("setTextViewWithString():", e);
+			tv.setText(datetimeStr);
 		}
 	}
 }

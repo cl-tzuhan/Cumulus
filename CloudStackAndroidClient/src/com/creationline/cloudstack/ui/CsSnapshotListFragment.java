@@ -1,9 +1,5 @@
 package com.creationline.cloudstack.ui;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import net.londatiga.android.ActionItem;
 import net.londatiga.android.QuickAction;
 import android.content.BroadcastReceiver;
@@ -31,7 +27,7 @@ import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
-import com.creationline.cloudstack.util.ClLog;
+import com.creationline.cloudstack.util.DateTimeParser;
 import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsSnapshotListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -43,20 +39,11 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     private CsSnapshotListAdapter adapter = null;  //backer for this list
     private BroadcastReceiver snapshotListCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
     private static InProgressCache snapshotsWithInProgressRequests = new InProgressCache();  //used to keep track of which snapshotss have requests in-progress
-//    private static Bundle snapshotsWithInProgressRequests = new Bundle();
-//    private static final int IDLE = 0;
-//    private static final int IN_PROGRESS = 1;
-//    private static final int SHOW_ICON = 2;
-    
 
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
     	//This adaptor use strictly for use with the CsSnapshot class/layout, and expects specific data to fill its contents.
     	
-    	private SimpleDateFormat datetimeParser=null;
-		private SimpleDateFormat timePrinter;
-		private SimpleDateFormat datePrinter;
-
 		public CsSnapshotListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
 		}
@@ -95,7 +82,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
 			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
 			final String snapshotId = snapshotIdText.getText().toString();
-//			int progress = snapshotsWithInProgressRequests.getInt(snapshotId);
 			int progress = snapshotsWithInProgressRequests.getProgressForId(snapshotId);
 			if(progress==0) {
 				//If a snapshot is created on the server-side w/out csac knowing, then we have no IDLE/IN_PROGRESS info for it.
@@ -104,25 +90,20 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 				TextView stateText = (TextView)view.findViewById(R.id.state);
 				final String state = stateText.getText().toString();
 				if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state) || Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
-//					progress = IN_PROGRESS;
 					progress = InProgressCache.IN_PROGRESS;
 				}
 			}
 			switch(progress) {
-//				case IDLE:
 				case InProgressCache.IDLE:
 					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
 					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
 					break;
-//				case IN_PROGRESS:
 				case InProgressCache.IN_PROGRESS:
 					QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
 					break;
-//				case SHOW_ICON:
 				case InProgressCache.SHOW_ICON:
 					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
 					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
-//					snapshotsWithInProgressRequests.remove(snapshotId);
 					snapshotsWithInProgressRequests.removeId(snapshotId);
 					break;
 			}
@@ -140,40 +121,10 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			String text = cursor.getString(cursor.getColumnIndex(columnName));
 			
 			if(textViewId==R.id.created) {
-				setCreatedDateTime(view, tv, text);
+				DateTimeParser.setCreatedDateTime(view, tv, text);
 			} else {
 				//for non-special cases, just output text as is
 				tv.setText(text);
-			}
-		}
-
-		/**
-		 * Specifically sets the "created" and "createdTime" textviews in the specified view with
-		 * parsed output from passed-in datetimeStr.  Format of datetimeStr is assumed to be fixed.
-		 * In the case datetimeStr cannot be successfully parsed/formated, the textviews will not be set.
-		 * 
-		 * @param view view which contains "created" and "createdTime" textviews to set with date/time text
-		 * @param tv the "created" textview (this is passed in just to save processing since we have this already in the existing code flow)
-		 * @param datetimeStr string in pre-determined format of the datetime to parse
-		 */
-		public void setCreatedDateTime(View view, TextView tv, String datetimeStr) {
-			try {
-				//lazy init & re-use
-				if(datetimeParser==null) {datetimeParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");};
-				if(datePrinter==null) {datePrinter = new SimpleDateFormat("yyyy-MM-dd");};
-				if(timePrinter==null) {timePrinter = new SimpleDateFormat("HH:mm:ss");};
-				
-				final Date date = datetimeParser.parse(datetimeStr);  //parse the date string
-				
-				tv.setText(datePrinter.format(date));  //set just the date info
-				
-				tv = (TextView) view.findViewById(R.id.createdtime);
-				tv.setText(timePrinter.format(date));  //set the time info separately from date info
-
-			} catch (ParseException e) {
-				//in the case of an un-parse-able datetime str, we will just display the str as is instead of trying to prettify it
-				ClLog.e("setTextViewWithString():", "created timestamp could not be parsed; skipping");
-				ClLog.e("setTextViewWithString():", e);
 			}
 		}
 
@@ -209,12 +160,10 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		final String snapshotId = bundle.getString(Snapshots.ID);
         		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
         			//if deleteSnapshot failed, revert the progress-circle back to icon again
-//        			snapshotsWithInProgressRequests.putInt(snapshotId, CsSnapshotListFragment.SHOW_ICON);
         			snapshotsWithInProgressRequests.setShowIconForId(snapshotId);
         			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
         		} else {
         			//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
-//        			snapshotsWithInProgressRequests.remove(snapshotId);
         			snapshotsWithInProgressRequests.removeId(snapshotId);
     				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
         		}
@@ -266,7 +215,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	}
 
 	public QuickAction createQuickAction(final View view) {
-//		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.menu_eraser));
 		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.bin));
 		
 		//create QuickAction. Use QuickAction.VERTICAL or QuickAction.HORIZONTAL param to define layout orientation
@@ -295,7 +243,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
 		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 		
-//		snapshotsWithInProgressRequests.putInt(snapshotId, CsSnapshotListFragment.IN_PROGRESS);
 		snapshotsWithInProgressRequests.setInProgressForId(snapshotId);
 
         //make the rest call to cs server to start/stop/reboot vm represented by itemView

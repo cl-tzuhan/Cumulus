@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.DateTimeParser;
@@ -24,8 +23,8 @@ public class CsVmDetailsFragment extends Fragment {
 
 	
 	public CsVmDetailsFragment() {
+		//empty constructor is needed by Android for automatically creating fragments from XML declarations
 	}
-	
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -34,8 +33,6 @@ public class CsVmDetailsFragment extends Fragment {
 		System.out.println("we are in onCraete()!!!!!!!");
 		///endDEBUG
 	}
-
-
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -110,23 +107,10 @@ public class CsVmDetailsFragment extends Fragment {
 		final String[] selectionArgs = new String[] { selectedVmId };
 		Cursor c = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
 		
-//		TextView textView = null;
-//		textView = (TextView)view.findViewById(R.id.displayname);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.DISPLAYNAME)));
-//		textView = (TextView)view.findViewById(R.id.name);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.NAME)));
-//		TextView stateText = (TextView)view.findViewById(R.id.state);
-//		stateText.setText(c.getString(c.getColumnIndex(Vms.STATE)));
 		setTextViewWithString(view, R.id.displayname, c, Vms.DISPLAYNAME);
 		setTextViewWithString(view, R.id.name, c, Vms.NAME);
 		setTextViewWithString(view, R.id.state, c, Vms.STATE);
 		
-//		textView = (TextView)view.findViewById(R.id.cpunumber);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.CPUNUMBER)));
-//		textView = (TextView)view.findViewById(R.id.cpuspeed);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.CPUSPEED)));
-//		textView = (TextView)view.findViewById(R.id.memory);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.MEMORY)));
 		setTextViewWithString(view, R.id.cpunumber, c, Vms.CPUNUMBER);
 		setTextViewWithString(view, R.id.cpuspeed, c, Vms.CPUSPEED);
 		setTextViewWithString(view, R.id.memory, c, Vms.MEMORY);
@@ -135,29 +119,6 @@ public class CsVmDetailsFragment extends Fragment {
 		setTextViewWithString(view, R.id.networkkbread, c, Vms.NETWORKKBSREAD);
 		setTextViewWithString(view, R.id.networkkbwrite, c, Vms.NETWORKKBSWRITE);
 
-		
-//		TextView vmidText = (TextView)view.findViewById(R.id.id);
-//		vmidText.setText(c.getString(c.getColumnIndex(Vms.ID)));
-//		textView = (TextView)view.findViewById(R.id.zonename);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.ZONENAME)));
-//		textView = (TextView)view.findViewById(R.id.hypervisor);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
-//		textView = (TextView)view.findViewById(R.id.templatedisplaytext);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.TEMPLATEDISPLAYTEXT)));
-//		textView = (TextView)view.findViewById(R.id.serviceofferingname);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.SERVICEOFFERINGNAME)));
-//		textView = (TextView)view.findViewById(R.id.haenabled);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.HAENABLE)));
-//		textView = (TextView)view.findViewById(R.id.hostname);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.HOSTNAME)));
-//		textView = (TextView)view.findViewById(R.id.group);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.GROUPA)));
-//		textView = (TextView)view.findViewById(R.id.domain);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.DOMAIN)));
-//		textView = (TextView)view.findViewById(R.id.account);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.ACCOUNT)));
-//		textView = (TextView)view.findViewById(R.id.created);
-//		textView.setText(c.getString(c.getColumnIndex(Vms.CREATED)));
 		setTextViewWithString(view, R.id.id, c, Vms.ID);
 		setTextViewWithString(view, R.id.zonename, c, Vms.ZONENAME);
 		setTextViewWithString(view, R.id.hypervisor, c, Vms.HYPERVISOR);
