@@ -83,7 +83,7 @@
 		android:textSize="9sp" android:textColor="@color/label"
 		android:visibility="invisible"
 		android:text="inprogress_state" />
-	<ImageView android:id="@+id/quickactionicon" android:src="@drawable/toggle_menu"
+	<ImageView android:id="@+id/quickactionicon" android:src="@drawable/toggle_menu_selector"
 		android:layout_alignParentRight="true" android:layout_alignParentBottom="true" android:layout_below="@id/volumename"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:paddingTop="4dp" android:paddingRight="20dp" android:paddingBottom="8dp" android:paddingLeft="20dp"

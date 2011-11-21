@@ -332,6 +332,8 @@ containing a value of this type.
         public static final int menu_up_arrow=0x7f02001b;
         public static final int popup=0x7f02001c;
         public static final int toggle_menu=0x7f02001d;
+        public static final int toggle_menu_disabled=0x7f02001e;
+        public static final int toggle_menu_selector=0x7f02001f;
     }
     public static final class id {
         public static final int account=0x7f050021;
