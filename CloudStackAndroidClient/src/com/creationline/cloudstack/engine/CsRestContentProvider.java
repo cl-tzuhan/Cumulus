@@ -38,7 +38,7 @@ public class CsRestContentProvider extends ContentProvider {
 	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
 	private SQLiteDatabaseHelper sqlDbHelper;
-	private static final int DB_VERSION = 5;
+	private static final int DB_VERSION = 6;
 	
 	
 	public static class SQLiteDatabaseHelper extends SQLiteOpenHelper {

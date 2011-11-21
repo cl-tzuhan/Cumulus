@@ -62,9 +62,10 @@
 		android:textSize="13sp" android:textColor="@color/label"
 		android:text="volume" />
 		
-	<TextView android:id="@+id/state" android:layout_alignLeft="@id/name"
-		android:layout_below="@id/volumename" android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
+	<TextView android:id="@+id/state"
+		android:layout_alignLeft="@id/name" android:layout_below="@id/volumename"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginTop="4dp"
 		android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
 		android:typeface="monospace"
 		android:text="state" />
@@ -76,15 +77,21 @@
 		android:textSize="9sp" android:textColor="@color/label"
 		android:visibility="invisible"
 		android:text="id" />
+	<TextView android:id="@+id/inprogress_state"
+		android:layout_toRightOf="@id/id" android:layout_alignParentBottom="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="9sp" android:textColor="@color/label"
+		android:visibility="invisible"
+		android:text="inprogress_state" />
 	<ImageView android:id="@+id/quickactionicon" android:src="@drawable/toggle_menu"
-		android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
+		android:layout_alignParentRight="true" android:layout_alignParentBottom="true" android:layout_below="@id/volumename"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:paddingTop="4dp" android:paddingRight="20dp" android:paddingBottom="8dp" android:paddingLeft="20dp"
 		android:hapticFeedbackEnabled="true"
 		android:visibility="visible"
 		android:background="@android:color/transparent" />
 	<ProgressBar android:id="@+id/quickactionprogress" style="?android:attr/progressBarStyleSmall"
-		android:layout_alignParentRight="true" android:layout_alignParentBottom="true"
+		android:layout_alignParentRight="true" android:layout_alignParentBottom="true" android:layout_below="@id/volumename"
 		android:layout_height="wrap_content"  android:layout_width="wrap_content"
 		android:layout_marginRight="25dp" android:paddingBottom="21dp"
 		android:visibility="invisible"

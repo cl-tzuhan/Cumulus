@@ -24,7 +24,7 @@
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
 		android:layout_marginLeft="28px"
 		android:layoutAnimation="@anim/fadein_layoutanim">
-		<ImageView android:id="@+id/vmicon" android:src="@drawable/device_and_hardware_w"
+		<ImageView android:id="@+id/vmicon" android:src="@drawable/device_and_hardware_w_72x72"
 		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:layout_marginLeft="0dp" android:layout_marginRight="10dp"
@@ -395,8 +395,7 @@
 				android:drawablePadding="-10dp"
 				android:padding="5dp"
 				android:textColor="@color/primaryinfo_color_selector"
-				android:text="Start VM"
-				android:onClick="onStartVmClick" />
+				android:text="Start VM" />
 			<Button android:id="@+id/stopvmbutton"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:layout_marginTop="30dp"
@@ -405,8 +404,7 @@
 				android:drawablePadding="-10dp"
 				android:padding="5dp"
 				android:textColor="@color/primaryinfo_color_selector"
-				android:text="Stop VM"
-				android:onClick="onStopVmClick" />
+				android:text="Stop VM" />
 			<Button android:id="@+id/rebootvmbutton"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:layout_marginTop="30dp" android:layout_marginLeft="30dp"
@@ -415,8 +413,7 @@
 				android:drawablePadding="-10dp"
 				android:padding="5dp"
 				android:textColor="@color/primaryinfo_color_selector"
-				android:text="Reboot VM"
-				android:onClick="onRebootVmClick" />
+				android:text="Reboot VM" />
 			</LinearLayout>
 
 		</RelativeLayout>

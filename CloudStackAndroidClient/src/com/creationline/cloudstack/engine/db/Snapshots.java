@@ -32,10 +32,14 @@ public class Snapshots implements BaseColumns {
 	public static final String VOLUMENAME = "volumename";
 	public static final String VOLUMETYPE = "volumetype";
 	
+	public static final String INPROGRESS_STATE = "inprogress_state";  //this a CSAC-specific db field and is not a part of the real CS API
+	
 	public static final class STATE_VALUES {
 		public static final String CREATING = "Creating";
 		public static final String BACKINGUP = "BackingUp";
 		public static final String BACKEDUP = "BackedUp";
+		
+		public static final String DELETING = "Deleting...";  //this is not a real CS API value; this used locally by CSAC
 	}
 	
 	public static final class META_DATA {

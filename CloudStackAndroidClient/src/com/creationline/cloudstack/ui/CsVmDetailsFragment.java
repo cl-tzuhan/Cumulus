@@ -76,11 +76,13 @@ public class CsVmDetailsFragment extends Fragment {
 	}
 
 	public void setTextViewValues(View view) {
+		final String TAG = "CsVmDetailsFragment.setTextViewValues()";
 		
 		final String selectedVmId = getActivity().getIntent().getStringExtra(Vms.class.toString()+Vms.ID);
 		if(selectedVmId==null) {
 			//Null check to guard against cases when CsVmDetailsFragment is called with outdated (i.e. null) vmid.
 			//Since we can't do anything with this view w/out vm data, just refuse to start in this case.
+			ClLog.e(TAG, "aborted start of vm details view because selectedVmId=null");
 			getActivity().finish();
 			return;
 		}
@@ -120,9 +122,17 @@ public class CsVmDetailsFragment extends Fragment {
 //				Vms.NIC,
 				Vms.HYPERVISOR};
 		final String whereClause = Vms.ID+"=?";
-		ClLog.d("CsVmDetailsFragment.onActivityCreated()", "starting with selectedVmId= "+selectedVmId);
+		ClLog.d(TAG, "starting with selectedVmId= "+selectedVmId);
 		final String[] selectionArgs = new String[] { selectedVmId };
 		Cursor c = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+		
+		if(c==null || c.getCount()<=0) {
+			//Null check to guard against cases when CsVmDetailsFragment is called with outdated vmId.
+			//Since we can't do anything with this view w/out vm data, just refuse to start in this case.
+			ClLog.e(TAG, "aborted start of vm details view, because data does not exist for vmId="+selectedVmId);
+			getActivity().finish();
+			return;
+		}
 		
 		setTextViewWithString(view, R.id.displayname, c, Vms.DISPLAYNAME);
 		setTextViewWithString(view, R.id.name, c, Vms.NAME);
@@ -158,9 +168,16 @@ public class CsVmDetailsFragment extends Fragment {
 	 */
 	public void setTextViewWithString(View view, int textViewId, Cursor cursor, String columnName) {
 		TextView tv = (TextView) view.findViewById(textViewId);
-		String text = cursor.getString(cursor.getColumnIndex(columnName));
+		final int columnIndex = cursor.getColumnIndex(columnName);
+		String text = null;
+		if(columnIndex!=-1) {
+			text = cursor.getString(columnIndex);
+		}
 		
-		if(textViewId==R.id.created) {
+		if (text==null) {
+			//if we have a missing value, set a null value and let the textview show its hint
+			tv.setText(null);
+		} else if(textViewId==R.id.created) {
 			//format all dates to a more readable format
 			DateTimeParser.setCreatedDateTime(view, tv, text);
 		} else if(textViewId==R.id.haenabled) {
@@ -196,39 +213,39 @@ public class CsVmDetailsFragment extends Fragment {
 		if(Vms.STATE_VALUES.RUNNING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmrunning_color_selector));
 			stateText.startAnimation(QuickActionUtils.getFadein_decelerate());
-			setButtonEnabledDisabled(view, false, true, true);
+			setButtonEnabled(view, false, true, true);
 			makeProgressInvisible(view);
 			
 		} else if (Vms.STATE_VALUES.STOPPED.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstopped_color_selector));
 			stateText.startAnimation(QuickActionUtils.getFadein_decelerate());
-			setButtonEnabledDisabled(view, true, false, false);
+			setButtonEnabled(view, true, false, false);
 			makeProgressInvisible(view);
 			
 		} else if (Vms.STATE_VALUES.STARTING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstarting_color_selector));
-			setButtonEnabledDisabled(view, false, false, false);
-			makeProgressVisible(view);
+			setButtonEnabled(view, false, false, false);
+			setProgressVisible(view);
 			
 		} else if (Vms.STATE_VALUES.STOPPING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmstopping_color_selector));
-			setButtonEnabledDisabled(view, false, false, false);
-			makeProgressVisible(view);
+			setButtonEnabled(view, false, false, false);
+			setProgressVisible(view);
 			
 		}  else if (Vms.STATE_VALUES.REBOOTING.equalsIgnoreCase(state)) {
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmrebooting_color_selector));
-			setButtonEnabledDisabled(view, false, false, false);
-			makeProgressVisible(view);
+			setButtonEnabled(view, false, false, false);
+			setProgressVisible(view);
 			
 		} else {
 			//if we run into an unknown state, give...
 			stateText.setTextColor(getResources().getColorStateList(R.color.vmunknown_color_selector));  //...state a default color
-			setButtonEnabledDisabled(view, false, false, false);  //...and no buttons to be safe since we don't know which commands may/not work
+			setButtonEnabled(view, false, false, false);  //...and no buttons to be safe since we don't know which commands may/not work
 			makeProgressInvisible(view);
 		}
 	}
 
-	public void makeProgressVisible(View view) {
+	public void setProgressVisible(View view) {
 		ProgressBar progresscircle = (ProgressBar)view.findViewById(R.id.progresscircle);
 		if(progresscircle.getVisibility()==View.INVISIBLE) {
 			progresscircle.startAnimation(QuickActionUtils.getFadein_decelerate());
@@ -244,7 +261,7 @@ public class CsVmDetailsFragment extends Fragment {
 		}
 	}
 
-	public void setButtonEnabledDisabled(View view, boolean startVmEnabled, boolean stopVmEnabled, boolean rebootVmEnabled) {
+	public void setButtonEnabled(View view, boolean startVmEnabled, boolean stopVmEnabled, boolean rebootVmEnabled) {
 		Button startVmButton = (Button)view.findViewById(R.id.startvmbutton);
 		startVmButton.setEnabled(startVmEnabled);
 		Button stopVmButton = (Button)view.findViewById(R.id.stopvmbutton);

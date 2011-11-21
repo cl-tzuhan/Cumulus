@@ -44,19 +44,6 @@
 	 	android:layout_width="fill_parent" android:layout_height="wrap_content"
 		style="@style/Widget.CsacTitlepageIndicator" />
 
-	<Button android:id="@+id/button1" android:text="Button"
-		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentRight="true" android:layout_marginBottom="25dp"
-		android:autoLink="phone" android:onClick="onClick_sideMenu"></Button>
-
-	<TextView android:layout_height="wrap_content"
-		android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge"
-		android:text="->" android:id="@+id/textView1"
-		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_marginRight="15dp" android:layout_marginTop="28dp"
-		android:focusable="false" android:focusableInTouchMode="false"
-		android:textStyle="bold"></TextView>
 		
 	<TextSwitcher android:textAppearance="?android:attr/textAppearanceSmall"
 		android:id="@+id/errorLogTextView" android:text="error log"

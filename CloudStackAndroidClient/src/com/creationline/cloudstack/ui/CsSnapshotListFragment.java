@@ -3,6 +3,7 @@ package com.creationline.cloudstack.ui;
 import net.londatiga.android.ActionItem;
 import net.londatiga.android.QuickAction;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,6 +18,7 @@ import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.ResourceCursorAdapter;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,14 +34,16 @@ import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsSnapshotListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 	public static class INTENT_ACTION {
+		//NOTE: changing the value of this constant requires you to change any usage of the same string in Android.manifest!!!
 		public static final String DELETESNAPSHOT_COMMAND = "com.creationline.cloudstack.ui.CsSnapshotListFragment.DELETESNAPSHOT_COMMAND";
 	}
 
 	private static final int CSSNAPSHOT_LIST_LOADER = 0x02;
     private CsSnapshotListAdapter adapter = null;  //backer for this list
     private BroadcastReceiver snapshotListCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
-    private static InProgressCache snapshotsWithInProgressRequests = new InProgressCache();  //used to keep track of which snapshotss have requests in-progress
-
+//    private static InProgressCache snapshotsWithInProgressRequests = new InProgressCache();  //used to keep track of which snapshotss have requests in-progress
+//    private List<String> itemsToAnimate = new ArrayList<String>();
+    
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
     	//This adaptor use strictly for use with the CsSnapshot class/layout, and expects specific data to fill its contents.
@@ -57,7 +61,10 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			setTextViewWithString(view, R.id.volumetype, cursor, Snapshots.VOLUMETYPE);
 			setTextViewWithString(view, R.id.state, cursor, Snapshots.STATE);
 			
-			configureQuickAction(view);
+			setTextViewWithString(view, R.id.inprogress_state, cursor, Snapshots.INPROGRESS_STATE);
+			
+//			configureQuickAction(view);
+			configureAttributesBasedOnState(view);
 			setStateColor(view);
     	}
 
@@ -71,41 +78,83 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 				colorStateList = getResources().getColorStateList(R.color.snapshotbackingup_color_selector);
 			} else if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state)) {
 				colorStateList = getResources().getColorStateList(R.color.snapshotcreating_color_selector);
+			} else if (Snapshots.STATE_VALUES.DELETING.equalsIgnoreCase(state)) {
+				colorStateList = getResources().getColorStateList(R.color.vmstopping_color_selector);
 			} else {
 				colorStateList = getResources().getColorStateList(R.color.supplementaryinfo_color_selector);
 			}
 			stateText.setTextColor(colorStateList);
 		}
 
-		public void configureQuickAction(View view) {
-			TextView snapshotIdText = (TextView)view.findViewById(R.id.id);
+//		public void configureQuickAction(View view) {
+//			TextView snapshotIdText = (TextView)view.findViewById(R.id.id);
+//			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
+//			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
+//			final String snapshotId = snapshotIdText.getText().toString();
+//			int progress = snapshotsWithInProgressRequests.getProgressForId(snapshotId);
+//			if(progress==0) {
+//				//If a snapshot is created on the server-side w/out csac knowing, then we have no IDLE/IN_PROGRESS info for it.
+//				//Since you can't issue commands to a creating/backing-up snapshot, we will show the progress-circle for
+//				//these states as well to handle these server-created snapshots.
+//				TextView stateText = (TextView)view.findViewById(R.id.state);
+//				final String state = stateText.getText().toString();
+//				if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state) || Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
+//					progress = InProgressCache.IN_PROGRESS;
+//				}
+//			}
+//			switch(progress) {
+//				case InProgressCache.IDLE:
+//					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+//					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
+//					break;
+//				case InProgressCache.IN_PROGRESS:
+//					QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+//					break;
+//				case InProgressCache.SHOW_ICON:
+//					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+//					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
+//					snapshotsWithInProgressRequests.removeId(snapshotId);
+//					break;
+//			}
+//		}
+		public void configureAttributesBasedOnState(View view) {
 			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
 			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
-			final String snapshotId = snapshotIdText.getText().toString();
-			int progress = snapshotsWithInProgressRequests.getProgressForId(snapshotId);
-			if(progress==0) {
-				//If a snapshot is created on the server-side w/out csac knowing, then we have no IDLE/IN_PROGRESS info for it.
-				//Since you can't issue commands to a creating/backing-up snapshot, we will show the progress-circle for
-				//these states as well to handle these server-created snapshots.
-				TextView stateText = (TextView)view.findViewById(R.id.state);
-				final String state = stateText.getText().toString();
-				if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state) || Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
-					progress = InProgressCache.IN_PROGRESS;
-				}
+			
+			TextView stateText = (TextView)view.findViewById(R.id.state);
+			String state = stateText.getText().toString();
+			TextView inProgressStateText = (TextView)view.findViewById(R.id.inprogress_state);
+
+			final String inProgressState = inProgressStateText.getText().toString();
+			if(!inProgressState.isEmpty() && !inProgressState.equalsIgnoreCase("show_icon")) {
+				state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
 			}
-			switch(progress) {
-				case InProgressCache.IDLE:
-					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
-					break;
-				case InProgressCache.IN_PROGRESS:
-					QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
-					break;
-				case InProgressCache.SHOW_ICON:
-					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
-					snapshotsWithInProgressRequests.removeId(snapshotId);
-					break;
+//			boolean animate = false;
+//			TextView snapshotIdText = (TextView)view.findViewById(R.id.id);
+//			final String snapshotId = snapshotIdText.getText().toString();
+//			if(itemsToAnimate.contains(snapshotId)) {
+//				animate = true;
+//				itemsToAnimate.remove(snapshotId);
+//			}
+			
+			quickActionIcon.setEnabled(true);
+			//for the vm state text, we change its color depending on the current state of the vm
+			if(Snapshots.STATE_VALUES.BACKEDUP.equalsIgnoreCase(state)) {
+				QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
+				QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
+				
+			} else if (Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				
+			} else if (Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state)) {
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				
+			} else if (Snapshots.STATE_VALUES.DELETING.equalsIgnoreCase(state)) {
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				
+			} else {
+				//if we run into an unknown state, give...
+				quickActionIcon.setEnabled(false);  //...disable the quickaction menu since we don't know what running a command might do in this state
 			}
 		}
 
@@ -122,6 +171,13 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			
 			if(textViewId==R.id.created) {
 				DateTimeParser.setCreatedDateTime(view, tv, text);
+			} else if (textViewId==R.id.inprogress_state) {
+				//inprogress_state values takes precedence over state values for ui-display purposes
+				if(text!=null) {
+					TextView stateText = (TextView) view.findViewById(R.id.state);
+					stateText.setText(text);
+				}
+				tv.setText(text);
 			} else {
 				//for non-special cases, just output text as is
 				tv.setText(text);
@@ -158,13 +214,18 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		Bundle bundle = intent.getExtras();
         		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
         		final String snapshotId = bundle.getString(Snapshots.ID);
+        		
+        		//as the request is finished, mark inprogress_state as null signifying there is no pending operation left
+        		updateSnapshotInProgressStateOnDb(snapshotId, null);
+//        		itemsToAnimate.add(snapshotId);
+        		
         		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
         			//if deleteSnapshot failed, revert the progress-circle back to icon again
-        			snapshotsWithInProgressRequests.setShowIconForId(snapshotId);
+//        			snapshotsWithInProgressRequests.setShowIconForId(snapshotId);
         			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
         		} else {
         			//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
-        			snapshotsWithInProgressRequests.removeId(snapshotId);
+//        			snapshotsWithInProgressRequests.removeId(snapshotId);
     				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
         		}
         	}
@@ -180,7 +241,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
         getActivity().startService(csRestServiceIntent);
     }
-	
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -198,7 +258,18 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         
         super.onActivityCreated(savedInstanceState);
 	}
-
+	
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		final TextView snapshotIdText = (TextView)v.findViewById(R.id.id);
+		
+		//start details view activity with id of selected snapshot
+		Intent intent = new Intent();
+		intent.setClass(getActivity(), CsSnapshotDetailsFragmentActivity.class);
+		intent.putExtra(Snapshots.class.toString()+Snapshots.ID, snapshotIdText.getText().toString());
+		startActivity(intent);
+	}
+	
 	@Override
 	public void onDestroy() {
 		
@@ -243,7 +314,9 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
 		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 		
-		snapshotsWithInProgressRequests.setInProgressForId(snapshotId);
+//		snapshotsWithInProgressRequests.setInProgressForId(snapshotId);
+		//set the inprogress_state so the ui will know this snapshot has a pending command
+		updateSnapshotInProgressStateOnDb(snapshotId, Snapshots.STATE_VALUES.DELETING);
 
         //make the rest call to cs server to start/stop/reboot vm represented by itemView
         final String action = CsRestService.TEST_CALL;   
@@ -255,6 +328,15 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         getActivity().startService(csRestServiceIntent);
 	}
 	
+	public void updateSnapshotInProgressStateOnDb(final String snapshotId, String state) {
+		ContentValues cv = new ContentValues();
+		cv.put(Snapshots.INPROGRESS_STATE, state);
+		final String whereClause = Snapshots.ID+"=?";
+		final String[] selectionArgs = new String[] { snapshotId };
+		getActivity().getContentResolver().update(Snapshots.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+	}
+	
+	
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] columns = new String[] {
@@ -265,6 +347,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		Snapshots.VOLUMENAME,
         		Snapshots.VOLUMETYPE,
         		Snapshots.STATE,
+				Snapshots.INPROGRESS_STATE,  //csac-specific field
         };
         CursorLoader cl = new CursorLoader(getActivity(), Snapshots.META_DATA.CONTENT_URI, columns, null, null, null);
 		return cl;

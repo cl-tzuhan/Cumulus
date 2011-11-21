@@ -51,6 +51,7 @@ import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
+import com.creationline.cloudstack.ui.CsSnapshotListFragment;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsRestService extends IntentService {
@@ -79,7 +80,8 @@ public class CsRestService extends IntentService {
 	private static final int ASYNCJOB_COMPLETED = 1;
 	private static final int ASYNCJOB_FAILEDTOCOMPLETE = 2;
 	
-	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
+//	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
+	private static List<Uri> inProgressTransactionList = new ArrayList<Uri>();
 	private static Time time = null;
 
 	
@@ -147,17 +149,24 @@ public class CsRestService extends IntentService {
 	
 	@Override
 	public void onDestroy() {
-		final String TAG = "CsRestService.onDestory()";
-
-		if(inProgressTransaction!=null) {
-			ClLog.i(TAG, "App exited before request completed.  Marking "+inProgressTransaction+" as canceled");
-			updateCallAsAbortedOnDb(inProgressTransaction);
-		}
+//		final String TAG = "CsRestService.onDestory()";
+//
+//		if(inProgressTransaction!=null) {
+//			ClLog.i(TAG, "App exited before request completed.  Marking "+inProgressTransaction+" as canceled");
+//			updateCallAsAbortedOnDb(inProgressTransaction);
+//		}
+//		for(Uri uri : inProgressTransactionList) {
+//			ClLog.i(TAG, "App exited before request completed.  Marking "+uri+" as canceled");
+//			updateCallAsAbortedOnDb(uri);
+//		}
+//		inProgressTransactionList.clear();
 		
 		super.onDestroy();
 	}
 
 	private void performRestRequest(Bundle apiCmd) {
+		
+		Uri inProgressTransaction = null;
 		
 		try {
 			//create complete url
@@ -165,6 +174,7 @@ public class CsRestService extends IntentService {
 
 			//save the request to db
 			inProgressTransaction = saveRequestToDb(finalUrl, apiCmd);
+			inProgressTransactionList.add(inProgressTransaction);
 
 			//send request to cs
 			HttpResponse reply = doRestCall(finalUrl, inProgressTransaction);
@@ -192,6 +202,7 @@ public class CsRestService extends IntentService {
 			updateCallAsAbortedOnDb(inProgressTransaction);
 		}
 		
+		inProgressTransactionList.remove(inProgressTransaction);
 		inProgressTransaction = null;
 		
 	}
@@ -487,26 +498,34 @@ public class CsRestService extends IntentService {
 	public void informCallerOfFailure(final Uri uriToUpdate, String responseName) {
 		final String truncatedResponseName = responseName.substring(0, responseName.lastIndexOf("response"));
 		if(CsApiConstants.API.deleteSnapshot.equalsIgnoreCase(truncatedResponseName)) {
-			informSnapshotFragmentOfCallFailure(uriToUpdate);
+			informCallerFragmentOfCallFailure(uriToUpdate);
 		}
 	}
 
-	public void informSnapshotFragmentOfCallFailure(final Uri uriToUpdate) {
+	public void informCallerFragmentOfCallFailure(final Uri uriToUpdate) {
 		Bundle bundle = findTransactionRequestAndCallbackForRow(uriToUpdate);
 		final String originalRequest = bundle.getString(Transactions.REQUEST);
-		final String snapshotId = extractParamValueFromUriStr(originalRequest, Snapshots.ID);
+		final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
 		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+		
+		if(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND.equalsIgnoreCase(callbackIntentFilter)) {
+			ContentValues cv = new ContentValues();
+			cv.putNull(Snapshots.INPROGRESS_STATE);
+			final String whereClause = Snapshots.ID+"=?";
+			final String[] selectionArgs = new String[] { id };
+			getContentResolver().update(Snapshots.META_DATA.CONTENT_URI, cv, whereClause, selectionArgs);
+		}
 
-		informCallerFragmentOfCallCompletion(callbackIntentFilter, snapshotId, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+		informCallerFragmentOfCallCompletion(callbackIntentFilter, id, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
 	}
 
-	public void informCallerFragmentOfCallCompletion(final String callbackIntentFilter, final String snapshotId, final int successOrFailure) {
+	public void informCallerFragmentOfCallCompletion(final String callbackIntentFilter, final String id, final int successOrFailure) {
 		//inform CsSnapshotListFragment of the result of the call
 //				Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
 		if(callbackIntentFilter!=null) {
 			Intent broadcastIntent = new Intent(callbackIntentFilter);
 			Bundle bundle = new Bundle();
-			bundle.putString(Snapshots.ID, snapshotId);
+			bundle.putString(Snapshots.ID, id);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
 			bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
 			broadcastIntent.putExtras(bundle);
 			sendBroadcast(broadcastIntent);
@@ -547,7 +566,7 @@ public class CsRestService extends IntentService {
 		
 		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 		
-		informSnapshotFragmentOfCallFailure(uriToUpdate);
+		informCallerFragmentOfCallFailure(uriToUpdate);
 	}
 
 	/**

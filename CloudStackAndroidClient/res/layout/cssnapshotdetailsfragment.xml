@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/cssnapshotdetailsfragment"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content" >
+	<LinearLayout android:id="@+id/logotitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true" >
+		<TextView android:id="@+id/apptitle_pt1"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="#39caff"
+			android:text="Cloud" />
+		<TextView android:id="@+id/apptitle_pt2"
+			android:layout_width="wrap_content" android:layout_height="8sp"
+			android:layout_marginLeft="-28sp"
+			android:textSize="10dp" android:textColor="#1e8eee"
+			android:text="Cloud" />
+		<TextView
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="@color/supplementaryinfo_color_selector"
+			android:text="Stack" />
+	</LinearLayout>
+	<LinearLayout android:id="@+id/iconframe"
+		android:layout_alignParentLeft="true" android:layout_below="@id/logotitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_marginLeft="28px"
+		android:layoutAnimation="@anim/fadein_layoutanim">
+		<ImageView android:id="@+id/detailviewicon" android:src="@drawable/folder_picture_w_72x72"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="0dp" android:layout_marginRight="10dp"
+		android:background="@android:color/transparent" />
+	</LinearLayout>
+	<TextView android:id="@+id/name"
+		android:layout_toRightOf="@id/iconframe" android:layout_alignTop="@id/iconframe"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginTop="10dp"
+		android:textSize="10sp" android:textColor="@color/primaryinfo_color_selector"
+		android:text="Name" />
+	<ProgressBar android:id="@+id/progresscircle"
+		android:layout_alignParentRight="true" android:layout_alignTop="@id/name"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginTop="20dp" android:layout_marginRight="20dp"
+		android:visibility="invisible" 
+		style="?android:attr/progressBarStyleSmall" />
+	<TextView android:id="@+id/volumename" android:layout_alignLeft="@id/name"
+		android:layout_below="@id/name" android:layout_height="wrap_content"
+		android:layout_width="wrap_content" android:layout_marginTop="-2dp"
+		android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="Volume name" />
+	<TextView android:id="@+id/state"
+		android:layout_alignLeft="@id/name" android:layout_alignBottom="@id/iconframe"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginBottom="4dp"
+		android:textSize="10sp"
+		android:textColor="@color/vmunknown_color_selector" android:textStyle="bold"
+		android:typeface="monospace"
+		android:text="state" />
+		
+	<ScrollView android:id="@+id/detailscrollview"
+		android:layout_alignParentLeft="true" android:layout_below="@id/iconframe"
+		android:layout_width="match_parent" android:layout_height="wrap_content" >
+
+		<RelativeLayout android:id="@+id/detailview"
+			android:layout_width="fill_parent" android:paddingTop="10dp" android:paddingLeft="25dp" android:paddingRight="25dp" android:paddingBottom="30dp"
+			android:minHeight="?android:attr/listPreferredItemHeight" android:layout_height="wrap_content">
+
+			<TextView android:id="@+id/basicinformationsectiontitle"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/state"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layout_marginTop="0dp"
+				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="basic information" />
+			<TextView android:id="@+id/id"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/basicinformationsectiontitle"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="id" />
+			<TextView android:id="@+id/idlabel"
+				android:layout_toRightOf="@id/id" android:layout_below="@id/state"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/id"
+				android:layout_marginLeft="5dp"
+				android:textSize="14sp" android:textColor="@color/label"
+				android:text="ID" />
+				
+			<TextView android:id="@+id/volumetype"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/id"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Volume Type" />
+			<TextView android:id="@+id/volumetypelabel"
+				android:layout_toRightOf="@id/volumetype" android:layout_below="@id/id"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/volumetype"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="volume type" />
+				
+			<TextView android:id="@+id/intervaltype"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/volumetype"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Interval type" />
+			<TextView android:id="@+id/intervaltypelabel"
+				android:layout_toRightOf="@id/intervaltype" android:layout_below="@id/id"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/intervaltype"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="interval type" />
+				
+			<TextView android:id="@+id/domain"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/intervaltype"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Domain" />
+			<TextView android:id="@+id/domainlabel"
+				android:layout_toRightOf="@id/domain"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/domain"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="domain" />
+				
+				
+			<TextView android:id="@+id/miscellaneoussectiontitle"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/domain"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layout_marginTop="23dp"
+				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="miscellaneous information" />
+			<TextView android:id="@+id/snapshottype"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/miscellaneoussectiontitle"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Account" />
+			<TextView android:id="@+id/snapshottypelabel"
+				android:layout_toRightOf="@id/snapshottype"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/snapshottype"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="snapshot type" />
+
+			<TextView android:id="@+id/account"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/snapshottype"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Account" />
+			<TextView android:id="@+id/accountlabel"
+				android:layout_toRightOf="@id/account"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/account"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="account" />
+
+
+			<TextView android:id="@+id/created"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/account"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginTop="23dp"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Created date" />
+			<TextView android:id="@+id/createdtime"
+			    android:layout_toRightOf="@id/created"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/created"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:typeface="serif"
+				android:text="time" />
+			<TextView android:id="@+id/createdlabel"
+				android:layout_toRightOf="@id/createdtime"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/created"
+				android:layout_marginLeft="5dp"
+				android:paddingBottom="20dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="created on" />
+		
+		
+			<LinearLayout android:id="@+id/commandbuttonline"
+			android:layout_alignLeft="@id/iconframe" android:layout_below="@id/created"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:gravity="center_horizontal" >
+			<Button android:id="@+id/deletesnapshotbutton"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginTop="30dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/bin_selector"
+				android:drawablePadding="-10dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:text="Delete Snapshot" />
+			</LinearLayout>
+
+			<TextView android:id="@+id/inprogress_state"
+				android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="9sp" android:textColor="@color/label"
+				android:visibility="invisible"
+				android:text="inprogress_state" />
+		</RelativeLayout>
+
+	</ScrollView>
+	
+</RelativeLayout>
