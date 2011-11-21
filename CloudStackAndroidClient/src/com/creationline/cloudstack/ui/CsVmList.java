@@ -60,6 +60,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         tpi.setOnPageChangeListener(new CurrentPageListener());
         final Animation slide_leftToRight_slow = AnimationUtils.loadAnimation(this, R.anim.slide_lefttoright_slow);
         tpi.setAnimation(slide_leftToRight_slow);
+        tpi.setCurrentItem(1);  //make the "Instances" page the default page shown
         
         //set animation for apptitle
         TextView apptitle_pt1 = (TextView)findViewById(R.id.apptitle_pt1);

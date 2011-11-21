@@ -41,8 +41,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	private static final int CSSNAPSHOT_LIST_LOADER = 0x02;
     private CsSnapshotListAdapter adapter = null;  //backer for this list
     private BroadcastReceiver snapshotListCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
-//    private static InProgressCache snapshotsWithInProgressRequests = new InProgressCache();  //used to keep track of which snapshotss have requests in-progress
-//    private List<String> itemsToAnimate = new ArrayList<String>();
     
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
@@ -63,10 +61,26 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			
 			setTextViewWithString(view, R.id.inprogress_state, cursor, Snapshots.INPROGRESS_STATE);
 			
-//			configureQuickAction(view);
 			configureAttributesBasedOnState(view);
 			setStateColor(view);
+		
+			
+			//NOTE: This is not an ideal location as bindView() is called on each item in the list,
+			//      and we only need this to be called once whenever the db changes.  Unfortunately,
+			//      because of the ViewPager, it is possible that the CsSnapshotListFragment view is
+			//      not yet created when the snapshot db is already updated (from, say, a listSnapshots
+			//      call), so trying to update #-of-Snapshots when the view does not exist yet causes a crash.
+			updateSnapshotNum();
     	}
+
+		public void updateSnapshotNum() {
+			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
+			if(footersnapshotnum!=null) {
+				//update the current #-of-snapshots count
+				final int count = getCursor().getCount();
+				footersnapshotnum.setText(String.valueOf(count));
+			}
+		}
 
 		public void setStateColor(View view) {
 			TextView stateText = (TextView)view.findViewById(R.id.state);
@@ -86,37 +100,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			stateText.setTextColor(colorStateList);
 		}
 
-//		public void configureQuickAction(View view) {
-//			TextView snapshotIdText = (TextView)view.findViewById(R.id.id);
-//			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
-//			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
-//			final String snapshotId = snapshotIdText.getText().toString();
-//			int progress = snapshotsWithInProgressRequests.getProgressForId(snapshotId);
-//			if(progress==0) {
-//				//If a snapshot is created on the server-side w/out csac knowing, then we have no IDLE/IN_PROGRESS info for it.
-//				//Since you can't issue commands to a creating/backing-up snapshot, we will show the progress-circle for
-//				//these states as well to handle these server-created snapshots.
-//				TextView stateText = (TextView)view.findViewById(R.id.state);
-//				final String state = stateText.getText().toString();
-//				if(Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state) || Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
-//					progress = InProgressCache.IN_PROGRESS;
-//				}
-//			}
-//			switch(progress) {
-//				case InProgressCache.IDLE:
-//					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-//					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
-//					break;
-//				case InProgressCache.IN_PROGRESS:
-//					QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
-//					break;
-//				case InProgressCache.SHOW_ICON:
-//					QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-//					QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, true);
-//					snapshotsWithInProgressRequests.removeId(snapshotId);
-//					break;
-//			}
-//		}
 		public void configureAttributesBasedOnState(View view) {
 			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
 			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
@@ -129,13 +112,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			if(!inProgressState.isEmpty() && !inProgressState.equalsIgnoreCase("show_icon")) {
 				state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
 			}
-//			boolean animate = false;
-//			TextView snapshotIdText = (TextView)view.findViewById(R.id.id);
-//			final String snapshotId = snapshotIdText.getText().toString();
-//			if(itemsToAnimate.contains(snapshotId)) {
-//				animate = true;
-//				itemsToAnimate.remove(snapshotId);
-//			}
 			
 			quickActionIcon.setEnabled(true);
 			//for the vm state text, we change its color depending on the current state of the vm
@@ -184,17 +160,27 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			}
 		}
 
-		@Override
-		public void notifyDataSetChanged() {
-			//update the current #-of-snapshots count
-			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
-			if(footersnapshotnum!=null) {
-				final int count = getCursor().getCount();
-				footersnapshotnum.setText(String.valueOf(count));
-			}
-			
-			super.notifyDataSetChanged();
-		}
+//		@Override
+//		public void notifyDataSetChanged() {
+//			
+//			if(getActivity().findViewById(R.id.cssnapshotdetailsfragment)!=null) {
+//				//This is a hack to check whether or not the CsSnapshotList fragment view has been created yet or not.
+//				//(it may not have due to it being too far off the horizon in the ViewPager even though the
+//				// snapshots db table can be updated with the list offscreen)
+//				//If indeed the view hasn't been created yet, just bail on this processing since we will crash trying
+//				//to access a non-existent list.
+//				//Regardless, we still need to call notifyDataSetChanged() though, or ListView will complain and crash.
+//			
+//				TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
+//				if(footersnapshotnum!=null) {
+//					//update the current #-of-snapshots count
+//					final int count = getCursor().getCount();
+//					footersnapshotnum.setText(String.valueOf(count));
+//				}
+//			}
+//			
+//			super.notifyDataSetChanged();
+//		}
 		
     }
     
@@ -217,15 +203,12 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		
         		//as the request is finished, mark inprogress_state as null signifying there is no pending operation left
         		updateSnapshotInProgressStateOnDb(snapshotId, null);
-//        		itemsToAnimate.add(snapshotId);
         		
         		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
         			//if deleteSnapshot failed, revert the progress-circle back to icon again
-//        			snapshotsWithInProgressRequests.setShowIconForId(snapshotId);
         			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
         		} else {
         			//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
-//        			snapshotsWithInProgressRequests.removeId(snapshotId);
     				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
         		}
         	}
@@ -272,7 +255,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	
 	@Override
 	public void onDestroy() {
-		
 		if(snapshotListCallbackReceiver!=null) {
 			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
 			try {
@@ -314,7 +296,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
 		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
 		
-//		snapshotsWithInProgressRequests.setInProgressForId(snapshotId);
 		//set the inprogress_state so the ui will know this snapshot has a pending command
 		updateSnapshotInProgressStateOnDb(snapshotId, Snapshots.STATE_VALUES.DELETING);
 

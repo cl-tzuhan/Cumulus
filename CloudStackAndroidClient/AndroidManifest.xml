@@ -16,7 +16,8 @@
         </activity>
         
         <activity android:name=".ui.CsVmList"
-                  android:label="@string/app_name" />
+                  android:label="@string/app_name"
+                  android:windowSoftInputMode="stateUnchanged" />
 
         <activity android:name=".ui.CsVmDetailsFragmentActivity"
                   android:label="Instance Details" />

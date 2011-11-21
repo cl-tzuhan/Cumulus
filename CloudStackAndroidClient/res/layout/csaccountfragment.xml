@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/csaccountfragment"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent" >
+    
+    <ScrollView android:id="@+id/detailscrollview"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_width="match_parent" android:layout_height="wrap_content" >
+
+		<RelativeLayout android:id="@+id/detailview"
+			android:layout_width="fill_parent" android:paddingTop="20dp" android:paddingLeft="25dp" android:paddingRight="25dp" android:paddingBottom="30dp"
+			android:minHeight="?android:attr/listPreferredItemHeight" android:layout_height="wrap_content">
+ 
+		    <RelativeLayout android:id="@+id/csinstanceinputframe"
+ 		   		android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
+				
+	 			<TextView android:id="@+id/csinstancetitle"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:paddingLeft="4sp"
+					android:textSize="16sp" android:textColor="@color/primaryinfo_color_selector"
+					android:text="I want to connect to this CloudStack" />
+					
+	 		   	<EditText android:id="@+id/csinstanceurl" 
+	 		   		android:layout_alignLeft="@id/csinstancetitle" android:layout_below="@id/csinstancetitle"
+	 		   		android:layout_height="40sp" android:layout_width="match_parent"
+	 		   		android:layout_marginTop="4dp" android:layout_marginLeft="0dp"
+	 		   		android:textSize="16sp" android:textColor="#1e8eee"
+	 		   		android:inputType="textUri"
+			    	android:maxLines="1"
+	 		   		android:hint="CloudStack instance url" >
+	    		</EditText>
+
+			</RelativeLayout>
+			
+		    <RelativeLayout android:id="@+id/loginframe"
+	 		   	android:layout_alignLeft="@id/csinstanceinputframe" android:layout_below="@id/csinstanceinputframe"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+	 		   	android:layout_marginTop="20dp" android:layout_marginLeft="0dp"
+	 		   	android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
+				
+	 			<TextView android:id="@+id/logintitle"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="0dp"
+					android:paddingLeft="4sp"
+					android:textSize="16sp" android:textColor="@color/primaryinfo_color_selector"
+					android:text="using the following login credentials" />
+					
+	 		   	<EditText android:id="@+id/loginname" 
+	 		   		android:layout_alignLeft="@id/logintitle" android:layout_below="@id/logintitle"
+	 		   		android:layout_height="50sp" android:layout_width="match_parent"
+	 		   		android:layout_marginTop="4dp" android:layout_marginLeft="0dp"
+	 		   		android:textSize="24sp" android:textColor="#1e8eee"
+			    	android:inputType="textEmailAddress"
+			    	android:maxLines="1"
+	 		   		android:hint="login name" >
+	    		</EditText>
+			
+			    <EditText android:id="@+id/password" 
+	 		   		android:layout_alignLeft="@id/loginname" android:layout_below="@id/loginname"
+			    	android:layout_height="50sp" android:layout_width="match_parent"
+			    	android:inputType="textPassword" android:textColor="#1e8eee"
+	 		   		android:textSize="24sp"
+			    	android:maxLines="1"
+			    	android:hint="password" >
+			    </EditText>
+			    
+				<Button android:id="@+id/loginbutton"
+	 		   		android:layout_alignLeft="@id/loginname" android:layout_below="@id/password"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:background="@drawable/action_item_btn"
+					android:drawableTop="@drawable/key"
+					android:drawablePadding="-10dp"
+					android:padding="5dp"
+					android:textColor="@color/primaryinfo_color_selector"
+					android:text="Login!" />
+					
+	 			<TextView
+	 		   		android:layout_toRightOf="@id/loginbutton" android:layout_below="@id/password"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="8dp" android:layout_marginLeft="5dp"
+					android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="Logging in will generate a token that is saved on your Android phone.  This token will be used thereafter to connect to the CloudStack.  Your password is thrown away after login is complete." />
+			</RelativeLayout>
+		
+		</RelativeLayout>
+		
+	</ScrollView>
+	
+</RelativeLayout>

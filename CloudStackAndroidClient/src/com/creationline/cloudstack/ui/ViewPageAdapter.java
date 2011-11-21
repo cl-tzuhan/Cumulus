@@ -16,7 +16,7 @@ public class ViewPageAdapter extends FragmentPagerAdapter implements TitleProvid
 
 	@Override
 	public int getCount() {
-		return 2;
+		return 3;
 	}
 	
 	@Override
@@ -24,8 +24,10 @@ public class ViewPageAdapter extends FragmentPagerAdapter implements TitleProvid
 		//order of the views in csac is hard-coded
 		switch(position) {
 			case 0:
-				return new CsVmListFragment();
+				return new CsAccountFragment();
 			case 1:
+				return new CsVmListFragment();
+			case 2:
 				return new CsSnapshotListFragment();
 			default:
 				ClLog.e("ViewPageAdapter.getItem()", "Trying to swtich to non-existant position="+position);
@@ -38,8 +40,10 @@ public class ViewPageAdapter extends FragmentPagerAdapter implements TitleProvid
 		//order of the views in csac is hard-coded
 		switch(position) {
 			case 0:
-				return "Instances";
+				return "Account";
 			case 1:
+				return "Instances";
+			case 2:
 				return "Snapshots";
 			default:
 				ClLog.e("ViewPageAdapter.getTitle()", "Trying to swtich to non-existant position="+position);
