@@ -6,10 +6,14 @@ import android.support.v4.app.FragmentActivity;
 
 public class CloudStackAndroidClient extends FragmentActivity {
 	
-	//SharedPreference-related constants
-	public static String SHARED_PREFERENCES_NAME = "CloudStackAndroidClientAccountPreferences";
-	public static String CLOUDSTACK_URL_SETTING = "CloudStackUrl";
-	public static String LOGIN_NAME_SETTING = "LoginName";
+	public static class SHARED_PREFERENCES {
+		//SharedPreference-related constants
+		public static String NAME = "CloudStackAndroidClientAccountPreferences";
+		public static String CLOUDSTACK_HOST_SETTING = "CloudStackUrl";
+		public static String LOGIN_NAME_SETTING = "LoginName";
+		public static String APIKEY_SETTING = "ApiKey";
+		public static String SECRETKEY_SETTING = "SecretKey";
+	}
 	
     /** Called when the activity is first created. */
     @Override

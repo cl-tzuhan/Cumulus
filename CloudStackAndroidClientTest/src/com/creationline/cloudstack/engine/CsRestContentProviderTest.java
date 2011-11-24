@@ -387,10 +387,24 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		c.close();
 	}
 	
-	public void testMakeCreateTableSqlStr() {
+	public void testMakeCreateTableSqlStr_vms() {
 		final String correctAnswer = "CREATE TABLE vms ( _id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, cpunumber TEXT, cpuspeed TEXT, cpuused TEXT, created TEXT, displayname TEXT, domain TEXT, domainid TEXT, forvirtualnetwork TEXT, groupa TEXT, groupid TEXT, guestosid TEXT, haenable TEXT, hostid TEXT, hostname TEXT, hypervisor TEXT, id TEXT, ipaddress TEXT, isodisplaytext TEXT, isoid TEXT, isoname TEXT, jobid TEXT, jobstatus TEXT, memory TEXT, name TEXT, networkkbsread TEXT, networkkbswrite TEXT, nic TEXT, password TEXT, passwordenabled TEXT, rootdeviceid TEXT, rootdevicetype TEXT, securitygroup TEXT, serviceofferingid TEXT, serviceofferingname TEXT, state TEXT, templatedisplaytext TEXT, templateid TEXT, templatename TEXT, zoneid TEXT, zonename TEXT );";
 		
 		final String vmsTableCreateStatement = CsRestContentProvider.SQLiteDatabaseHelper.makeCreateTableSqlStr(new Vms());
+		assertEquals(correctAnswer, vmsTableCreateStatement);
+	}
+
+	public void testMakeCreateTableSqlStr_snapshots() {
+		final String correctAnswer = "CREATE TABLE snapshots ( _id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, created TEXT, domain TEXT, domainid TEXT, id TEXT, inprogress_state TEXT, intervaltype TEXT, jobid TEXT, jobstatus TEXT, name TEXT, snapshottype TEXT, state TEXT, volumeid TEXT, volumename TEXT, volumetype TEXT );";
+		
+		final String vmsTableCreateStatement = CsRestContentProvider.SQLiteDatabaseHelper.makeCreateTableSqlStr(new Snapshots());
+		assertEquals(correctAnswer, vmsTableCreateStatement);
+	}
+
+	public void testMakeCreateTableSqlStr_errors() {
+		final String correctAnswer = "CREATE TABLE errors ( _id INTEGER PRIMARY KEY AUTOINCREMENT, errorcode TEXT, errortext TEXT, originatingcall TEXT );";
+		
+		final String vmsTableCreateStatement = CsRestContentProvider.SQLiteDatabaseHelper.makeCreateTableSqlStr(new Errors());
 		assertEquals(correctAnswer, vmsTableCreateStatement);
 	}
 	

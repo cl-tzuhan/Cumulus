@@ -41,12 +41,14 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.Time;
 import android.util.Base64;
 
+import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
@@ -86,8 +88,8 @@ public class CsRestService extends IntentService {
 
 	
 	// ApiKey and secretKey as given by your CloudStack vendor
-	private String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
-	private String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
+//	private String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
+//	private String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
 	
 	public class JsonNameNodePair {
 		private String responseName;
@@ -169,8 +171,13 @@ public class CsRestService extends IntentService {
 		Uri inProgressTransaction = null;
 		
 		try {
+			SharedPreferences preferences = getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
+			final String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+			final String apiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
+			final String secretKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, null);
+			
 			//create complete url
-			String finalUrl = buildFinalUrl(null, apiCmd, apiKey, secretKey);
+			String finalUrl = buildFinalUrl(csHost, apiCmd, apiKey, secretKey);
 
 			//save the request to db
 			inProgressTransaction = saveRequestToDb(finalUrl, apiCmd);
@@ -247,16 +254,12 @@ public class CsRestService extends IntentService {
 		
 		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
 		//String HOST = "http://72.52.126.24/client/api";  //Citrix CS user api base url
-		String HOST = "http://219.117.239.169:8080/client/api";  //SakauePark CS user api base url
+//		String HOST = "http://219.117.239.169:8080/client/api";  //SakauePark CS user api base url
+		String csHostUrl = "http://fake";  //SakauePark CS user api base url
 		
-		if (specifiedHost!=null) {HOST = specifiedHost;}  //use any caller-specified host over the default value
+		if (specifiedHost!=null) {csHostUrl = specifiedHost;}  //use any caller-specified host over the default value
 		
-		
-		/// These are the things that need to be done next!!!
-		///
-		/// TODO: need to find a way to have the user specify her own host
-		/// TODO: need to find a way to have the user specify her apiKey/secretKey
-		///
+		csHostUrl = makeHostIntoApiUrlIfNecessary(csHostUrl);
 
 		try {
 			if (apiCmd == null || apiCmd.isEmpty() || apiKey == null || secretKey == null) {
@@ -267,7 +270,7 @@ public class CsRestService extends IntentService {
 			//make sure we get reply in json 
 			apiCmd.putString("response", "json");  //will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail
 
-			ClLog.d(TAG, "constructing API call to host='" + HOST + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
+			ClLog.d(TAG, "constructing API call to host='" + csHostUrl + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
 			
 			//"Step 1: Make sure your APIKey is toLowerCased and URL encoded"
 			final String encodedApiKey = URLEncoder.encode(apiKey.toLowerCase(), "UTF-8"); //NOTE: URLEncoder will convert spaces to "+" instead of "%20" like cs prefers
@@ -297,7 +300,7 @@ public class CsRestService extends IntentService {
 			final String encodedSignature = signRequest(sortedParamSb.toString(), secretKey);
 			
 			//"Step 4: Construct the final URL we want to send to the CloudStack Management Server"
-			final String finalUrl = HOST + "?" + apiCmdSb.toString() + "apiKey=" + apiKey + "&signature=" + encodedSignature;
+			final String finalUrl = csHostUrl + "?" + apiCmdSb.toString() + "apiKey=" + apiKey + "&signature=" + encodedSignature;
 			ClLog.d(TAG, "finalURL= " + finalUrl);
 
 			return finalUrl;
@@ -306,6 +309,19 @@ public class CsRestService extends IntentService {
 			ClLog.e(TAG, "error occurred building api call: " + t.toString() + " ["+t.getMessage()+"]");
 			throw new IllegalArgumentException("error in trying to build final url", t);
 		}
+	}
+	
+	public static String makeHostIntoApiUrlIfNecessary(String csUrl) {
+		if(!csUrl.startsWith("http://")) {
+			csUrl = "http://"+csUrl;
+		}
+		if(csUrl.endsWith("/")) {
+			csUrl = csUrl.substring(0, csUrl.length()-1);
+		}
+		if(!csUrl.endsWith("/client/api")) {
+			csUrl += "/client/api";
+		}
+		return csUrl;
 	}
 	
 	/**
@@ -364,7 +380,6 @@ public class CsRestService extends IntentService {
             final HttpGet httpGet = new HttpGet(url);
             //final HttpPost httpPost = new HttpPost(url);
             
-            // Create a response handler
             HttpResponse response =  httpclient.execute(httpGet);
             return response;
             
@@ -400,7 +415,7 @@ public class CsRestService extends IntentService {
 		return getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
-	public StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
+	public static StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
 		final String TAG = "CsRestService.getReplyBody()";
 		
 		if(reply==null) {
@@ -576,7 +591,7 @@ public class CsRestService extends IntentService {
 	 * @param is InputStream with data to read out
 	 * @return all the data in specified InputStream
 	 */
-	public StringBuilder inputStreamToString(final InputStream is) throws IOException {
+	public static StringBuilder inputStreamToString(final InputStream is) throws IOException {
 
 	    String line = "";
 	    StringBuilder total = new StringBuilder();

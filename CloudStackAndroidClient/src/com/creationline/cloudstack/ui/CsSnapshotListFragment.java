@@ -44,7 +44,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
-    	//This adaptor use strictly for use with the CsSnapshot class/layout, and expects specific data to fill its contents.
+    	//This adaptor used strictly for use with the CsSnapshot class/layout, and expects specific data to fill its contents.
     	
 		public CsSnapshotListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
@@ -70,17 +70,17 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			//      because of the ViewPager, it is possible that the CsSnapshotListFragment view is
 			//      not yet created when the snapshot db is already updated (from, say, a listSnapshots
 			//      call), so trying to update #-of-Snapshots when the view does not exist yet causes a crash.
-			updateSnapshotNum();
+//			updateSnapshotNum(view);
     	}
 
-		public void updateSnapshotNum() {
-			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
-			if(footersnapshotnum!=null) {
-				//update the current #-of-snapshots count
-				final int count = getCursor().getCount();
-				footersnapshotnum.setText(String.valueOf(count));
-			}
-		}
+//		public void updateSnapshotNum(View view) {
+//			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
+//			if(footersnapshotnum!=null) {
+//				//update the current #-of-snapshots count
+//				final int count = getCursor().getCount();
+//				footersnapshotnum.setText(String.valueOf(count));
+//			}
+//		}
 
 		public void setStateColor(View view) {
 			TextView stateText = (TextView)view.findViewById(R.id.state);
@@ -160,27 +160,28 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			}
 		}
 
-//		@Override
-//		public void notifyDataSetChanged() {
-//			
+		@Override
+		public void notifyDataSetChanged() {
+			
 //			if(getActivity().findViewById(R.id.cssnapshotdetailsfragment)!=null) {
-//				//This is a hack to check whether or not the CsSnapshotList fragment view has been created yet or not.
-//				//(it may not have due to it being too far off the horizon in the ViewPager even though the
-//				// snapshots db table can be updated with the list offscreen)
-//				//If indeed the view hasn't been created yet, just bail on this processing since we will crash trying
-//				//to access a non-existent list.
-//				//Regardless, we still need to call notifyDataSetChanged() though, or ListView will complain and crash.
-//			
+				//This is a hack to check whether or not the CsSnapshotList fragment view has been created yet or not.
+				//(it may not have due to it being too far off the horizon in the ViewPager even though the
+				// snapshots db table can be updated with the list offscreen)
+				//If indeed the view hasn't been created yet, just bail on this processing since we will crash trying
+				//to access a non-existent list.
+				//Regardless, we still need to call notifyDataSetChanged() though, or ListView will complain and crash.
+			
 //				TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
-//				if(footersnapshotnum!=null) {
-//					//update the current #-of-snapshots count
-//					final int count = getCursor().getCount();
-//					footersnapshotnum.setText(String.valueOf(count));
-//				}
+				TextView footersnapshotnum = (TextView)getActivity().findViewById(R.id.footersnapshotnum);
+				if(footersnapshotnum!=null) {
+					//update the current #-of-snapshots count
+					final int count = getCursor().getCount();
+					footersnapshotnum.setText(String.valueOf(count));
+				}
 //			}
-//			
-//			super.notifyDataSetChanged();
-//		}
+			
+			super.notifyDataSetChanged();
+		}
 		
     }
     

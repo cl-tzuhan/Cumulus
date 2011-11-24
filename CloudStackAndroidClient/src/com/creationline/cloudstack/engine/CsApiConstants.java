@@ -10,6 +10,24 @@ public class CsApiConstants {
 		
 		//Snapshot
 		public static final String deleteSnapshot = "deleteSnapshot";
+		
+		//Other
+		public static final String login = "login";
+		public static final String listAccounts = "listAccounts";
+		public static final String logout = "logout";
+		
+	}
+
+	public static class LOGIN_PARAMS {
+		public static final String USERNAME = "username";
+		public static final String PASSWORD = "password";
+		
+		public static final String SESSIONKEY = "sessionkey";
+	}
+	
+	public static class LISTACCOUNTS_PARAMS {
+		public static final String APIKEY = "apikey";
+		public static final String SECRETKEY = "secretkey";
 	}
 	
 }

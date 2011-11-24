@@ -29,7 +29,7 @@
 	 		   		android:textSize="16sp" android:textColor="#1e8eee"
 	 		   		android:inputType="textUri"
 			    	android:maxLines="1"
-	 		   		android:hint="CloudStack instance url" >
+	 		   		android:hint="CloudStack URL[:port]" >
 	    		</EditText>
 
 			</RelativeLayout>
