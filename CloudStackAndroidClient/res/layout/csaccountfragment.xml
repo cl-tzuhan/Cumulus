@@ -31,7 +31,13 @@
 			    	android:maxLines="1"
 	 		   		android:hint="CloudStack URL[:port]" >
 	    		</EditText>
-
+	    		
+	    		<TextSwitcher android:id="@+id/hosterrorframe"
+	 		   		android:layout_alignLeft="@id/csinstancetitle" android:layout_below="@id/csinstanceurl"
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					android:layout_marginTop="-7sp"
+					android:paddingLeft="4sp"
+					/>
 			</RelativeLayout>
 			
 		    <RelativeLayout android:id="@+id/loginframe"
@@ -54,7 +60,7 @@
 	 		   		android:textSize="24sp" android:textColor="#1e8eee"
 			    	android:inputType="textEmailAddress"
 			    	android:maxLines="1"
-	 		   		android:hint="login name" >
+	 		   		android:hint="username" >
 	    		</EditText>
 			
 			    <EditText android:id="@+id/password" 
@@ -66,22 +72,42 @@
 			    	android:hint="password" >
 			    </EditText>
 			    
-				<Button android:id="@+id/loginbutton"
+			    <TextSwitcher android:id="@+id/usernamepassworderrorframe"
 	 		   		android:layout_alignLeft="@id/loginname" android:layout_below="@id/password"
-					android:layout_width="wrap_content" android:layout_height="wrap_content"
-					android:background="@drawable/action_item_btn"
-					android:drawableTop="@drawable/key"
-					android:drawablePadding="-10dp"
-					android:padding="5dp"
-					android:textColor="@color/primaryinfo_color_selector"
-					android:text="Login!" />
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					android:layout_marginTop="-7sp"
+					android:paddingLeft="4sp"
+					/>
+			    
+			    <ViewSwitcher android:id="@+id/loginprogressswitcher"
+			    	android:layout_alignLeft="@id/loginname" android:layout_below="@id/usernamepassworderrorframe"
+			    	android:layout_width="wrap_content" android:layout_height="wrap_content" >
+					<Button android:id="@+id/loginbutton"
+						android:layout_width="wrap_content" android:layout_height="wrap_content"
+						android:background="@drawable/action_item_btn"
+						android:drawableTop="@drawable/key"
+						android:drawablePadding="-10dp"
+						android:padding="5dp"
+						android:textColor="@color/primaryinfo_color_selector"
+						android:text="Login!" />
+					<ProgressBar android:id="@+id/loginprogress"
+					  	android:layout_width="wrap_content"  android:layout_height="wrap_content"
+					  	android:layout_gravity="center_vertical|center_horizontal"
+					  	android:layout_marginTop="-3dp" />
+			    </ViewSwitcher>
 					
-	 			<TextView
-	 		   		android:layout_toRightOf="@id/loginbutton" android:layout_below="@id/password"
+	 			<TextView android:id="@+id/logindescriptiontext"
+	 		   		android:layout_toRightOf="@id/loginprogressswitcher" android:layout_below="@id/usernamepassworderrorframe"
 					android:layout_height="wrap_content" android:layout_width="match_parent"
 					android:layout_marginTop="8dp" android:layout_marginLeft="5dp"
 					android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
 					android:text="Logging in will generate a token that is saved on your Android phone.  This token will be used thereafter to connect to the CloudStack.  Your password is thrown away after login is complete." />
+			
+				<TextSwitcher android:id="@+id/loginerrorframe"
+					android:layout_alignLeft="@id/loginprogressswitcher" android:layout_below="@id/logindescriptiontext"
+					android:layout_marginTop="20dp"
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					/>
 			</RelativeLayout>
 		
 		</RelativeLayout>

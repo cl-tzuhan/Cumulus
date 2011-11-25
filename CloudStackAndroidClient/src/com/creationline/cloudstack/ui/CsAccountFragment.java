@@ -2,6 +2,7 @@ package com.creationline.cloudstack.ui;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
@@ -16,33 +17,34 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextSwitcher;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
-import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.util.ClLog;
+import com.creationline.cloudstack.util.QuickActionUtils;
 
-public class CsAccountFragment extends Fragment {
+public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFactory {
 	public static class INTENT_ACTION {
 		//NOTE: changing the value of this constant requires you to change any usage of the same string in Android.manifest!!!
 		public static final String LOGIN = "com.creationline.cloudstack.ui.CsAccountFragment.LOGIN";
@@ -52,10 +54,9 @@ public class CsAccountFragment extends Fragment {
 	private static String ASYNC_RESULT = "asyncResult";
 	private static String ASYNC_ERROR = "asyncError";
 	
-//	DefaultHttpClient httpclient = new DefaultHttpClient();
 	DefaultHttpClient httpclient = null;
 
-    private BroadcastReceiver accountCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
+//    private BroadcastReceiver accountCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
  
 	private class CsSessionBasedRequestTask extends AsyncTask<Bundle, Void, Bundle> {
 
@@ -92,21 +93,8 @@ public class CsAccountFragment extends Fragment {
 		    return "";
 		}
 		
-//		public String makeHostIntoApiUrlIfNecessary(String csUrl) {
-//			if(!csUrl.startsWith("http://")) {
-//				csUrl = "http://"+csUrl;
-//			}
-//			if(csUrl.endsWith("/")) {
-//				csUrl = csUrl.substring(0, csUrl.length()-1);
-//			}
-//			if(!csUrl.endsWith("/client/api")) {
-//				csUrl += "/client/api";
-//			}
-//			return csUrl;
-//		}
-		
 		public HttpResponse executeHttpRequest(final String finalUrl, Bundle returnBundle) {
-    		final String TAG = "CsACcountFragment.CsLoginTask.executeHttpRequest()";
+    		final String TAG = "CsACcountFragment.CsSessionBasedRequestTask.executeHttpRequest()";
 
 			HttpResponse response = null;
             try {
@@ -114,10 +102,7 @@ public class CsAccountFragment extends Fragment {
                 //final HttpPost httpPost = new HttpPost(finalUrl);
                 
                 response =  httpclient.execute(httpGet);
-///DEBUG
-System.out.println("response="+response);
-System.out.println("cookies="+httpclient.getCookieStore().getCookies());
-///endDEBUG
+
             } catch (ClientProtocolException e) {
             	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
             	ClLog.e(TAG, e);
@@ -133,7 +118,11 @@ System.out.println("cookies="+httpclient.getCookieStore().getCookies());
     		} catch (HttpHostConnectException e) {
     			ClLog.e(TAG, "got HttpHostConnectException! [" + e.toString() +"]");
     			ClLog.e(TAG, e);
-    			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Could not connect to specified CloudStack instance.  Perhaps the URL is incorrect?");
+    			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Could not connect to the specified CloudStack instance.  Perhaps the URL is incorrect?");
+    		} catch (SocketException e) {
+    			ClLog.e(TAG, "got SocketException! [" + e.toString() +"]");
+    			ClLog.e(TAG, e);
+    			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Could not found a route to the specified CloudStack instance.  Perhaps the port number is missing?");
     		} catch (IOException e) {
     			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
     			ClLog.e(TAG, e);
@@ -143,7 +132,55 @@ System.out.println("cookies="+httpclient.getCookieStore().getCookies());
 			return response;
 		}
 		
-		public String extractValueForKey(String replyBody, final String keyToExtract) {
+		public JsonNode extractUserObjFor(final String replyBody, final String username) {
+			final String TAG = "CsACcountFragment.CsLoginTask.extractUserObjFor()";
+
+			ObjectMapper om = new ObjectMapper();
+			try {
+				JsonNode replyObj = om.readTree(replyBody);
+				ClLog.d(TAG, CsApiConstants.LISTACCOUNTS_PARAMS.USER+"="+username);
+				JsonNode userList = replyObj.findValue(CsApiConstants.LISTACCOUNTS_PARAMS.USER);
+				ClLog.d(TAG, "userList="+userList);
+				if(userList!=null) {
+					//each account may have multiple users, so search through the list users,
+					//returning only the one that is the currently logged-in user
+					for(JsonNode userObj : userList) {
+						JsonNode usernameNode = userObj.findValue(CsApiConstants.LISTACCOUNTS_PARAMS.USERNAME);
+						if(usernameNode!=null) {
+							String usernameNodeAsStr = usernameNode.toString();
+							usernameNodeAsStr = removeDoubleQuotes(usernameNodeAsStr);
+							ClLog.d(TAG, "  usernameNodeAsStr="+usernameNodeAsStr);
+							if(username.equalsIgnoreCase(usernameNodeAsStr)) {
+								return userObj;
+							}
+						}
+					}
+				}
+			} catch (IOException e) {
+				ClLog.e(TAG, "got IOException parsing reading replyBody! [" + e.toString() +"]");
+				ClLog.e(TAG, e);
+			}
+			return null;
+		}
+
+		public String removeDoubleQuotes(final String inStr) {
+			String returnStr = null;
+			if(inStr.startsWith("\"") && inStr.endsWith("\"")) {
+				//remove any double-quotes around the value (Jackson tends to return the values with double-quotes instead of just the raw value)
+				returnStr = inStr.substring(1, inStr.length()-1);
+			}
+			return returnStr;
+		}
+		
+		public String extractValueForKey(JsonNode node, final String keyToExtract) {
+			JsonNode value = node.findValue(keyToExtract);
+			if(value==null) {
+				return null;
+			}
+			return value.asText();
+		}
+
+		public String extractValueForKey(final String replyBody, final String keyToExtract) {
     		final String TAG = "CsACcountFragment.CsLoginTask.extractSessionKey()";
 
 			String value = null;
@@ -151,9 +188,6 @@ System.out.println("cookies="+httpclient.getCookieStore().getCookies());
 			try {
 				JsonNode replyObj = om.readTree(replyBody);
 				value = replyObj.findValue(keyToExtract).asText();
-///DEBUG
-System.out.println(keyToExtract+"="+value);
-///endDEBUG
 			} catch (IOException e) {
 				ClLog.e(TAG, "got IOException parsing reading replyBody! [" + e.toString() +"]");
 				ClLog.e(TAG, e);
@@ -161,18 +195,30 @@ System.out.println(keyToExtract+"="+value);
 			return value;
 		}
 
-		public String urlEncodeSessionKey(final String sessionKey) {
-			final String TAG = "CsAccountFragment.urlEncodeSessionKey.urlEncodeSessionKey()";
+		public String urlEncode(final String valueToEncode) {
+			final String TAG = "CsAccountFragment.urlEncodeSessionKey.urlEncode()";
 		
 			try {
-				final String encodedSessionKey = URLEncoder.encode(sessionKey, "UTF-8");
-				return encodedSessionKey;
+				return URLEncoder.encode(valueToEncode, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				ClLog.e(TAG, "We should not be getting this exception!  We are hosed if we are. [" + e.toString() +"]");
 				ClLog.e(TAG, e);
-				//TODO: make me show this error on the screen (not as toast)
 			}
 			return null;
+		}
+
+		public void showErrorAndEndProgress(final String asyncError) {
+			//show error to user
+			TextSwitcher ts = (TextSwitcher) getActivity().findViewById(R.id.loginerrorframe);
+			ts.setText(asyncError);
+			
+			//revert progress-circle back to button icon
+			switchLoginProgress();
+		}
+
+		public void switchLoginProgress() {
+			ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+			loginprogressswitcher.showNext();
 		}
 	}
 	
@@ -193,8 +239,9 @@ System.out.println(keyToExtract+"="+value);
     		
 			parseLoginResponse(response, returnBundle);
     		
-			//add csHost to the return bundle so chained rest requests can make use of it
+			//add the input needed by later calls to the return bundle so chained rest requests can make use of them
 			returnBundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, apiParams.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
+			returnBundle.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, apiParams.getString(CsApiConstants.LOGIN_PARAMS.USERNAME));
     		return returnBundle;
     	}
 
@@ -205,19 +252,12 @@ System.out.println(keyToExtract+"="+value);
     		final String username = apiParams.getString(CsApiConstants.LOGIN_PARAMS.USERNAME);
     		String password = apiParams.getString(CsApiConstants.LOGIN_PARAMS.PASSWORD);
 
-///DEBUG
-System.out.println("csHost="+csHost);
-System.out.println("username="+username);
-System.out.println("password="+password);
-///endDEBUG
-    		
-//final String csHostUrl = makeHostIntoApiUrlIfNecessary(csHost);
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
 			final String hashedPassword = md5(password);
     		final String finalUrl = csHostUrl + "?" + "response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.login
-    								+ "&"+CsApiConstants.LOGIN_PARAMS.USERNAME+"="+username
-    								+ "&"+CsApiConstants.LOGIN_PARAMS.PASSWORD+"=" + hashedPassword;
+    								+ "&"+CsApiConstants.LOGIN_PARAMS.USERNAME+"="+urlEncode(username)
+    								+ "&"+CsApiConstants.LOGIN_PARAMS.PASSWORD+"="+urlEncode(hashedPassword);
     		ClLog.d(TAG, "finalUrl="+finalUrl);
     		
     		HttpResponse response = executeHttpRequest(finalUrl, returnBundle);
@@ -227,8 +267,10 @@ System.out.println("password="+password);
 		public void parseLoginResponse(HttpResponse response, Bundle returnBundle) {
 			final String TAG = "CsAccountFragment.CsLoginTask.parseLoginResponse()";
 
-			final int statusCode = response.getStatusLine().getStatusCode();
-			final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
+			if(response==null) {
+				return;
+			}
+			
 			String replyBody = null;
 			try {
 				replyBody = CsRestService.getReplyBody(response).toString();
@@ -237,11 +279,17 @@ System.out.println("password="+password);
 				ClLog.e(TAG, e);
 			}
 			
+			final int statusCode = response.getStatusLine().getStatusCode();
+			final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
+			final boolean ranInto404 = statusCode==HttpStatus.SC_NOT_FOUND;
 			if(callReturnedOk) {
-				final String sessionKey = extractValueForKey(replyBody, "sessionkey");
+				final String sessionKey = extractValueForKey(replyBody, CsApiConstants.LOGIN_PARAMS.SESSIONKEY);
     			returnBundle.putString(CsAccountFragment.ASYNC_RESULT, sessionKey);
+			} else if(ranInto404) {
+				String errorText = "The specified CloudStack instance could not be found.  Perhaps the URL is incorrect?";
+    			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, errorText);
 			} else {
-				String errorText = extractValueForKey(replyBody, "errortext");
+				String errorText = extractValueForKey(replyBody, CsApiConstants.ERROR_PARAMS.ERRORTEXT);
 				if(errorText==null) { errorText="Ran into an unknown error."; };
     			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, errorText);
 			}
@@ -252,20 +300,15 @@ System.out.println("password="+password);
     		final String asyncResult = returnBundle.getString(CsAccountFragment.ASYNC_RESULT);
     		final String asyncError = returnBundle.getString(CsAccountFragment.ASYNC_ERROR);
     		
-///DEBUG
-System.out.println("...got result="+asyncResult);
-System.out.println("...got error="+asyncError);
-///endDEBUG
-    		
-    		if(asyncError!=null) {
-    			Toast.makeText(getActivity(), "Got error: "+asyncError, Toast.LENGTH_SHORT).show();
-    			//TODO: make me show this error on the screen (not as toast)
-    			return;  //if we got an error, display it and abort the provisioning process
+			if(asyncError!=null) {
+				showErrorAndEndProgress(asyncError);
+    			return;  //if we got an error abort the provisioning process
     		}
 
     		Bundle bundle = new Bundle();
-    		//add csHost to the return bundle so chained rest requests can make use of it
+    		//add the input needed by later calls to the params bundle so chained rest requests can make use of them
     		bundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, returnBundle.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
+    		bundle.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, returnBundle.getString(CsApiConstants.LOGIN_PARAMS.USERNAME));
     		bundle.putString(CsApiConstants.LOGIN_PARAMS.SESSIONKEY, asyncResult);
     		new CsListAccountsTask().execute(bundle);
     	}
@@ -281,7 +324,7 @@ System.out.println("...got error="+asyncError);
 
 			HttpResponse response = makeListAccountsCall(apiParams, returnBundle);
 			
-			parseListAccountsResponse(response, returnBundle);
+			parseListAccountsResponse(response, apiParams, returnBundle);
     		
 			//add csHost to the return bundle so chained rest requests can make use of it
 			returnBundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, apiParams.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
@@ -292,10 +335,9 @@ System.out.println("...got error="+asyncError);
 			final String TAG = "CsAccountFragment.CsListAccountsTask.makeListAccountsCall()";
 			
 			final String sessionKey = apiParams.getString(CsApiConstants.LOGIN_PARAMS.SESSIONKEY);
-			String encodedSessionKey = urlEncodeSessionKey(sessionKey);
+			String encodedSessionKey = urlEncode(sessionKey);
     		
 			final String csHost = apiParams.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING);
-//			final String csHostUrl = makeHostIntoApiUrlIfNecessary(csHost);
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
     		final String finalUrl = csHostUrl + "?"+"response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.listAccounts
@@ -306,9 +348,13 @@ System.out.println("...got error="+asyncError);
 			return response;
 		}
 		
-		public void parseListAccountsResponse(HttpResponse response, Bundle returnBundle) {
+		public void parseListAccountsResponse(HttpResponse response, Bundle apiParams, Bundle returnBundle) {
 			final String TAG = "CsAccountFragment.CsListAccountsTask.parseListAccountsResponse()";
 
+			if(response==null) {
+				return;
+			}
+			
 			final int statusCode = response.getStatusLine().getStatusCode();
 			final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
 			String replyBody = null;
@@ -320,16 +366,15 @@ System.out.println("...got error="+asyncError);
 			}
 			
 			if(callReturnedOk) {
-				final String apikey = extractValueForKey(replyBody, "apikey");
-				final String secretkey = extractValueForKey(replyBody, "secretkey");
-///DEBUG
-System.out.println("apikey="+apikey);
-System.out.println("secretkey="+secretkey);
-///endDEBUG
+				final String loggedInUsername = apiParams.getString(CsApiConstants.LOGIN_PARAMS.USERNAME);
+				final JsonNode userObject = extractUserObjFor(replyBody, loggedInUsername);
+				
+				final String apikey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.APIKEY);
+				final String secretkey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.SECRETKEY);
+
 				final boolean ifApiKeysHaveNotBeenGenerated = apikey==null || apikey.isEmpty() || secretkey==null || secretkey.isEmpty();
 				if(ifApiKeysHaveNotBeenGenerated) {
-					//TODO: put up some error message about how to generate api keys
-					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Please generate api keys on CloudStack first.");
+					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "You must first generate API/secret keys on CloudStack for login to complete.  Please ask your administrator for details and try again after the keys have been generated.");
 					return;
 				}
 
@@ -342,8 +387,8 @@ System.out.println("secretkey="+secretkey);
 
     			returnBundle.putString(CsAccountFragment.ASYNC_RESULT, apikey);
 			} else {
-				String errorText = extractValueForKey(replyBody, "errortext");
-				if(errorText==null) { errorText="Ran into an unknown error."; };
+				String errorText = extractValueForKey(replyBody, CsApiConstants.ERROR_PARAMS.ERRORTEXT);
+				if(errorText==null) { errorText="Sorry, encountered an unknown error."; };
     			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, errorText);
 			}
 		}
@@ -353,23 +398,21 @@ System.out.println("secretkey="+secretkey);
     		final String asyncResult = returnBundle.getString(CsAccountFragment.ASYNC_RESULT);
     		final String asyncError = returnBundle.getString(CsAccountFragment.ASYNC_ERROR);
     		
-///DEBUG
-System.out.println("...got result="+asyncResult);
-System.out.println("...got error="+asyncError);
-///endDEBUG
-    		
-    		if(asyncError!=null) {
-    			Toast.makeText(getActivity(), "Got error: "+asyncError, Toast.LENGTH_SHORT).show();
-    			//TODO: make me show this error on the screen (not as toast)
-    			return;  //if we got an error, display it and abort the provisioning process
-    		}
+			if(asyncError!=null) {
+				showErrorAndEndProgress(asyncError);
+				return;  //if we got an error abort the provisioning process
+			}
 
     		Bundle bundle = new Bundle();
     		//add csHost to the return bundle so chained rest requests can make use of it
     		bundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, returnBundle.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
     		bundle.putString(CsApiConstants.LOGIN_PARAMS.SESSIONKEY, asyncResult);
     		new CsLogoutTask().execute(bundle);
+    		
+			//revert progress-circle back to button icon
+			switchLoginProgress();
     	}
+
     }
     
     private class CsLogoutTask extends CsSessionBasedRequestTask {
@@ -396,10 +439,9 @@ System.out.println("...got error="+asyncError);
 			final String TAG = "CsAccountFragment.CsLoginTask.makeLogoutCall()";
 			
 			final String sessionKey = apiParams.getString(CsApiConstants.LOGIN_PARAMS.SESSIONKEY);
-    		String encodedSessionKey = urlEncodeSessionKey(sessionKey);
+    		String encodedSessionKey = urlEncode(sessionKey);
 				
 			final String csHost = apiParams.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING);
-//			final String csHostUrl = makeHostIntoApiUrlIfNecessary(csHost);
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
     		final String finalUrl = csHostUrl + "?" + "response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.logout
@@ -421,45 +463,62 @@ System.out.println("...got error="+asyncError);
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        accountCallbackReceiver = new BroadcastReceiver(){
-        	//This handles callback intents broadcasted by CsRestService
-        	@Override
-        	public void onReceive(Context contenxt, Intent intent) {
-        		Bundle bundle = intent.getExtras();
-        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
-        		final String snapshotId = bundle.getString(Snapshots.ID);
-        		
-        		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
-        			
-        		} else {
-        		
-        		}
-        	}
-        };
-        getActivity().registerReceiver(accountCallbackReceiver, new IntentFilter(CsAccountFragment.INTENT_ACTION.LOGIN));  //activity will now get intents broadcast by CsRestService (filtered by LOGIN action)
+//        accountCallbackReceiver = new BroadcastReceiver(){
+//        	//This handles callback intents broadcasted by CsRestService
+//        	@Override
+//        	public void onReceive(Context contenxt, Intent intent) {
+//        		Bundle bundle = intent.getExtras();
+//        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
+//        		final String snapshotId = bundle.getString(Snapshots.ID);
+//        		
+//        		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
+//        			
+//        		} else {
+//        		
+//        		}
+//        	}
+//        };
+//        getActivity().registerReceiver(accountCallbackReceiver, new IntentFilter(CsAccountFragment.INTENT_ACTION.LOGIN));  //activity will now get intents broadcast by CsRestService (filtered by LOGIN action)
         
-
     }
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
+		final Animation shake = AnimationUtils.loadAnimation(getActivity(),  R.anim.shake);
+		final Animation out = AnimationUtils.loadAnimation(getActivity(), android.R.anim.slide_out_right);
+        
+        //setup error frame TextSwitchers
+		initTextSwitcher(R.id.hosterrorframe, shake, out);
+		initTextSwitcher(R.id.usernamepassworderrorframe, shake, out);
+		initTextSwitcher(R.id.loginerrorframe, shake, out);
+        
+        ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+        loginprogressswitcher.setInAnimation(QuickActionUtils.getFadein_decelerate());
+        loginprogressswitcher.setOutAnimation(QuickActionUtils.getFadeout_decelerate());
         
         super.onActivityCreated(savedInstanceState);
+	}
+
+	public void initTextSwitcher(final int textSwitcherId, final Animation inAnimation, final Animation outAnimation) {
+		TextSwitcher hostErrorFrame = (TextSwitcher) getActivity().findViewById(textSwitcherId);
+        hostErrorFrame.setFactory(this);
+        hostErrorFrame.setInAnimation(inAnimation);
+        hostErrorFrame.setOutAnimation(outAnimation);
 	}
 	
 	
 	@Override
 	public void onDestroy() {
 		
-		if(accountCallbackReceiver!=null) {
-			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-			try {
-				getActivity().unregisterReceiver(accountCallbackReceiver);
-			} catch (IllegalArgumentException e) {
-				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
-				;
-			}
-		}
+//		if(accountCallbackReceiver!=null) {
+//			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
+//			try {
+//				getActivity().unregisterReceiver(accountCallbackReceiver);
+//			} catch (IllegalArgumentException e) {
+//				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
+//				;
+//			}
+//		}
 		super.onDestroy();
 	}
 
@@ -524,27 +583,71 @@ System.out.println("...got error="+asyncError);
 
 	public void makeLoginCall(View itemView) {
 		
+		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+		loginprogressswitcher.showNext();
+		
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
-		String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, "no value found!!!");
-		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_NAME_SETTING, "no value found!!!");
-
+		String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_NAME_SETTING, null);
 		TextView passwordText = (TextView)getActivity().findViewById(R.id.password);
 		final String password = passwordText.getText().toString();
-		
-		Toast.makeText(getActivity(), "csHost="+csHost+"   login="+username+"    PASSWORD="+password, Toast.LENGTH_LONG).show();
 
+		clearErrorFrames();
+		if(inputValidationFailed(csHost, username, password)) {
+			loginprogressswitcher.showNext();
+			return;  //if input validation failed, short-circuit the rest of the method
+		}
+			
 		//make the rest call to login to cs server
-        final String action = CsRestService.TEST_CALL;   
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, CsApiConstants.API.login);
         apiCmd.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, csHost);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, username);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.PASSWORD, password);
-//        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
-//        getActivity().startService(csRestServiceIntent);
         new CsLoginTask().execute(apiCmd);
 	}
 	
+	public void clearErrorFrames() {
+		showLoginErrorMessage(R.id.hosterrorframe, "");
+		showLoginErrorMessage(R.id.usernamepassworderrorframe, "");
+		showLoginErrorMessage(R.id.loginerrorframe, "");
+	}
+
+	public boolean inputValidationFailed(String csHost, final String username, final String password) {
+		boolean improperInputExists = false;
+		
+		if(csHost==null || csHost.isEmpty()) {
+			showLoginErrorMessage(R.id.hosterrorframe, "Please enter a valid CloudStack URL");
+			improperInputExists = true;
+		} else if(csHost.indexOf(' ')>-1 || csHost.contains("Å@")) { //csHost cannot contain 1-byte nor 2-byte spaces
+			showLoginErrorMessage(R.id.hosterrorframe, "CloudStack URL cannot contain spaces");
+			improperInputExists = true;
+		}
+		
+		if(username==null || username.isEmpty() || password==null || password.isEmpty()) {
+			showLoginErrorMessage(R.id.usernamepassworderrorframe, "Enter your username and password");
+			improperInputExists = true;
+		} else if(username.indexOf(' ')>-1 || username.contains("Å@")) { //username cannot contain 1-byte nor 2-byte spaces
+			showLoginErrorMessage(R.id.usernamepassworderrorframe, "Username cannot contain spaces");
+			improperInputExists = true;
+		}
+		
+		return improperInputExists;
+	}
+	
+	private void showLoginErrorMessage(final int errorFrameId, final String message) {
+		TextSwitcher ts = (TextSwitcher) getActivity().findViewById(errorFrameId);
+        ts.setText(message);
+	}
+
+	@Override
+	public View makeView() {
+		TextView t = new TextView(getActivity());
+		t.setTextSize(14);
+		t.setGravity(Gravity.CENTER_HORIZONTAL);
+		t.setTextColor(getResources().getColor(R.color.error));
+		return t;
+	}
 
 
 }

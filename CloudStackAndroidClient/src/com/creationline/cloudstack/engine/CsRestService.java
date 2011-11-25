@@ -476,9 +476,11 @@ public class CsRestService extends IntentService {
 		
 		final int statusCode = reply.getStatusLine().getStatusCode();
 		final boolean callReturnedOk = statusCode==HttpStatus.SC_OK;
-		
+		final boolean ranInto404 = statusCode==HttpStatus.SC_NOT_FOUND;
 		if(callReturnedOk) {
 			processAndSaveJsonReplyData(uriToUpdate, replyBody.toString());
+		} else if(ranInto404){
+			addToErrorLog(String.valueOf(statusCode), "CloudStack instance not found at saved URL (404)", uriToUpdate.toString());
 		} else {
 			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody.toString());
 		}

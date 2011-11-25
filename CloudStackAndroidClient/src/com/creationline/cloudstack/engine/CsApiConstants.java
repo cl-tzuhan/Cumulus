@@ -24,10 +24,16 @@ public class CsApiConstants {
 		
 		public static final String SESSIONKEY = "sessionkey";
 	}
-	
+
 	public static class LISTACCOUNTS_PARAMS {
+		public static final String USER = "user";
+		public static final String USERNAME = "username";
 		public static final String APIKEY = "apikey";
 		public static final String SECRETKEY = "secretkey";
+	}
+	
+	public static class ERROR_PARAMS {
+		public static final String ERRORTEXT = "errortext";
 	}
 	
 }
