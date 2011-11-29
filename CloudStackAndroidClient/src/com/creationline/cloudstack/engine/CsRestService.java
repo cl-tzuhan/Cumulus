@@ -85,6 +85,7 @@ public class CsRestService extends IntentService {
 //	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
 	private static List<Uri> inProgressTransactionList = new ArrayList<Uri>();
 	private static Time time = null;
+	private HttpClient httpclient = new DefaultHttpClient();  //one httpclient for use by multiple requests as suggested by android
 
 	
 	// ApiKey and secretKey as given by your CloudStack vendor
@@ -143,25 +144,14 @@ public class CsRestService extends IntentService {
 		
 		performRestRequest(apiCmd);
 		
-//		Intent broadcastIntent = new Intent(payload.getString(CsRestService.ACTION_ID));
-//		broadcastIntent.putExtra(CsRestService.RESPONSE, apiCmd+"Response");
-//		sendBroadcast(broadcastIntent);
-
 	}
 	
 	@Override
 	public void onDestroy() {
-//		final String TAG = "CsRestService.onDestory()";
-//
-//		if(inProgressTransaction!=null) {
-//			ClLog.i(TAG, "App exited before request completed.  Marking "+inProgressTransaction+" as canceled");
-//			updateCallAsAbortedOnDb(inProgressTransaction);
-//		}
-//		for(Uri uri : inProgressTransactionList) {
-//			ClLog.i(TAG, "App exited before request completed.  Marking "+uri+" as canceled");
-//			updateCallAsAbortedOnDb(uri);
-//		}
-//		inProgressTransactionList.clear();
+		// When HttpClient instance is no longer needed,
+        // shut down the connection manager to ensure
+        // immediate deallocation of all system resources
+        httpclient.getConnectionManager().shutdown();
 		
 		super.onDestroy();
 	}
@@ -206,6 +196,7 @@ public class CsRestService extends IntentService {
 			//user should not see this type of error in the wild.
 			;
 		} catch (IOException e) {
+			addToErrorLog(null, e.getMessage(), inProgressTransaction.toString());
 			updateCallAsAbortedOnDb(inProgressTransaction);
 		}
 		
@@ -375,7 +366,7 @@ public class CsRestService extends IntentService {
 			return null;
 		}
 		
-        HttpClient httpclient = new DefaultHttpClient();
+//        HttpClient httpclient = new DefaultHttpClient();
         try {
             final HttpGet httpGet = new HttpGet(url);
             //final HttpPost httpPost = new HttpPost(url);
@@ -401,7 +392,7 @@ public class CsRestService extends IntentService {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
             // immediate deallocation of all system resources
-            httpclient.getConnectionManager().shutdown();
+//            httpclient.getConnectionManager().shutdown();
         }
 		
 		return null;
@@ -440,7 +431,7 @@ public class CsRestService extends IntentService {
 		try {
 			replyBody = inputStreamToString(replyBodyObject);
 		} catch (IOException e) {
-			ClLog.e(TAG, "failure occured trying to read replyBody so aborting.  reply="+reply);
+			ClLog.e(TAG, "failure occurred trying to read replyBody so aborting.  replyBodyObject="+replyBodyObject);
 			throw e;
 		}
 		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBody);

@@ -5,6 +5,7 @@ import net.londatiga.android.QuickAction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
@@ -224,14 +226,19 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     @Override
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
+    	
+    	SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 
-    	//make the rest call to cs server for data
-        final String action = CsRestService.TEST_CALL;   
-        Bundle apiCmd = new Bundle();
-        apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
-        apiCmd.putString(Vms.ACCOUNT, "rickson");
-        Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
-        getActivity().startService(csRestServiceIntent);
+		if(username!=null) {
+			//make the rest call to cs server for data
+			final String action = CsRestService.TEST_CALL;   
+			Bundle apiCmd = new Bundle();
+			apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
+			apiCmd.putString(Vms.ACCOUNT, username);
+			Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
+			getActivity().startService(csRestServiceIntent);
+		}
 	}
 
 	/** Called when the activity is first created. */
