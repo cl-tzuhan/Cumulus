@@ -7,21 +7,27 @@ import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -33,6 +39,8 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
@@ -42,9 +50,12 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.util.ClLog;
-import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFactory {
+	//loginscreenkeyscreenswitcher-related constants
+	private static final int LOGIN_SCREEN = 0;  //the viewswitcher xml declaration must define the login screen first in order for this to work
+	private static final int KEYS_SCREEN = 1;  //the viewswitcher xml declaration must define the keys info screen second in order for this to work
+
 	public static class INTENT_ACTION {
 		//NOTE: changing the value of this constant requires you to change any usage of the same string in Android.manifest!!!
 		public static final String LOGIN = "com.creationline.cloudstack.ui.CsAccountFragment.LOGIN";
@@ -55,6 +66,11 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	private static String ASYNC_ERROR = "asyncError";
 	
 	DefaultHttpClient httpclient = null;
+
+	final Pattern csHostPattern = Pattern.compile("^(((ht|f)tp(s?))\\://)?[\\w\\-\\.:/~\\+#]*");  //allows any mix of letters+digits along with period, colon, tilda, pound, slash, and optional preceding "http:", "https:", or "ftp:")
+	final Pattern usernamePattern = Pattern.compile("[\\w\\d-]*");  //allows letters(+underscore), digits, hyphen
+	
+	private CsSessionBasedRequestTask provisionTaskHandle = null;  //task member var so we can have a handle to cancel in-progress tasks on exit
 
 //    private BroadcastReceiver accountCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
  
@@ -115,6 +131,10 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     			ClLog.e(TAG, "got UnknownHostException! [" + e.toString() +"]");
     			ClLog.e(TAG, e);
     			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Specified URL is not a valid CloudStack instance.  This must be a proper host/URL.");
+    		} catch (ConnectTimeoutException e) {
+    			ClLog.e(TAG, "got ConnectTimeoutException! [" + e.toString() +"]");
+    			ClLog.e(TAG, e);
+    			returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "Could not connect to the specified CloudStack instance.  Is the URL is correct?");
     		} catch (HttpHostConnectException e) {
     			ClLog.e(TAG, "got HttpHostConnectException! [" + e.toString() +"]");
     			ClLog.e(TAG, e);
@@ -208,9 +228,20 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		}
 
 		public void showErrorAndEndProgress(final String asyncError) {
+			//cache error so we can re-display in case user leave this screen and comes back
+			SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = preferences.edit();
+			editor.putString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGINERROR_CACHE, asyncError);
+			editor.remove(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);
+			editor.commit();
+			
 			//show error to user
-			TextSwitcher ts = (TextSwitcher) getActivity().findViewById(R.id.loginerrorframe);
-			ts.setText(asyncError);
+			TextSwitcher ts = (TextSwitcher)getActivity().findViewById(R.id.loginerrorframe);
+			if(ts!=null) { ts.setText(asyncError); }
+			
+			//auto-scroll to bottom to make sure error is on-screen
+			ScrollView detailscrollview = (ScrollView)getActivity().findViewById(R.id.detailscrollview);
+			if(detailscrollview!=null) { detailscrollview.smoothScrollTo(0, detailscrollview.getHeight()); }
 			
 			//revert progress-circle back to button icon
 			switchLoginProgress();
@@ -218,12 +249,22 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 		public void switchLoginProgress() {
 			ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-			loginprogressswitcher.showNext();
+			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
 		}
 	}
 	
     private class CsLoginTask extends CsSessionBasedRequestTask {
 
+		@Override
+		protected void onPreExecute() {
+			SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = preferences.edit();
+			editor.putBoolean(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS, true);
+			editor.commit();
+			
+			super.onPreExecute();
+		}
+		
     	@Override
     	protected Bundle doInBackground(Bundle... params) {
     		Bundle apiParams = params[0];
@@ -310,7 +351,8 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     		bundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, returnBundle.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
     		bundle.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, returnBundle.getString(CsApiConstants.LOGIN_PARAMS.USERNAME));
     		bundle.putString(CsApiConstants.LOGIN_PARAMS.SESSIONKEY, asyncResult);
-    		new CsListAccountsTask().execute(bundle);
+    		provisionTaskHandle = new CsListAccountsTask();
+    		provisionTaskHandle.execute(bundle);
     	}
     	
     }
@@ -379,7 +421,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				}
 
 				//save the retrieved keys to prefs
-				SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
+				SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 				SharedPreferences.Editor preferencesEditor = preferences.edit();
 				preferencesEditor.putString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, apikey);
 				preferencesEditor.putString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, secretkey);
@@ -397,12 +439,22 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     	protected void onPostExecute(Bundle returnBundle) {
     		final String asyncResult = returnBundle.getString(CsAccountFragment.ASYNC_RESULT);
     		final String asyncError = returnBundle.getString(CsAccountFragment.ASYNC_ERROR);
+
+    		provisionTaskHandle = null;
+    		
+    		final FragmentActivity activity = getActivity();
+    		if(activity!=null) {
+    			SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+    			SharedPreferences.Editor editor = preferences.edit();
+    			editor.remove(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);
+    			editor.commit();
+    		}
     		
 			if(asyncError!=null) {
 				showErrorAndEndProgress(asyncError);
 				return;  //if we got an error abort the provisioning process
 			}
-
+			
     		Bundle bundle = new Bundle();
     		//add csHost to the return bundle so chained rest requests can make use of it
     		bundle.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, returnBundle.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING));
@@ -411,7 +463,39 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     		
 			//revert progress-circle back to button icon
 			switchLoginProgress();
+			
+			switchToKeysScreen();
     	}
+
+		public void switchToKeysScreen() {
+			final FragmentActivity activity = getActivity();
+			
+			//disable the slide-in animation for ui elements while ViewSwitcher animates flipping the screen
+			RelativeLayout keysdisplayframe = (RelativeLayout)activity.findViewById(R.id.keysdisplayframe);
+			if(keysdisplayframe!=null) { keysdisplayframe.setLayoutAnimation(null); }
+			
+			//fill out the dynamic text in the keys screen
+			SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+			TextView readonlyusername = (TextView)activity.findViewById(R.id.username);
+			readonlyusername.setText(preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, "<username missing>"));
+			TextView readonlycshost = (TextView)activity.findViewById(R.id.cshost);
+			readonlycshost.setText(preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, "<CloudStack host not configured>"));
+			TextView apikey = (TextView)activity.findViewById(R.id.apikey);
+			apikey.setText(preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, "<api key does not exist>"));
+			TextView secretkey = (TextView)activity.findViewById(R.id.secretkey);
+			secretkey.setText(preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, "<secret key does not exist>"));
+			
+			//just to be safe in case there has been scrolling, move scrollview back to beginning so user sees top of view after we flip
+			ScrollView detailscrollview = (ScrollView)activity.findViewById(R.id.detailscrollview);
+			if(detailscrollview!=null) { detailscrollview.smoothScrollTo(0, 0); }
+			
+			//switch the ui to "keys screen"
+			flipBetweenLoginAndKeysScreens(CsAccountFragment.KEYS_SCREEN);
+			
+			//in case the focus was on something before the flip, clear focus here so we don't attract attention to the reset button from the get-go
+			Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
+			if(resetbutton!=null) {  resetbutton.clearFocus(); }
+		}
 
     }
     
@@ -484,17 +568,74 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		final Animation shake = AnimationUtils.loadAnimation(getActivity(),  R.anim.shake);
-		final Animation out = AnimationUtils.loadAnimation(getActivity(), android.R.anim.slide_out_right);
+		final FragmentActivity activity = getActivity();
+		final Animation shake = AnimationUtils.loadAnimation(activity,  R.anim.shake);
+		final Animation out = AnimationUtils.loadAnimation(activity, android.R.anim.slide_out_right);
         
         //setup error frame TextSwitchers
 		initTextSwitcher(R.id.hosterrorframe, shake, out);
 		initTextSwitcher(R.id.usernamepassworderrorframe, shake, out);
 		initTextSwitcher(R.id.loginerrorframe, shake, out);
         
-        ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-        loginprogressswitcher.setInAnimation(QuickActionUtils.getFadein_decelerate());
-        loginprogressswitcher.setOutAnimation(QuickActionUtils.getFadeout_decelerate());
+//        ViewSwitcher loginprogressswitcher = (ViewSwitcher)activity.findViewById(R.id.loginprogressswitcher);
+//        loginprogressswitcher.setInAnimation(QuickActionUtils.getFadein_decelerate());
+//        loginprogressswitcher.setOutAnimation(QuickActionUtils.getFadeout_decelerate());
+        
+        Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
+        resetbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				View confirmdialog_resetaccount = activity.getLayoutInflater().inflate(R.layout.confirmdialog_resetaccount, null);
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+			    builder.setView(confirmdialog_resetaccount)
+			    	   .setPositiveButton("Reset", new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			                    resetAccount();
+			               }
+			           })
+			           .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			                    dialog.cancel();
+			               }
+			           });
+			    AlertDialog confirmDialog = builder.create();
+			    confirmDialog.show();
+			}
+		});
+        
+		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
+        final boolean isProvisioned = savedApiKey!=null;
+		if(isProvisioned) {
+        	//if we are already provisioned, just show the "keys screen"
+			ViewSwitcher loginscreenkeyscreenswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginscreenkeyscreenswitcher);
+			loginscreenkeyscreenswitcher.setDisplayedChild(KEYS_SCREEN);
+
+			final String savedCsHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+			final String savedUsername = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
+			final String savedSecretKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, null);
+			
+			setTextViewValue(R.id.cshost, savedCsHost);
+			setTextViewValue(R.id.username, savedUsername);
+			setTextViewValue(R.id.apikey, savedApiKey);
+			setTextViewValue(R.id.secretkey, savedSecretKey);
+        } else {
+        	//if we aren't provisioned yet, we will get the "login screen" by default
+        	final boolean loginIsInProgress = preferences.getBoolean(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS, false);
+        	if(loginIsInProgress) {
+        		//show progress-circle
+        		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+    			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
+        	}
+        	
+        	final String loginErrorMessage = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGINERROR_CACHE, null);
+        	if(loginErrorMessage!=null) {
+        		//show any login error messages we may have got while off-screen
+        		TextSwitcher ts = (TextSwitcher)getActivity().findViewById(R.id.loginerrorframe);
+    			if(ts!=null) { ts.setText(loginErrorMessage); }
+        	}
+        }
         
         super.onActivityCreated(savedInstanceState);
 	}
@@ -519,6 +660,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 //				;
 //			}
 //		}
+		
+		if(provisionTaskHandle!=null) {
+			provisionTaskHandle.cancel(false);
+			removePreferenceSetting(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);  //mark login as no longer in progress so we don't have a never-ending progress circle once we return. If the provision call does complete, we can always re-do it anyways
+		}
+		
 		super.onDestroy();
 	}
 
@@ -527,16 +674,23 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final View csaccountfragment = inflater.inflate(R.layout.csaccountfragment, container, false);
 
-		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
-		String savedCsUrl = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
-		String savedLoginName = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_NAME_SETTING, null);
+		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		final String savedCsHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+		final String savedUsername = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
+//		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
+//		final String savedSecretKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, null);
 		
-        setTextWatcherAndValueForEditText(csaccountfragment, R.id.csinstanceurl, CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, savedCsUrl);
-        setTextWatcherAndValueForEditText(csaccountfragment, R.id.loginname, CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_NAME_SETTING, savedLoginName);
-		
+        setTextWatcherAndValueForEditText(csaccountfragment, R.id.cshostfield, CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, savedCsHost);
+        setTextWatcherAndValueForEditText(csaccountfragment, R.id.usernamefield, CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, savedUsername);
+
         setLoginButtonClickHandler(csaccountfragment);
         
 		return csaccountfragment;
+	}
+
+	public void setTextViewValue(final int idOfTextViewToSet, final String newValue) {
+		TextView textView = (TextView)getActivity().findViewById(idOfTextViewToSet);
+        if(textView!=null) { textView.setText(newValue); }
 	}
 
 	public void setTextWatcherAndValueForEditText(final View csaccountfragment, final int idOfEditTextToWatch, final String preferenceKey, final String previousValue) {
@@ -544,11 +698,28 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 			@Override
 			public void afterTextChanged(Editable arg0) {
+				//persist input to preferences
 				final String inputtedString = arg0.toString();
-				SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
+				SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 				SharedPreferences.Editor preferencesEditor = preferences.edit();
 				preferencesEditor.putString(preferenceKey, inputtedString);
 				preferencesEditor.commit();
+				
+				if(idOfEditTextToWatch==R.id.cshostfield){
+					Matcher matcher = csHostPattern.matcher(inputtedString);
+					if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
+						showLoginErrorMessage(R.id.hosterrorframe, "host value must be a valid URL");
+					} else {
+						showLoginErrorMessage(R.id.hosterrorframe, "");
+					}
+				} else if(idOfEditTextToWatch==R.id.usernamefield) {
+					Matcher matcher = usernamePattern.matcher(inputtedString);
+					if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
+						showLoginErrorMessage(R.id.usernamepassworderrorframe, "username cannot contain special characters");
+					} else {
+						showLoginErrorMessage(R.id.usernamepassworderrorframe, "");
+					}
+				}
 			}
 
 			@Override
@@ -564,10 +735,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         };
 
         EditText editText = (EditText)csaccountfragment.findViewById(idOfEditTextToWatch);
-        editText.addTextChangedListener(textWatcher);
-        
-        if(previousValue!=null) {
-        	editText.setText(previousValue);
+        if(editText!=null) {
+	        editText.addTextChangedListener(textWatcher);
+	        
+	        if(previousValue!=null) {
+	        	editText.setText(previousValue);
+	        }
         }
 	}
 
@@ -586,10 +759,10 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
 		loginprogressswitcher.showNext();
 		
-		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.NAME, Context.MODE_PRIVATE);
+		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
-		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_NAME_SETTING, null);
-		TextView passwordText = (TextView)getActivity().findViewById(R.id.password);
+		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
+		TextView passwordText = (TextView)getActivity().findViewById(R.id.passwordfield);
 		final String password = passwordText.getText().toString();
 
 		clearErrorFrames();
@@ -604,31 +777,35 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         apiCmd.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, csHost);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, username);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.PASSWORD, password);
-        new CsLoginTask().execute(apiCmd);
+        provisionTaskHandle = new CsLoginTask();
+        provisionTaskHandle.execute(apiCmd);
 	}
 	
 	public void clearErrorFrames() {
 		showLoginErrorMessage(R.id.hosterrorframe, "");
 		showLoginErrorMessage(R.id.usernamepassworderrorframe, "");
 		showLoginErrorMessage(R.id.loginerrorframe, "");
+		
+		removePreferenceSetting(CloudStackAndroidClient.SHARED_PREFERENCES.LOGINERROR_CACHE);
+	}
+
+	public void removePreferenceSetting(final String keyToRemove) {
+		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.remove(keyToRemove);
+		editor.commit();
 	}
 
 	public boolean inputValidationFailed(String csHost, final String username, final String password) {
 		boolean improperInputExists = false;
 		
 		if(csHost==null || csHost.isEmpty()) {
-			showLoginErrorMessage(R.id.hosterrorframe, "Please enter a valid CloudStack URL");
-			improperInputExists = true;
-		} else if(csHost.indexOf(' ')>-1 || csHost.contains("Å@")) { //csHost cannot contain 1-byte nor 2-byte spaces
-			showLoginErrorMessage(R.id.hosterrorframe, "CloudStack URL cannot contain spaces");
+			showLoginErrorMessage(R.id.hosterrorframe, "please enter a valid CloudStack URL");
 			improperInputExists = true;
 		}
 		
 		if(username==null || username.isEmpty() || password==null || password.isEmpty()) {
-			showLoginErrorMessage(R.id.usernamepassworderrorframe, "Enter your username and password");
-			improperInputExists = true;
-		} else if(username.indexOf(' ')>-1 || username.contains("Å@")) { //username cannot contain 1-byte nor 2-byte spaces
-			showLoginErrorMessage(R.id.usernamepassworderrorframe, "Username cannot contain spaces");
+			showLoginErrorMessage(R.id.usernamepassworderrorframe, "enter your username and password");
 			improperInputExists = true;
 		}
 		
@@ -637,7 +814,49 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	
 	private void showLoginErrorMessage(final int errorFrameId, final String message) {
 		TextSwitcher ts = (TextSwitcher) getActivity().findViewById(errorFrameId);
-        ts.setText(message);
+		if(ts!=null) { ts.setText(message); }
+	}
+	
+	private void resetAccount() {
+		final FragmentActivity activity = getActivity();
+
+		//delete all saved prefs
+		SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		SharedPreferences.Editor preferencesEditor = preferences.edit();
+		preferencesEditor.clear();
+		preferencesEditor.commit();
+		
+		//just to be safe in case there has been scrolling, move scrollview back to beginning so user sees top of view after we flip
+		ScrollView detailscrollview = (ScrollView)activity.findViewById(R.id.detailscrollview);
+		if(detailscrollview!=null) { detailscrollview.fullScroll(ScrollView.FOCUS_UP); }
+		
+		//switch the ui to "login screen"
+		flipBetweenLoginAndKeysScreens(CsAccountFragment.LOGIN_SCREEN);
+		
+		//clear the edittexts of previous values
+//		EditText cshost = (EditText)activity.findViewById(R.id.cshostfield);
+//		cshost.setText("");
+//		EditText username = (EditText)activity.findViewById(R.id.usernamefield);
+//		username.setText("");
+//		EditText password = (EditText)activity.findViewById(R.id.password);
+//		password.setText("");
+		setTextViewValue(R.id.cshostfield, "");
+		setTextViewValue(R.id.usernamefield, "");
+		setTextViewValue(R.id.passwordfield, "");
+	}
+
+	public void flipBetweenLoginAndKeysScreens(final int screenToFlipTo) {
+		final FragmentActivity activity = getActivity();
+		
+		ViewSwitcher loginscreenkeyscreenswitcher = (ViewSwitcher)activity.findViewById(R.id.loginscreenkeyscreenswitcher);
+		if(loginscreenkeyscreenswitcher.getDisplayedChild()!=screenToFlipTo) {
+			final Animation flipout_withstartdelay = AnimationUtils.loadAnimation(activity, R.anim.flipout_withstartdelay);
+			final Animation flipin_withstartdelay = AnimationUtils.loadAnimation(activity, R.anim.flipin_withstartdelay);
+
+			loginscreenkeyscreenswitcher.setOutAnimation(flipout_withstartdelay);
+			loginscreenkeyscreenswitcher.setInAnimation(flipin_withstartdelay);
+			loginscreenkeyscreenswitcher.showNext();
+		}
 	}
 
 	@Override

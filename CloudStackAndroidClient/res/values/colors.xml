@@ -6,6 +6,7 @@
    
    <color name="label">#4a4a4a</color>
 
+   <color name="active">#1e8eee</color>
    <color name="error">#e5e818</color>
 
    <color name="viewPagerIndicator_unselectedColor">#333333</color>

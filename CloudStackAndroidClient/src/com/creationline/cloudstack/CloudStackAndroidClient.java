@@ -8,11 +8,13 @@ public class CloudStackAndroidClient extends FragmentActivity {
 	
 	public static class SHARED_PREFERENCES {
 		//SharedPreference-related constants
-		public static String NAME = "CloudStackAndroidClientAccountPreferences";
+		public static String PREFERENCES_NAME = "CloudStackAndroidClientAccountPreferences";
+		public static String LOGIN_INPROGRESS = "LoginInProgress";  //boolean
 		public static String CLOUDSTACK_HOST_SETTING = "CloudStackUrl";
-		public static String LOGIN_NAME_SETTING = "LoginName";
+		public static String USERNAME_SETTING = "LoginName";
 		public static String APIKEY_SETTING = "ApiKey";
 		public static String SECRETKEY_SETTING = "SecretKey";
+		public static String LOGINERROR_CACHE = "LoginErrorCache";
 	}
 	
     /** Called when the activity is first created. */
@@ -32,6 +34,5 @@ public class CloudStackAndroidClient extends FragmentActivity {
 		
 		super.onDestroy();
 	}
-    
     
 }

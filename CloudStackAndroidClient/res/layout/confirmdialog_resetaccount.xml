@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/confirmdialog_resetaccount_view"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content"
+	android:layoutAnimation="@anim/slide_righttoleft_layoutanim"
+	android:minHeight="?android:attr/listPreferredItemHeight">
+
+	<LinearLayout android:id="@+id/iconframe"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layoutAnimation="@anim/fadein_layoutanim">
+		<ImageView android:id="@+id/dialogicon" android:src="@drawable/shieldbang_w_alpha20"
+			android:layout_alignParentLeft="true" android:layout_centerVertical="true"
+			android:layout_height="wrap_content" android:layout_width="wrap_content"
+			android:layout_marginLeft="0dp" android:layout_marginRight="3dp"
+			android:background="@android:color/transparent" />
+	</LinearLayout>
+	<TextView android:id="@+id/dialogtitle"
+		android:layout_toRightOf="@id/iconframe" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:text="Are you sure you want to reset this account?" />
+	<TextView android:id="@+id/dialogmessage"
+		android:layout_alignLeft="@id/dialogtitle" android:layout_below="@id/dialogtitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="This will erase your local account information and delete all data cached on the device." />
+	<TextView android:id="@+id/dialogmessagedetail"
+		android:layout_alignLeft="@id/dialogtitle" android:layout_below="@id/dialogmessage"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="14sp" android:textColor="@color/label"
+		android:text="(data on CloudStack are unaffected)" />
+
+</RelativeLayout>
