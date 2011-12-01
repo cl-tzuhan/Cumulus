@@ -15,7 +15,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".ui.CsVmList"
+        <activity android:name=".ui.MultiListUi"
                   android:label="@string/app_name"
                   android:windowSoftInputMode="stateUnchanged" />
 

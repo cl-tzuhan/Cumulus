@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewSwitcher android:id="@+id/csvmlistcommandfooterviewswitcher"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content" android:layout_width="wrap_content"
+	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+	android:inAnimation="@anim/fadein" android:outAnimation="@anim/fadeout_decelerate" >
+
+	<!-- child==0 of ViewSwitcher: RelativeLayout composing the header we usually want to show -->
+	<RelativeLayout android:id="@+id/csvmlistcommandfooter"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:paddingTop="10dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="0dp" >
+		
+		<RelativeLayout android:id="@+id/timestampline" 
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true" >
+				
+			<TextView android:id="@+id/lastrefresheddatestamp"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="4dp"
+				android:textSize="11sp" android:textColor="@color/primaryinfo_color_selector"
+				android:typeface="serif"
+				android:text="" />
+			<TextView android:id="@+id/lastrefreshedtimestamp"
+				android:layout_toRightOf="@id/lastrefresheddatestamp" android:layout_alignBaseline="@id/lastrefresheddatestamp"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="4dp"
+				android:textSize="11sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:typeface="serif"
+				android:text="" />
+			<TextView android:id="@+id/lastrefreshedtimestamplabel"
+				android:layout_toRightOf="@id/lastrefreshedtimestamp" android:layout_alignBaseline="@id/lastrefreshedtimestamp"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="4sp"
+				android:textSize="13sp" android:textColor="@color/label"
+				android:text="last refresh" />
+		</RelativeLayout>
+		<ProgressBar android:id="@+id/progresscircle"
+			android:layout_toRightOf="@id/timestampline"
+			android:layout_height="wrap_content" android:layout_width="wrap_content"
+			android:layout_marginTop="-2dp" android:layout_marginLeft="6dp"
+			android:paddingTop="2dp"
+			android:visibility="invisible" 
+			style="?android:attr/progressBarStyleSmall" />
+		<LinearLayout android:id="@+id/commandbuttonline"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:gravity="center_horizontal" >
+			<Button android:id="@+id/refreshbutton"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginTop="30dp" android:layout_marginBottom="100dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/button_rotate_cw_selector"
+				android:drawablePadding="-10dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:text="Refresh" />
+		</LinearLayout>	
+			
+	</RelativeLayout>
+
+	<!-- child==1 of ViewSwitcher: using empty TextView here to show blank space -->
+	<TextView
+    	android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:text=" " />
+		
+</ViewSwitcher>
+
+	

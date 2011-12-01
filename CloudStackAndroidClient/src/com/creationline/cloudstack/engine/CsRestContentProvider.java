@@ -270,5 +270,13 @@ public class CsRestContentProvider extends ContentProvider {
 //			sqlDb.close();
 //		}
 	}
+	
+	public static void deleteAllData(Context context) {
+		//erase all data from each table
+		context.getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
+		context.getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+		context.getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
+		context.getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
+	}
 
 }

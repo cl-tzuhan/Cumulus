@@ -189,15 +189,14 @@
 						android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
 						android:text="See your virtual machines and other CloudStack data on the screens to the right!" />
 						
-						
-						<Button android:id="@+id/resetbutton"
-							android:layout_alignParentRight="true" android:layout_below="@id/accountintrotext2"
-							android:layout_width="wrap_content" android:layout_height="wrap_content"
-							android:layout_marginTop="35sp"
-							android:padding="4dp"
-							android:background="@drawable/action_item_btn"
-							android:textColor="@color/active"
-							android:text="clear data &amp; reset app" />
+					<Button android:id="@+id/resetbutton"
+						android:layout_alignParentRight="true" android:layout_below="@id/accountintrotext2"
+						android:layout_width="wrap_content" android:layout_height="wrap_content"
+						android:layout_marginTop="35sp"
+						android:padding="4dp"
+						android:background="@drawable/action_item_btn"
+						android:textColor="@color/active"
+						android:text="clear data &amp; reset app" />
 						
 				
 				</RelativeLayout>

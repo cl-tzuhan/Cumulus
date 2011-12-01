@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
@@ -24,7 +25,7 @@ import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.util.QuickActionUtils;
 import com.viewpagerindicator.TitlePageIndicator;
 
-public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFactory {
+public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFactory {
 	
 //	private BroadcastReceiver broadcastReceiver = null;
 	
@@ -47,7 +48,7 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.csvmlist);
+        setContentView(R.layout.multilistui);
         
         //bind the viewpager to the backing adaptor
         ViewPageAdapter vpa = new ViewPageAdapter(getSupportFragmentManager());
@@ -70,26 +71,14 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
         apptitle_pt2.setAnimation(slide_rightToLeft_slow);
         
         //set-up error log view to update with animation
-        TextSwitcher ts = (TextSwitcher) findViewById(R.id.errorLogTextView);
+        TextSwitcher ts = (TextSwitcher)findViewById(R.id.errorLogTextView);
         ts.setFactory(this);
         Animation in = AnimationUtils.loadAnimation(this,  android.R.anim.fade_in);
         Animation out = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
         ts.setInAnimation(in);
         ts.setOutAnimation(out);
                 
-//        final String action = CsRestService.TEST_CALL;     
-//        broadcastReceiver = new BroadcastReceiver(){
-//        	//This handles intents broadcasted by CsRestService
-//        	@Override
-//        	public void onReceive(Context arg0, Intent arg1) {
-//        		String responseString = arg1.getStringExtra(CsRestService.RESPONSE);
-//        		Toast.makeText(getBaseContext(), "CsRestService: request "+responseString+" initiated...", Toast.LENGTH_SHORT).show();
-//        	}
-//        };
-//        registerReceiver(broadcastReceiver, new IntentFilter(action));  //activity will now get intents broadcast by CsRestService (filtered by action str)
-        
         registerForErrorsDbUpdate();
-        //registerForVmsDbUpdate();
         
         new QuickActionUtils(this);
     }
@@ -104,6 +93,10 @@ public class CsVmList extends FragmentActivity implements ViewSwitcher.ViewFacto
     					Errors.ERRORTEXT
     			};
     			Cursor errorLog = getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, "_ID DESC");
+    			if(errorLog==null || errorLog.getCount()>=0) {
+    				return;
+    			}
+    			
     			errorLog.moveToFirst();
     			final int latestErrorMsgId = errorLog.getInt(errorLog.getColumnIndex(Errors._ID));
     			final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));

@@ -148,7 +148,8 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			String text = cursor.getString(cursor.getColumnIndex(columnName));
 			
 			if(textViewId==R.id.created) {
-				DateTimeParser.setCreatedDateTime(view, tv, text);
+				TextView timeText = (TextView)view.findViewById(R.id.createdtime);
+				DateTimeParser.setParsedDateTime(tv, timeText, text);
 			} else if (textViewId==R.id.inprogress_state) {
 				//inprogress_state values takes precedence over state values for ui-display purposes
 				if(text!=null) {
@@ -210,6 +211,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
         			//if deleteSnapshot failed, revert the progress-circle back to icon again
         			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
+        			
         		} else {
         			//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
     				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
@@ -236,7 +238,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		//add the custom footer to the list
-        View footerView = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistfooter, null, false);
+        View footerView = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistsummaryfooter, null, false);
         ViewSwitcher vs = (ViewSwitcher)footerView.findViewById(R.id.footerviewswitcher);
         vs.setDisplayedChild(0);
         vs.setAnimateFirstView(true);

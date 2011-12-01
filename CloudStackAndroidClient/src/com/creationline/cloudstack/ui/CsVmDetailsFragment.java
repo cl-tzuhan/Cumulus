@@ -179,7 +179,8 @@ public class CsVmDetailsFragment extends Fragment {
 			tv.setText(null);
 		} else if(textViewId==R.id.created) {
 			//format all dates to a more readable format
-			DateTimeParser.setCreatedDateTime(view, tv, text);
+			TextView timeText = (TextView)view.findViewById(R.id.createdtime);
+			DateTimeParser.setParsedDateTime(tv, timeText, text);
 		} else if(textViewId==R.id.haenabled) {
 			//substitute an easier-to-read string for this instead of true/false
 			final String enabledOrDisabled = ("true").equalsIgnoreCase(text)? "enabled" : "disabled";
@@ -330,7 +331,7 @@ public class CsVmDetailsFragment extends Fragment {
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Vms.ID, vmid);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.CALLBACK_VMLIST);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_VMLIST
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_VMLIST
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}

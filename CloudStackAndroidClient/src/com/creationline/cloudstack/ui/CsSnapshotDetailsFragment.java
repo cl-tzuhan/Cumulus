@@ -181,7 +181,8 @@ public class CsSnapshotDetailsFragment extends Fragment {
 			tv.setText(null);
 		} else if (textViewId==R.id.created) {
 			//format all dates to a more readable format
-			DateTimeParser.setCreatedDateTime(view, tv, text);
+			TextView timeText = (TextView)view.findViewById(R.id.createdtime);
+			DateTimeParser.setParsedDateTime(tv, timeText, text);
 		} else if (textViewId==R.id.inprogress_state) {
 			//inprogress_state values takes precedence over state values for ui-display purposes
 			if(text!=null && !text.equalsIgnoreCase("show_icon")) {

@@ -23,11 +23,13 @@ import org.codehaus.jackson.map.ObjectMapper;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -39,6 +41,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextSwitcher;
@@ -48,7 +51,10 @@ import android.widget.ViewSwitcher;
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
+import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
+import com.creationline.cloudstack.engine.db.Transactions;
+import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 
 public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFactory {
@@ -443,12 +449,14 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     		provisionTaskHandle = null;
     		
     		final FragmentActivity activity = getActivity();
-    		if(activity!=null) {
-    			SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
-    			SharedPreferences.Editor editor = preferences.edit();
-    			editor.remove(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);
-    			editor.commit();
+    		if(activity==null) {
+    			return;
     		}
+    		
+    		SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+    		SharedPreferences.Editor editor = preferences.edit();
+    		editor.remove(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);
+    		editor.commit();
     		
 			if(asyncError!=null) {
 				showErrorAndEndProgress(asyncError);
@@ -463,8 +471,20 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     		
 			//revert progress-circle back to button icon
 			switchLoginProgress();
-			
 			switchToKeysScreen();
+			
+			//make listVm call to fill out vm data for user
+			final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
+			if(username!=null) {
+				//make the rest call to cs server for vm data
+				final String action = CsRestService.TEST_CALL;   
+				Bundle apiCmd = new Bundle();
+				apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
+				apiCmd.putString(Vms.ACCOUNT, username);
+		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);
+				Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
+				getActivity().startService(csRestServiceIntent);
+			}
     	}
 
 		public void switchToKeysScreen() {
@@ -826,6 +846,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		preferencesEditor.clear();
 		preferencesEditor.commit();
 		
+		//delete all existing data
+		CsRestContentProvider.deleteAllData(activity);
+		
 		//just to be safe in case there has been scrolling, move scrollview back to beginning so user sees top of view after we flip
 		ScrollView detailscrollview = (ScrollView)activity.findViewById(R.id.detailscrollview);
 		if(detailscrollview!=null) { detailscrollview.fullScroll(ScrollView.FOCUS_UP); }
@@ -834,12 +857,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		flipBetweenLoginAndKeysScreens(CsAccountFragment.LOGIN_SCREEN);
 		
 		//clear the edittexts of previous values
-//		EditText cshost = (EditText)activity.findViewById(R.id.cshostfield);
-//		cshost.setText("");
-//		EditText username = (EditText)activity.findViewById(R.id.usernamefield);
-//		username.setText("");
-//		EditText password = (EditText)activity.findViewById(R.id.password);
-//		password.setText("");
 		setTextViewValue(R.id.cshostfield, "");
 		setTextViewValue(R.id.usernamefield, "");
 		setTextViewValue(R.id.passwordfield, "");

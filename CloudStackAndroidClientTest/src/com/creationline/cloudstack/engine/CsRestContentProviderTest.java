@@ -28,10 +28,11 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	
 	protected void deleteAllData() {
 		//erase all data from each table
-		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
-		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
-		getContext().getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
-		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
+//		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
+//		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
+//		getContext().getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
+//		getContext().getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
+		CsRestContentProvider.deleteAllData(getContext());
 	}
 
 	public void testInsertAndQuery_rowSpecifiedInUri() {

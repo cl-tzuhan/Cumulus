@@ -25,6 +25,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
@@ -62,6 +63,7 @@ public class CsRestService extends IntentService {
 	public static final String ACTION_ID = "com.creationline.cloudstack.engine.ACTION_ID";
 	public static final String API_CMD = "com.creationline.cloudstack.engine.API_CMD";
 	public static final String RESPONSE = "com.creationline.cloudstack.engine.RESPONSE";
+	public static final String UPDATED_URI = "com.creationline.cloudstack.engine.UPDATED_URI";
 	
 	public static final String TEST_CALL = "com.creationline.cloudstack.engine.TEST_CALL";
 	
@@ -85,7 +87,7 @@ public class CsRestService extends IntentService {
 //	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
 	private static List<Uri> inProgressTransactionList = new ArrayList<Uri>();
 	private static Time time = null;
-	private HttpClient httpclient = new DefaultHttpClient();  //one httpclient for use by multiple requests as suggested by android
+	private HttpClient httpclient = null;  //one httpclient for use by multiple requests as suggested by android
 
 	
 	// ApiKey and secretKey as given by your CloudStack vendor
@@ -151,7 +153,12 @@ public class CsRestService extends IntentService {
 		// When HttpClient instance is no longer needed,
         // shut down the connection manager to ensure
         // immediate deallocation of all system resources
-        httpclient.getConnectionManager().shutdown();
+		if(httpclient!=null) {
+			ClientConnectionManager connectionManager = httpclient.getConnectionManager();
+			if(connectionManager!=null) {
+				connectionManager.shutdown();
+			}
+		}
 		
 		super.onDestroy();
 	}
@@ -370,6 +377,9 @@ public class CsRestService extends IntentService {
         try {
             final HttpGet httpGet = new HttpGet(url);
             //final HttpPost httpPost = new HttpPost(url);
+            if(httpclient==null) {
+            	httpclient = new DefaultHttpClient();  //lazy init
+            }
             
             HttpResponse response =  httpclient.execute(httpGet);
             return response;
@@ -385,6 +395,11 @@ public class CsRestService extends IntentService {
 			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
+			ClLog.e(TAG, e);
+			//save the error to errors db as well
+			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+		} catch (IllegalStateException e) {
+			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
 			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
@@ -528,8 +543,7 @@ public class CsRestService extends IntentService {
 	}
 
 	public void informCallerFragmentOfCallCompletion(final String callbackIntentFilter, final String id, final int successOrFailure) {
-		//inform CsSnapshotListFragment of the result of the call
-//				Intent broadcastIntent = new Intent(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
+		//inform calling fragment of the result of the call
 		if(callbackIntentFilter!=null) {
 			Intent broadcastIntent = new Intent(callbackIntentFilter);
 			Bundle bundle = new Bundle();
@@ -626,7 +640,7 @@ public class CsRestService extends IntentService {
 		
 		if("listVirtualMachinesResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listVirtualMachine results and save to vms table
-			parseReplyBody_listVirtualMachines(responseData.getValueNode());
+			parseReplyBody_listVirtualMachines(uriToUpdate, responseData.getValueNode());
 		} else if("startVirtualMachineResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse startVirtualMachine results and wait for async results
 			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
@@ -670,7 +684,7 @@ public class CsRestService extends IntentService {
 		return new JsonNameNodePair(apiResponseName, responseDataNode);
 	}
 
-	public void parseReplyBody_listVirtualMachines(JsonNode responseDataNode) {
+	public void parseReplyBody_listVirtualMachines(final Uri uriToUpdate, JsonNode responseDataNode) {
 		final String TAG = "CsRestService.parseListVirtualMachinesResult()";
 
 		JsonNode vmNode = responseDataNode.path("virtualmachine");  //extract the virtualmachine list, which contains the actual vm data
@@ -690,6 +704,15 @@ public class CsRestService extends IntentService {
 			e.printStackTrace();
 		}
 
+		Bundle requestAndCallback = findTransactionRequestAndCallbackForRow(uriToUpdate);
+		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
+		if(callbackIntentFilter!=null) {
+			Intent broadcastIntent = new Intent(callbackIntentFilter);
+			Bundle bundle = new Bundle();
+			bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
+			broadcastIntent.putExtras(bundle);
+			sendBroadcast(broadcastIntent);
+		}
 	}
 	
 	private void parseReplyBody_startOrStopOrRebootVirtualMachine(final Uri uriToUpdate, JsonNode responseDataNode) {

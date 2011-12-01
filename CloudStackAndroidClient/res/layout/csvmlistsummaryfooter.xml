@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ViewSwitcher android:id="@+id/footerviewswitcher"
+<ViewSwitcher android:id="@+id/csvmlistsummaryfooterviewswitcher"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content" android:layout_width="wrap_content"
 	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 	android:inAnimation="@anim/fadein" android:outAnimation="@anim/fadeout_decelerate" >
 
 	<!-- child==0 of ViewSwitcher: RelativeLayout composing the footer we usually want to show -->
-	<RelativeLayout android:id="@+id/cssnapshotlistfooter"
+	<RelativeLayout android:id="@+id/csvmlistsummaryfooter"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="30dp"
+		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="0dp"
 		android:minHeight="?android:attr/listPreferredItemHeight">
 		
 		<RelativeLayout android:id="@+id/footertitle" 
@@ -49,7 +49,7 @@
 				android:text="running" />
 				
 			<TextView android:id="@+id/andcharacter"
-			android:layout_toRightOf="@id/footerrunningvmnumlabel" android:layout_alignBaseline="@id/footervmnum"
+				android:layout_toRightOf="@id/footerrunningvmnumlabel" android:layout_alignBaseline="@id/footervmnum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:layout_marginLeft="4dp"
 				android:textSize="12sp"
