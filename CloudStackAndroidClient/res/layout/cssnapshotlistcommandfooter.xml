@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ViewSwitcher android:id="@+id/csvmlistcommandfooterviewswitcher"
+<ViewSwitcher android:id="@+id/cssnapshotlistcommandfooterviewswitcher"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content" android:layout_width="wrap_content"
 	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 	android:inAnimation="@anim/fadein" android:outAnimation="@anim/fadeout_decelerate" >
 
 	<!-- child==0 of ViewSwitcher: RelativeLayout composing the header we usually want to show -->
-	<RelativeLayout android:id="@+id/csvmlistcommandfooter"
+	<RelativeLayout android:id="@+id/cssnapshotlistcommandfooter"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:paddingTop="10dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="0dp" >
 		

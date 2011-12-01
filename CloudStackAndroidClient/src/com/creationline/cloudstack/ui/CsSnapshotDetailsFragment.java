@@ -67,7 +67,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
         		}
         	}
         };
-        getActivity().registerReceiver(snapshotDetailsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND));  //activity will now get intents broadcast by CsRestService (filtered by DELETESNAPSHOT_COMMAND action)
+        getActivity().registerReceiver(snapshotDetailsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
         
 	}
 
@@ -327,7 +327,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Snapshots.ID, snapshotId);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND);
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT);
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
         

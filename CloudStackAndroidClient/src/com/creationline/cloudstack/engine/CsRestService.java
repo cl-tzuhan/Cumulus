@@ -531,7 +531,7 @@ public class CsRestService extends IntentService {
 		final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
 		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
 		
-		if(CsSnapshotListFragment.INTENT_ACTION.DELETESNAPSHOT_COMMAND.equalsIgnoreCase(callbackIntentFilter)) {
+		if(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT.equalsIgnoreCase(callbackIntentFilter)) {
 			ContentValues cv = new ContentValues();
 			cv.putNull(Snapshots.INPROGRESS_STATE);
 			final String whereClause = Snapshots.ID+"=?";
@@ -554,6 +554,18 @@ public class CsRestService extends IntentService {
 		}
 	}
 
+	public void informCallerOfCallCompletion(final Uri uriToUpdate) {
+		Bundle requestAndCallback = findTransactionRequestAndCallbackForRow(uriToUpdate);
+		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
+		if(callbackIntentFilter!=null) {
+			Intent broadcastIntent = new Intent(callbackIntentFilter);
+			Bundle bundle = new Bundle();
+			bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
+			broadcastIntent.putExtras(bundle);
+			sendBroadcast(broadcastIntent);
+		}
+	}
+	
 	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {
 		final String TAG = "CsRestService.updateCallWithReplyOnDb()";
 
@@ -652,7 +664,7 @@ public class CsRestService extends IntentService {
 			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
 		} else if("listSnapshotsResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse listSnapshots results and save to snapshots table
-			parseReplyBody_listSnapshots(responseData.getValueNode());
+			parseReplyBody_listSnapshots(uriToUpdate, responseData.getValueNode());
 		} else if("deleteSnapshotResponse".equalsIgnoreCase(responseData.getFieldName())) {
 			//parse deleteSnapshot results and update snapshots table
 			parseReplyBody_startOrStopOrRebootVirtualMachine(uriToUpdate, responseData.getValueNode());
@@ -704,17 +716,9 @@ public class CsRestService extends IntentService {
 			e.printStackTrace();
 		}
 
-		Bundle requestAndCallback = findTransactionRequestAndCallbackForRow(uriToUpdate);
-		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
-		if(callbackIntentFilter!=null) {
-			Intent broadcastIntent = new Intent(callbackIntentFilter);
-			Bundle bundle = new Bundle();
-			bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
-			broadcastIntent.putExtras(bundle);
-			sendBroadcast(broadcastIntent);
-		}
+		informCallerOfCallCompletion(uriToUpdate);
 	}
-	
+
 	private void parseReplyBody_startOrStopOrRebootVirtualMachine(final Uri uriToUpdate, JsonNode responseDataNode) {
 		final String TAG = "CsRestService.parseReplyBody_startOrStopOrRebootVirtualMachine()";
 		
@@ -734,7 +738,7 @@ public class CsRestService extends IntentService {
 		startCheckAsyncJobProgress(jobid);
 	}
 
-	public void parseReplyBody_listSnapshots(JsonNode responseDataNode) {
+	public void parseReplyBody_listSnapshots(final Uri uriToUpdate, JsonNode responseDataNode) {
 		final String TAG = "CsRestService.parseReplyBody_listSnapshots()";
 
 		final JsonNode snapshotNode = responseDataNode.path("snapshot");  //extract the snapshot list, which contains the actual snapshot data
@@ -753,6 +757,8 @@ public class CsRestService extends IntentService {
 			ClLog.e(TAG, "got IOException trying to close snapshot list parser! [" + e.toString() +"]");
 			e.printStackTrace();
 		}
+		
+		informCallerOfCallCompletion(uriToUpdate);
 	}
 	
 	

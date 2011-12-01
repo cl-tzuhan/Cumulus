@@ -3,6 +3,7 @@ package com.creationline.cloudstack.engine;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import android.app.Activity;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -13,7 +14,9 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.BaseColumns;
+import android.text.format.Time;
 
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.engine.db.Snapshots;
@@ -34,6 +37,8 @@ public class CsRestContentProvider extends ContentProvider {
 	private static final String TAG = "ContentProvider";
 	
 	public static final String AUTHORITY = "com.creationline.cloudstack.engine.csrestcontentprovider";
+	public static final String DATESTAMP = AUTHORITY+".DATESTAMP";
+	public static final String TIMESTAMP = AUTHORITY+".TIMESTAMP";
 	
 	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
@@ -277,6 +282,38 @@ public class CsRestContentProvider extends ContentProvider {
 		context.getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
 		context.getContentResolver().delete(Snapshots.META_DATA.CONTENT_URI, null, null);
 		context.getContentResolver().delete(Errors.META_DATA.CONTENT_URI, null, null);
+	}
+	
+	public static Bundle getReplyDateTimeFor(Activity activity, final String uriStr) {
+		Bundle returnBundle = null;
+		final Uri lastestListVmTransaction = Uri.parse(uriStr);
+		final String[] columns = new String[] {
+			Transactions.REPLY_DATETIME,
+		};
+		Cursor c = activity.getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
+		if(c!=null && c.getCount()>0) {
+			c.moveToFirst();
+			final String lastUpdateTimestampStr = c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME));
+			
+			Time readTime = new Time();
+			readTime.parse3339(lastUpdateTimestampStr);  //str was saved out using RFC3339 format, so needs to be read in as such
+			readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+			String dateStamp = readTime.year+"-"+readTime.month+"-"+readTime.monthDay;
+			String timeStamp = readTime.hour+":"+readTime.minute+":"+readTime.second;
+			
+			returnBundle = new Bundle();
+			returnBundle.putString(CsRestContentProvider.DATESTAMP, dateStamp);
+			returnBundle.putString(CsRestContentProvider.TIMESTAMP, timeStamp);
+			    
+//			TextView lastrefresheddatestamp = (TextView)activity.findViewById(R.id.lastrefresheddatestamp);
+//			TextView lastrefreshedtimestamp = (TextView)activity.findViewById(R.id.lastrefreshedtimestamp);
+//			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null) {
+//				lastrefresheddatestamp.setText(dateStamp);
+//				lastrefreshedtimestamp.setText(timeStamp);
+//			}
+		}
+		
+		return returnBundle;
 	}
 
 }

@@ -29,7 +29,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -41,7 +40,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextSwitcher;
@@ -63,7 +61,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	private static final int KEYS_SCREEN = 1;  //the viewswitcher xml declaration must define the keys info screen second in order for this to work
 
 	public static class INTENT_ACTION {
-		//NOTE: changing the value of this constant requires you to change any usage of the same string in Android.manifest!!!
+		//NOTE: changing the value of these constants requires you to change any usage of the same string in Android.manifest!!!
 		public static final String LOGIN = "com.creationline.cloudstack.ui.CsAccountFragment.LOGIN";
 	}
 	
@@ -251,12 +249,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			
 			//revert progress-circle back to button icon
 			switchLoginProgress();
+			
+//			//we made login button unclickable after the first click, so reset it
+//			Button loginbutton = (Button)getActivity().findViewById(R.id.loginbutton);
+//			if(loginbutton!=null) { loginbutton.setClickable(true); }
 		}
 
-		public void switchLoginProgress() {
-			ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
-		}
 	}
 	
     private class CsLoginTask extends CsSessionBasedRequestTask {
@@ -473,7 +471,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			switchLoginProgress();
 			switchToKeysScreen();
 			
-			//make listVm call to fill out vm data for user
+			//make listVms call to fill out vm data for user
 			final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 			if(username!=null) {
 				//make the rest call to cs server for vm data
@@ -482,6 +480,18 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
 				apiCmd.putString(Vms.ACCOUNT, username);
 		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);
+				Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
+				getActivity().startService(csRestServiceIntent);
+			}
+			
+			//make listSnapshots call to fill out vm data for user
+			if(username!=null) {
+				//make the rest call to cs server for vm data
+				final String action = CsRestService.TEST_CALL;   
+				Bundle apiCmd = new Bundle();
+				apiCmd.putString(CsRestService.COMMAND, "listSnapshots");
+				apiCmd.putString(Vms.ACCOUNT, username);
+		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsSnapshotListFragment.INTENT_ACTION.CALLBACK_LISTSNAPSHOTS);
 				Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
 				getActivity().startService(csRestServiceIntent);
 			}
@@ -645,8 +655,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         	final boolean loginIsInProgress = preferences.getBoolean(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS, false);
         	if(loginIsInProgress) {
         		//show progress-circle
-        		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-    			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
+//        		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+//    			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
+        		switchLoginProgress();
         	}
         	
         	final String loginErrorMessage = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.LOGINERROR_CACHE, null);
@@ -765,10 +776,11 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	}
 
 	public void setLoginButtonClickHandler(final View csaccountfragment) {
-		Button loginButton = (Button)csaccountfragment.findViewById(R.id.loginbutton);
+		final Button loginButton = (Button)csaccountfragment.findViewById(R.id.loginbutton);
         loginButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				loginButton.setClickable(false);
 				makeLoginCall(csaccountfragment);
 			}
 		});
@@ -776,8 +788,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 	public void makeLoginCall(View itemView) {
 		
-		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-		loginprogressswitcher.showNext();
+//		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+//		loginprogressswitcher.showNext();
+		switchLoginProgress();
 		
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
@@ -787,7 +800,8 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 		clearErrorFrames();
 		if(inputValidationFailed(csHost, username, password)) {
-			loginprogressswitcher.showNext();
+//			loginprogressswitcher.showNext();
+			switchLoginProgress();
 			return;  //if input validation failed, short-circuit the rest of the method
 		}
 			
@@ -873,6 +887,14 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			loginscreenkeyscreenswitcher.setOutAnimation(flipout_withstartdelay);
 			loginscreenkeyscreenswitcher.setInAnimation(flipin_withstartdelay);
 			loginscreenkeyscreenswitcher.showNext();
+		}
+	}
+	
+	public void switchLoginProgress() {
+		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
+		if(loginprogressswitcher!=null) {
+			loginprogressswitcher.showNext();
+			loginprogressswitcher.getCurrentView().setClickable(true);  //always set whatever child is in front to clickable; we want to make the login button re-clickable after it was made unclickable when pressed + we don't care if the progress circle is clickable
 		}
 	}
 

@@ -8,7 +8,7 @@
 	<!-- child==0 of ViewSwitcher: RelativeLayout composing the footer we usually want to show -->
 	<RelativeLayout android:id="@+id/cssnapshotlistfooter"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="30dp"
+		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="0dp"
 		android:minHeight="?android:attr/listPreferredItemHeight">
 		
 		<RelativeLayout android:id="@+id/footertitle" 

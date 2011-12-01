@@ -19,10 +19,8 @@ import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.ResourceCursorAdapter;
 import android.text.format.Time;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -59,8 +57,8 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     private static final int REBOOT_VM = 2;
     
     //constants used as keys for saving/restoring app state on pause/resume
-    private static final String CSVMLIST_DATESTAMP = "CSVMLIST_DATESTAMP";
-    private static final String CSVMLIST_TIMESTAMP = "CSVMLIST_TIMESTAMP";
+    private static final String CSVMLIST_DATESTAMP = "com.creationline.cloudstack.ui.CsVmListFragment.CSVMLIST_DATESTAMP";
+    private static final String CSVMLIST_TIMESTAMP = "com.creationline.cloudstack.ui.CsVmListFragment.CSVMLIST_TIMESTAMP";
     
 
     public class CsVmListAdapter extends ResourceCursorAdapter {
@@ -389,7 +387,6 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         		final String[] columns = new String[] {
         			Transactions.REPLY_DATETIME,
         		};
-        		
 				Cursor c = activity.getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
         		if(c!=null && c.getCount()>0) {
         			c.moveToFirst();
