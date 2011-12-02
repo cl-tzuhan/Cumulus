@@ -25,7 +25,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;

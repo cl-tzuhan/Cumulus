@@ -25,6 +25,9 @@
         <activity android:name=".ui.CsSnapshotDetailsFragmentActivity"
                   android:label="Snapshot Details" />
         
+        <activity android:name=".ui.AboutFragmentActivity"
+                  android:label="About" />
+                  
         <service android:name=".engine.CsRestService" />
 		<receiver android:name=".engine.CheckAsyncJobProgress" />
 

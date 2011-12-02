@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/aboutfragment"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content" >
+	<LinearLayout android:id="@+id/logotitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true" >
+		<TextView android:id="@+id/apptitle_pt1"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="#39caff"
+			android:text="Cloud" />
+		<TextView android:id="@+id/apptitle_pt2"
+			android:layout_width="wrap_content" android:layout_height="8sp"
+			android:layout_marginLeft="-28sp"
+			android:textSize="10dp" android:textColor="#1e8eee"
+			android:text="Cloud" />
+		<TextView
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="@color/supplementaryinfo_color_selector"
+			android:text="Stack" />
+	</LinearLayout>
+	<LinearLayout android:id="@+id/iconframe"
+		android:layout_alignParentLeft="true" android:layout_below="@id/logotitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_marginLeft="28px"
+		android:layoutAnimation="@anim/fadein_withstartdelay_layoutanim">
+		<ImageView android:id="@+id/detailviewicon" android:src="@drawable/paint_photoshop_w_72x72"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="0dp" android:layout_marginRight="10dp"
+		android:background="@android:color/transparent" />
+	</LinearLayout>
+	<TextView android:id="@+id/name"
+		android:layout_toRightOf="@id/iconframe" android:layout_alignTop="@id/iconframe"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginTop="10dp"
+		android:textSize="50sp" android:textColor="@color/label"
+		android:text="About" />
+		
+	<ScrollView android:id="@+id/detailscrollview"
+		android:layout_alignParentLeft="true" android:layout_below="@id/iconframe"
+		android:layout_width="match_parent" android:layout_height="wrap_content" >
+
+		<RelativeLayout android:id="@+id/detailview"
+			android:layout_width="fill_parent" android:paddingTop="10dp" android:paddingLeft="25dp" android:paddingRight="25dp" android:paddingBottom="30dp"
+			android:minHeight="?android:attr/listPreferredItemHeight" android:layout_height="wrap_content">
+
+			<TextView android:id="@+id/basicinformationsectiontitle"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/name"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layout_marginTop="0dp"
+				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="basic information" />
+			<TextView android:id="@+id/appname"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/basicinformationsectiontitle"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="19sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="@string/app_name" />
+			<TextView android:id="@+id/appsubname"
+			    android:layout_toRightOf="@id/appname"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/appname"
+				android:layout_marginLeft="4dp"
+				android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="CloudStack Android Client" />
+			<TextView android:id="@+id/version"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/appname"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="16sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="version" />
+			<TextView android:id="@+id/revision"
+			    android:layout_toRightOf="@id/version"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/version"
+				android:layout_marginLeft="4dp"
+				android:textSize="15sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:typeface="serif"
+				android:text="revision" />
+			<TextView android:id="@+id/versionlabel"
+				android:layout_toRightOf="@id/revision"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/version"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="version" />
+			
+			<TextView android:id="@+id/licenseinformationsectiontitle"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/version"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layout_marginTop="23dp"
+				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="license information" />
+			<TextView android:id="@+id/license"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/licenseinformationsectiontitle"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Apache License v2.0" />
+			<TextView android:id="@+id/licenselabel"
+				android:layout_toRightOf="@id/license"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/license"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="license" />
+			<TextView android:id="@+id/sponsor"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/license"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Creationline, Inc." />
+			<TextView android:id="@+id/sponsorlabel"
+				android:layout_toRightOf="@id/sponsor"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/sponsor"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="sponsor" />
+			<TextView android:id="@+id/creator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/sponsor"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Tzu-Han Hsu" />
+			<TextView android:id="@+id/creatorlabel"
+				android:layout_toRightOf="@id/creator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/creator"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="creator" />
+				
+			<TextView android:id="@+id/contributionssectiontitle"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/creator"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layout_marginTop="23dp"
+				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="special thanks to contributions from" />
+			<TextView android:id="@+id/viewpagerindicatorcreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/contributionssectiontitle"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Jake Wharton" />
+			<TextView android:id="@+id/viewpagerindicatorcreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/viewpagerindicatorcreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="Android ViewPagerIndicator" />
+			<TextView android:id="@+id/quickaction3dcreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/viewpagerindicatorcreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Lorensius W. L. T" />
+			<TextView android:id="@+id/quickaction3dcreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/quickaction3dcreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="NewQuickAction3D" />
+			<TextView android:id="@+id/trimquotescreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/quickaction3dcreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Actuate Corporation" />
+			<TextView android:id="@+id/trimquotescreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/trimquotescreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="trimQuotes code" />
+			<TextView android:id="@+id/hapticfeedbackrecepiecreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/trimquotescreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Adrian Cowham" />
+			<TextView android:id="@+id/hapticfeedbackrecepiecreatorsupplement"
+			    android:layout_toRightOf="@id/hapticfeedbackrecepiecreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/hapticfeedbackrecepiecreator"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="(AndroidCookbook.com)" />
+			<TextView android:id="@+id/hapticfeedbackrecepielabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/hapticfeedbackrecepiecreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="Haptic feedback recepie" />
+			<TextView android:id="@+id/devineiconscreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/hapticfeedbackrecepielabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Subrat Nayak" />
+			<TextView android:id="@+id/devineiconscreatorsupplement"
+			    android:layout_toRightOf="@id/devineiconscreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/devineiconscreator"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="(~ipapun)" />
+			<TextView android:id="@+id/devineiconscreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/devineiconscreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="Devine-Icons Part-2" />
+			<TextView android:id="@+id/supermonoiconscreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/devineiconscreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Jack Cai" />
+			<TextView android:id="@+id/supermonoiconscreatorsupplement"
+			    android:layout_toRightOf="@id/supermonoiconscreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/supermonoiconscreator"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="(Double-J Design)" />
+			<TextView android:id="@+id/supermonoiconscreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/supermonoiconscreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="Super Mono" />
+
+		</RelativeLayout>
+
+	</ScrollView>
+	
+</RelativeLayout>

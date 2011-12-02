@@ -51,6 +51,7 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
+import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -522,9 +523,13 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			//switch the ui to "keys screen"
 			flipBetweenLoginAndKeysScreens(CsAccountFragment.KEYS_SCREEN);
 			
-			//in case the focus was on something before the flip, clear focus here so we don't attract attention to the reset button from the get-go
+			//in case the focus was on something before the flip, clear focus here so we don't attract attention to any buttons from the get-go
 			Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
 			if(resetbutton!=null) {  resetbutton.clearFocus(); }
+			Button aboutbutton_loginscreen = (Button)activity.findViewById(R.id.aboutbutton_loginscreen);
+			if(aboutbutton_loginscreen!=null) {  aboutbutton_loginscreen.clearFocus(); }
+			Button aboutbutton_keysscreen = (Button)activity.findViewById(R.id.aboutbutton_keysscreen);
+			if(aboutbutton_keysscreen!=null) {  aboutbutton_keysscreen.clearFocus(); }
 		}
 
     }
@@ -607,32 +612,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		initTextSwitcher(R.id.usernamepassworderrorframe, shake, out);
 		initTextSwitcher(R.id.loginerrorframe, shake, out);
         
-//        ViewSwitcher loginprogressswitcher = (ViewSwitcher)activity.findViewById(R.id.loginprogressswitcher);
-//        loginprogressswitcher.setInAnimation(QuickActionUtils.getFadein_decelerate());
-//        loginprogressswitcher.setOutAnimation(QuickActionUtils.getFadeout_decelerate());
-        
-        Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
-        resetbutton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				View confirmdialog_resetaccount = activity.getLayoutInflater().inflate(R.layout.confirmdialog_resetaccount, null);
-				
-				AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-			    builder.setView(confirmdialog_resetaccount)
-			    	   .setPositiveButton("Reset", new DialogInterface.OnClickListener() {
-			               public void onClick(DialogInterface dialog, int id) {
-			                    resetAccount();
-			               }
-			           })
-			           .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			               public void onClick(DialogInterface dialog, int id) {
-			                    dialog.cancel();
-			               }
-			           });
-			    AlertDialog confirmDialog = builder.create();
-			    confirmDialog.show();
-			}
-		});
+		setAboutButtonOnClickHandler(activity, R.id.aboutbutton_loginscreen);
+        setAboutButtonOnClickHandler(activity, R.id.aboutbutton_keysscreen);
+        setResetButtonOnClickHandler(activity);
         
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
@@ -669,6 +651,42 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         }
         
         super.onActivityCreated(savedInstanceState);
+	}
+
+	public void setAboutButtonOnClickHandler(final FragmentActivity activity, final int aboutButtonId) {
+		Button aboutbutton = (Button)activity.findViewById(aboutButtonId);
+		aboutbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent startAboutFragmentActivity = new Intent(activity, com.creationline.cloudstack.ui.AboutFragmentActivity.class);
+		    	startActivity(startAboutFragmentActivity);
+			}
+		});
+	}
+
+	public void setResetButtonOnClickHandler(final FragmentActivity activity) {
+		Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
+        resetbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				View confirmdialog_resetaccount = activity.getLayoutInflater().inflate(R.layout.confirmdialog_resetaccount, null);
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+			    builder.setView(confirmdialog_resetaccount)
+			    	   .setPositiveButton("Reset", new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			                    resetAccount();
+			               }
+			           })
+			           .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			               public void onClick(DialogInterface dialog, int id) {
+			                    dialog.cancel();
+			               }
+			           });
+			    AlertDialog confirmDialog = builder.create();
+			    confirmDialog.show();
+			}
+		});
 	}
 
 	public void initTextSwitcher(final int textSwitcherId, final Animation inAnimation, final Animation outAnimation) {
