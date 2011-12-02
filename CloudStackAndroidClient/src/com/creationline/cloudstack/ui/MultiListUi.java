@@ -1,8 +1,9 @@
 package com.creationline.cloudstack.ui;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +18,7 @@ import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
+import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.db.Errors;
 import com.creationline.cloudstack.util.ClLog;
@@ -79,6 +81,16 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
         registerForErrorsDbUpdate();
         
         new QuickActionUtils(this);
+        
+		//select the starting page shown to user depending on whether we are provisioned or not
+		SharedPreferences preferences = getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
+        boolean isProvisioned = savedApiKey!=null;
+		if(isProvisioned) {
+			vp.setCurrentItem(ViewPageAdapter.INSTANCES_PAGE);
+		} else {
+			vp.setCurrentItem(ViewPageAdapter.ACCOUNT_PAGE);
+		}
     }
 
     
@@ -107,17 +119,6 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
     	
     	registerForDbUpdate(Errors.META_DATA.CONTENT_URI, updatedUiWithResults);
     }
-    
-//    private void registerForVmsDbUpdate() {
-//    	final Runnable updatedUiWithResults = new Runnable() {
-//    		//This handles notifs from CsRestContentProvider upon changes in db
-//    		public void run() {
-//    			Toast.makeText(getBaseContext(), "Got a notif from vms!!!!!!", Toast.LENGTH_SHORT).show();
-//    		}
-//    	};
-//    	
-//    	registerForDbUpdate(Transactions.META_DATA.CONTENT_URI, updatedUiWithResults);
-//    }
     
     private void registerForDbUpdate(final Uri contentUriToObserve, final Runnable updatedUiWithResults) {
     	final Handler handler = new Handler();

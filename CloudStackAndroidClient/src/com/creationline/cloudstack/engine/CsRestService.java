@@ -566,15 +566,20 @@ public class CsRestService extends IntentService {
 
 	public void informCallerOfCallCompletion(final Uri uriToUpdate, final int successOrFailure) {
 		Bundle requestAndCallback = findTransactionRequestAndCallbackForRow(uriToUpdate);
-		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
-		if(callbackIntentFilter!=null) {
-			Intent broadcastIntent = new Intent(callbackIntentFilter);
-			Bundle bundle = new Bundle();
-			bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
-			bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
-			broadcastIntent.putExtras(bundle);
-			sendBroadcast(broadcastIntent);
+		if(requestAndCallback==null) {
+			return;
 		}
+		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
+		if(callbackIntentFilter==null) {
+			return;
+		}
+		
+		Intent broadcastIntent = new Intent(callbackIntentFilter);
+		Bundle bundle = new Bundle();
+		bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
+		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
+		broadcastIntent.putExtras(bundle);
+		sendBroadcast(broadcastIntent);
 	}
 	
 	public void updateCallWithReplyOnDb(final Uri uriToUpdate, final String status, final StringBuilder replyBodyText) {

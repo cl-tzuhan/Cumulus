@@ -23,7 +23,7 @@
 		android:layout_alignParentLeft="true" android:layout_below="@id/logotitle"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
 		android:layout_marginLeft="28px"
-		android:layoutAnimation="@anim/fadein_layoutanim">
+		android:layoutAnimation="@anim/fadein_withstartdelay_layoutanim">
 		<ImageView android:id="@+id/vmicon" android:src="@drawable/device_and_hardware_w_72x72"
 		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"

@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, CsVmList!</string>
-    <string name="app_name">CloudStackAndroidClient</string>
-    <string name="status_noVms">You have no Virtual Machine instances.</string>
+    <string name="app_name">Cumulus</string>
 </resources>
