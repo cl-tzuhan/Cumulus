@@ -9,16 +9,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.ResourceCursorAdapter;
-import android.text.format.Time;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -27,23 +24,23 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
+import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.QuickActionUtils;
 
-public class CsVmListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class CsVmListFragment extends CsListFragmentBase implements LoaderManager.LoaderCallbacks<Cursor> {
 	public static class INTENT_ACTION {
-		public static final String CALLBACK_VMLIST = "com.creationline.cloudstack.ui.CsVmListFragment.CALLBACK_VMLIST";
+		public static final String CALLBACK_LISTVM = "com.creationline.cloudstack.ui.CsVmListFragment.CALLBACK_LISTVM";
 	}
 
-	public static final int CSVM_LIST_FRAGMENT_ID = 200;
+//	public static final int CSVM_LIST_FRAGMENT_ID = 200;
 	
 	private static final int CSVM_LIST_LOADER = 0x01;
     private CsVmListAdapter adapter = null;  //backer for this list
@@ -220,9 +217,10 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			}
 			
 			//double-check whether we are still provisioned (use could have reset account in the mean time) and update button state if necessary
-	        updateIsProvisionedGlobal();
+	        isProvisioned = isProvisioned();
 			if(isProvisioned==false) {
-				setRefreshButtonEnabled(false);
+				View csvmlistcommandfooter = getActivity().findViewById(R.id.csvmlistcommandfooter);
+				setRefreshButtonEnabled(csvmlistcommandfooter, false);
 			}
 
 			super.notifyDataSetChanged();
@@ -231,11 +229,9 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     }
 
 
-
     public CsVmListFragment() {
     	//empty constructor is needed by Android for automatically creating fragments from XML declarations
     }
-    
     
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -272,9 +268,11 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 //        		}
 //        	}
 //        };
-//        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_VMLIST action)
+//        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTVM action)
         
-    	updateIsProvisionedGlobal();  //this needs to be done first as the isProvisioned member var is used at various places
+    	registerVmListCallbackReceiver();
+    	
+    	isProvisioned = isProvisioned();  //this needs to be done first as the isProvisioned member var is used at various places
 		
 //		final boolean isFreshAppStart = savedInstanceState==null;  //a "fresh app start" means the app was started fresh by the user, not as a result of orientation changes or such
 //		if(isFreshAppStart) {
@@ -299,40 +297,29 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
     	
 	}
 
-	public void updateIsProvisionedGlobal() {
-		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
-		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
-        isProvisioned = savedApiKey!=null;
-	}
-
 	/** Called when the activity is first created. */
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         //add summary footer to the list
-        View csvmlistsummaryfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.csvmlistsummaryfooter, null, false);
-        ViewSwitcher summaryfooterviewswitcher = (ViewSwitcher)csvmlistsummaryfooter.findViewById(R.id.csvmlistsummaryfooterviewswitcher);
-        if(summaryfooterviewswitcher!=null) {
-        	summaryfooterviewswitcher.setDisplayedChild(0);
-        	summaryfooterviewswitcher.setAnimateFirstView(true);
-        }
-        getListView().addFooterView(csvmlistsummaryfooter, null, false);
+        addAndInitFooter(savedInstanceState, R.layout.csvmlistsummaryfooter, R.id.csvmlistsummaryfooterviewswitcher);
         
         //add command footer to the list
-        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.csvmlistcommandfooter, null, false);
-        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.csvmlistcommandfooterviewswitcher);
-        if(commandfooterviewswitcher!=null) {
-        	commandfooterviewswitcher.setDisplayedChild(0);
-        	commandfooterviewswitcher.setAnimateFirstView(true);
-        }
-        getListView().addFooterView(csvmlistcommandfooter, null, false);
+        View csvmlistcommandfooter = addAndInitFooter(savedInstanceState, R.layout.csvmlistcommandfooter, R.id.csvmlistcommandfooterviewswitcher);
+//        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.csvmlistcommandfooter, null, false);
+//        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.csvmlistcommandfooterviewswitcher);
+//        if(commandfooterviewswitcher!=null) {
+//        	commandfooterviewswitcher.setDisplayedChild(0);
+//        	commandfooterviewswitcher.setAnimateFirstView(true);
+//        }
+//        getListView().addFooterView(csvmlistcommandfooter, null, false);
         
         setRefreshButtonClickHandler(csvmlistcommandfooter);
 		if(isProvisioned) {
-			setRefreshButtonEnabled(true);
+			setRefreshButtonEnabled(csvmlistcommandfooter, true);
         } else {
-        	setRefreshButtonEnabled(false);
+        	setRefreshButtonEnabled(csvmlistcommandfooter, false);
         }
 
         //set-up the loader & adapter for populating this list
@@ -352,20 +339,29 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			final String savedTimestamp = savedInstanceState.getString(CSVMLIST_TIMESTAMP);
 
 			if(savedDatestamp!=null) {
-				TextView lastrefresheddatestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
-				if(lastrefresheddatestamp!=null) { lastrefresheddatestamp.setText(savedDatestamp); }
+				setTextView(csvmlistcommandfooter, R.id.lastrefresheddatestamp, savedDatestamp);
+//				TextView lastrefresheddatestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
+//				if(lastrefresheddatestamp!=null) { lastrefresheddatestamp.setText(savedDatestamp); }
 			}
 			if(savedTimestamp!=null) {
-				TextView lastrefreshedtimestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
-				if(lastrefreshedtimestamp!=null) { lastrefreshedtimestamp.setText(savedTimestamp); }
+				setTextView(csvmlistcommandfooter, R.id.lastrefreshedtimestamp, savedTimestamp);
+//				TextView lastrefreshedtimestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
+//				if(lastrefreshedtimestamp!=null) { lastrefreshedtimestamp.setText(savedTimestamp); }
 			}
 		}
         
     }
-    
+
+
 	@Override
 	public void onResume() {
-    	vmListCallbackReceiver = new BroadcastReceiver(){
+//    	registerVmListCallbackReceiver();
+        
+		super.onResume();
+	}
+
+	public void registerVmListCallbackReceiver() {
+		vmListCallbackReceiver = new BroadcastReceiver(){
         	//This handles callback intents broadcasted by CsRestService
         	@Override
         	public void onReceive(Context contenxt, Intent intent) {
@@ -374,8 +370,14 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         			return;
         		}
         		
-        		setRefreshButtonEnabled(true);
-        		setProgressCircleVisible(ProgressBar.INVISIBLE);
+//        		setRefreshButtonEnabled(true);
+//        		setProgressCircleVisible(ProgressBar.INVISIBLE);
+        		View csvmlistcommandfooter = getActivity().findViewById(R.id.csvmlistcommandfooter);
+        		if(csvmlistcommandfooter==null) {
+        			return;
+        		}
+        		setRefreshButtonEnabled(csvmlistcommandfooter, true);
+        		setProgressCircleVisible(csvmlistcommandfooter, ProgressBar.INVISIBLE);
 
         		Bundle bundle = intent.getExtras();
         		final String updatedUriStr = bundle.getString(CsRestService.UPDATED_URI);
@@ -383,53 +385,64 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         			return;
         		}
 
-        		final Uri lastestListVmTransaction = Uri.parse(updatedUriStr);
-        		final String[] columns = new String[] {
-        			Transactions.REPLY_DATETIME,
-        		};
-				Cursor c = activity.getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
-        		if(c!=null && c.getCount()>0) {
-        			c.moveToFirst();
-        			final String lastUpdateTimestampStr = c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME));
-        			
-        			Time readTime = new Time();
-        			readTime.parse3339(lastUpdateTimestampStr);  //str was saved out using RFC3339 format, so needs to be read in as such
-        			readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
-        			String dateStamp = readTime.year+"-"+readTime.month+"-"+readTime.monthDay;
-        			String timeStamp = readTime.hour+":"+readTime.minute+":"+readTime.second;
-        			    
-        			TextView lastrefresheddatestamp = (TextView)activity.findViewById(R.id.lastrefresheddatestamp);
-        			TextView lastrefreshedtimestamp = (TextView)activity.findViewById(R.id.lastrefreshedtimestamp);
-        			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null) {
-        				lastrefresheddatestamp.setText(dateStamp);
-        				lastrefreshedtimestamp.setText(timeStamp);
-        			}
+//        		final Uri lastestListVmTransaction = Uri.parse(updatedUriStr);
+//        		final String[] columns = new String[] {
+//        			Transactions.REPLY_DATETIME,
+//        		};
+//				Cursor c = activity.getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
+//        		if(c!=null && c.getCount()>0) {
+//        			c.moveToFirst();
+//        			final String lastUpdateTimestampStr = c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME));
+//        			
+//        			Time readTime = new Time();
+//        			readTime.parse3339(lastUpdateTimestampStr);  //str was saved out using RFC3339 format, so needs to be read in as such
+//        			readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+//        			String dateStamp = readTime.year+"-"+readTime.month+"-"+readTime.monthDay;
+//        			String timeStamp = readTime.hour+":"+readTime.minute+":"+readTime.second;
+//        			    
+//        			TextView lastrefresheddatestamp = (TextView)activity.findViewById(R.id.lastrefresheddatestamp);
+//        			TextView lastrefreshedtimestamp = (TextView)activity.findViewById(R.id.lastrefreshedtimestamp);
+//        			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null) {
+//        				lastrefresheddatestamp.setText(dateStamp);
+//        				lastrefreshedtimestamp.setText(timeStamp);
+//        			}
+//        		}
+        		final Bundle parsedDateTime =  CsRestContentProvider.getReplyDateTimeFor(activity, updatedUriStr);
+        		if(parsedDateTime!=null) {
+        			setTextView(csvmlistcommandfooter, R.id.lastrefresheddatestamp, parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
+        			setTextView(csvmlistcommandfooter, R.id.lastrefreshedtimestamp, parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
         		}
         	}
         };
-        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_VMLIST action)
-        
-		super.onResume();
+        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTVM action)
 	}
 	
 	@Override
 	public void onPause() {
-		if(vmListCallbackReceiver!=null) {
-			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-			try {
-				getActivity().unregisterReceiver(vmListCallbackReceiver);
-			} catch (IllegalArgumentException e) {
-				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
-				;
-			}
-		}
+//		if(vmListCallbackReceiver!=null) {
+//			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
+//			try {
+//				getActivity().unregisterReceiver(vmListCallbackReceiver);
+//			} catch (IllegalArgumentException e) {
+//				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
+//				;
+//			}
+//		}
+//		unregisterCallbackReceiver(vmListCallbackReceiver);
 		
-		setRefreshButtonEnabled(true);
-		setProgressCircleVisible(ProgressBar.INVISIBLE);
+//		setRefreshButtonEnabled(true);
+//		setProgressCircleVisible(ProgressBar.INVISIBLE);
 		
 		super.onPause();
 	}
 
+	@Override
+	public void onDestroy() {
+		unregisterCallbackReceiver(vmListCallbackReceiver);
+
+		super.onDestroy();
+	}
+	
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		TextView lastrefresheddatestamp = (TextView)getActivity().findViewById(R.id.lastrefresheddatestamp);
@@ -530,7 +543,7 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Vms.ID, vmid);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);  //NOTE: currently, we are not using this CALLBACK_VMLIST.  If we do use it, may need new action const if we want to differentiate between list and start/stop/restart calls
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);  //NOTE: currently, we are not using this CALLBACK_LISTVM.  If we do use it, may need new action const if we want to differentiate between list and start/stop/restart calls
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}
@@ -557,8 +570,11 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 
-		setRefreshButtonEnabled(false);
-		setProgressCircleVisible(ProgressBar.VISIBLE);
+//		setRefreshButtonEnabled(false);
+//		setProgressCircleVisible(ProgressBar.VISIBLE);
+		View csvmlistcommandfooter = getActivity().findViewById(R.id.csvmlistcommandfooter);
+		setRefreshButtonEnabled(csvmlistcommandfooter, false);
+		setProgressCircleVisible(csvmlistcommandfooter, ProgressBar.VISIBLE);
 		
 		if(username!=null) {
 			//make the rest call to cs server for vm data
@@ -566,20 +582,10 @@ public class CsVmListFragment extends ListFragment implements LoaderManager.Load
 			Bundle apiCmd = new Bundle();
 			apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
 			apiCmd.putString(Vms.ACCOUNT, username);
-	        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);
+	        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);
 			Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
 			getActivity().startService(csRestServiceIntent);
 		}
-	}
-
-	public void setRefreshButtonEnabled(final boolean enabled) {
-		Button refreshbutton = (Button)getActivity().findViewById(R.id.refreshbutton);
-		if(refreshbutton!=null) { refreshbutton.setEnabled(enabled); }
-	}
-
-	public void setProgressCircleVisible(final int visibility) {
-		ProgressBar progresscircle = (ProgressBar)getActivity().findViewById(R.id.progresscircle);
-		if(progresscircle!=null) { progresscircle.setVisibility(visibility); }
 	}
 	
 

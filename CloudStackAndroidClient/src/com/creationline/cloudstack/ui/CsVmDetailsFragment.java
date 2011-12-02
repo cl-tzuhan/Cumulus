@@ -331,7 +331,7 @@ public class CsVmDetailsFragment extends Fragment {
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Vms.ID, vmid);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_VMLIST
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_LISTVM
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}

@@ -12,7 +12,6 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -38,7 +37,7 @@ import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.util.DateTimeParser;
 import com.creationline.cloudstack.util.QuickActionUtils;
 
-public class CsSnapshotListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class CsSnapshotListFragment extends CsListFragmentBase implements LoaderManager.LoaderCallbacks<Cursor> {
 	public static class INTENT_ACTION {
 		//NOTE: changing the value of these constants requires you to change any usage of the same string in Android.manifest!!!
 		public static final String CALLBACK_LISTSNAPSHOTS = "com.creationline.cloudstack.ui.CsSnapshotListFragment.CALLBACK_LISTSNAPSHOTS";
@@ -49,7 +48,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
     private CsSnapshotListAdapter adapter = null;  //backer for this list
     private BroadcastReceiver listSnapshotsCallbackReceiver = null;  //used to receive list snapshots complete notifs from CsRestService
     private BroadcastReceiver deleteSnapshotCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
-    private boolean isProvisioned = false;  //whether currently have api/secret key or not (determined at onCreate())
+    private boolean isProvisioned = false;  //whether we currently have api/secret key or not
 
     //constants used as keys for saving/restoring app state on pause/resume
     private static final String CSSNAPSHOTLIST_DATESTAMP = "com.creationline.cloudstack.ui.CsSnapshotListFragment.CSSNAPSHOTLIST_DATESTAMP";
@@ -183,7 +182,7 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			}
 			
 			//double-check whether we are still provisioned (use could have reset account in the mean time) and update button state if necessary
-	        updateIsProvisionedGlobal();
+			isProvisioned = isProvisioned();
 			if(isProvisioned==false) {
         		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
 				setRefreshButtonEnabled(cssnapshotlistcommandfooter, false);
@@ -226,8 +225,11 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 //        };
 //        getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
 
-    	updateIsProvisionedGlobal();  //this needs to be done first as the isProvisioned member var is used at various places
+        isProvisioned = isProvisioned();  //this needs to be done first as the isProvisioned member var is used at various places
 
+        registerListSnapshotsCallbackReceiver();
+        registerDeleteSnapshotCallbackReceiver();
+        
 //        SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 //		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 //
@@ -242,37 +244,33 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 //		}
     }
 	
-	public void updateIsProvisionedGlobal() {
-		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
-		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
-        isProvisioned = savedApiKey!=null;
-	}
-	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		//add the summary footer to the list
-        View cssnapshotlistsummaryfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistsummaryfooter, null, false);
-        ViewSwitcher footerviewswitcher = (ViewSwitcher)cssnapshotlistsummaryfooter.findViewById(R.id.footerviewswitcher);
-        if(footerviewswitcher!=null) {
-        	footerviewswitcher.setDisplayedChild(0);
-        	footerviewswitcher.setAnimateFirstView(true);
-        	getListView().addFooterView(cssnapshotlistsummaryfooter, null, false);
-        }
+		addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistsummaryfooter, R.id.csvmlistsummaryfooterviewswitcher);
+//        View cssnapshotlistsummaryfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistsummaryfooter, null, false);
+//        ViewSwitcher footerviewswitcher = (ViewSwitcher)cssnapshotlistsummaryfooter.findViewById(R.id.footerviewswitcher);
+//        if(footerviewswitcher!=null) {
+//        	footerviewswitcher.setDisplayedChild(0);
+//        	footerviewswitcher.setAnimateFirstView(true);
+//        	getListView().addFooterView(cssnapshotlistsummaryfooter, null, false);
+//        }
         
         //add command footer to the list
-        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistcommandfooter, null, false);
-        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.cssnapshotlistcommandfooterviewswitcher);
-        if(commandfooterviewswitcher!=null) {
-        	commandfooterviewswitcher.setDisplayedChild(0);
-        	commandfooterviewswitcher.setAnimateFirstView(true);
-        }
-        getListView().addFooterView(csvmlistcommandfooter, null, false);
+		View cssnapshotlistcommandfooter = addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistcommandfooter, R.id.cssnapshotlistcommandfooterviewswitcher);
+//        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistcommandfooter, null, false);
+//        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.cssnapshotlistcommandfooterviewswitcher);
+//        if(commandfooterviewswitcher!=null) {
+//        	commandfooterviewswitcher.setDisplayedChild(0);
+//        	commandfooterviewswitcher.setAnimateFirstView(true);
+//        }
+//        getListView().addFooterView(csvmlistcommandfooter, null, false);
         
-        setRefreshButtonClickHandler(csvmlistcommandfooter);
+        setRefreshButtonClickHandler(cssnapshotlistcommandfooter);
 		if(isProvisioned) {
-			setRefreshButtonEnabled(csvmlistcommandfooter, true);
+			setRefreshButtonEnabled(cssnapshotlistcommandfooter, true);
         } else {
-        	setRefreshButtonEnabled(csvmlistcommandfooter, false);
+        	setRefreshButtonEnabled(cssnapshotlistcommandfooter, false);
         }
         
         //set-up the loader & adapter for populating this list
@@ -292,18 +290,16 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 			final String savedTimestamp = savedInstanceState.getString(CSSNAPSHOTLIST_TIMESTAMP);
 
 			if(savedDatestamp!=null) {
-				TextView lastrefresheddatestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
-				if(lastrefresheddatestamp!=null) { lastrefresheddatestamp.setText(savedDatestamp); }
+				setTextView(cssnapshotlistcommandfooter, R.id.lastrefresheddatestamp, savedDatestamp);
 			}
 			if(savedTimestamp!=null) {
-				TextView lastrefreshedtimestamp = (TextView)csvmlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
-				if(lastrefreshedtimestamp!=null) { lastrefreshedtimestamp.setText(savedTimestamp); }
+				setTextView(cssnapshotlistcommandfooter, R.id.lastrefreshedtimestamp, savedTimestamp);
 			}
 		}
         
         super.onActivityCreated(savedInstanceState);
 	}
-	
+
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
@@ -333,26 +329,28 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 	
 	@Override
 	public void onResume() {
-		registerListSnapshotsCallbackReceiver();
-        registerDeleteSnapshotCallbackReceiver();
+//		registerListSnapshotsCallbackReceiver();
+//      registerDeleteSnapshotCallbackReceiver();
         
 		super.onResume();
 	}
 	
 	@Override
 	public void onPause() {
-		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
-		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
+//		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
+//		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
 		
-		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
-		setRefreshButtonEnabled(cssnapshotlistcommandfooter, true);
-		setProgressCircleVisible(cssnapshotlistcommandfooter, ProgressBar.INVISIBLE);
+//		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
+//		setRefreshButtonEnabled(cssnapshotlistcommandfooter, true);
+//		setProgressCircleVisible(cssnapshotlistcommandfooter, ProgressBar.INVISIBLE);
 		
 		super.onPause();
 	}
 
 	@Override
 	public void onDestroy() {
+		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
+		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
 //		if(listSnapshotsCallbackReceiver!=null) {
 //			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
 //			try {
@@ -387,14 +385,18 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
         		if(updatedUriStr==null) {
         			return;
         		}
-        		
+
         		final Bundle parsedDateTime =  CsRestContentProvider.getReplyDateTimeFor(activity, updatedUriStr);
-    			TextView lastrefresheddatestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
-    			TextView lastrefreshedtimestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
-    			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null && parsedDateTime!=null) {
-    				lastrefresheddatestamp.setText(parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
-    				lastrefreshedtimestamp.setText(parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
-    			}
+        		if(parsedDateTime!=null) {
+        			setTextView(cssnapshotlistcommandfooter, R.id.lastrefresheddatestamp, parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
+        			setTextView(cssnapshotlistcommandfooter, R.id.lastrefreshedtimestamp, parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
+        		}
+//    			TextView lastrefresheddatestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
+//    			TextView lastrefreshedtimestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
+//    			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null && parsedDateTime!=null) {
+//    				lastrefresheddatestamp.setText(parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
+//    				lastrefreshedtimestamp.setText(parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
+//    			}
         	}
         };
         getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_LISTSNAPSHOTS));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTSNAPSHOTS action)
@@ -425,18 +427,6 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 		getActivity().registerReceiver(deleteSnapshotCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
 	}
 	
-	public void unregisterCallbackReceiver(BroadcastReceiver broadcastReceiver) {
-		if(broadcastReceiver!=null) {
-			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-			try {
-				getActivity().unregisterReceiver(broadcastReceiver);
-			} catch (IllegalArgumentException e) {
-				//will get this exception if listSnapshotsCallbackReceiver has already been unregistered (or was never registered); will just ignore here
-				;
-			}
-		}
-	}
-	
 	public void setRefreshButtonClickHandler(final View view) {
 		Button refreshbutton = (Button)view.findViewById(R.id.refreshbutton);
 		refreshbutton.setOnClickListener(new OnClickListener() {
@@ -444,23 +434,9 @@ public class CsSnapshotListFragment extends ListFragment implements LoaderManage
 		    public void onClick(View v) {
 		    	makeListSnapshotCall();
 		    }
-		  });
+		});
 	}
 	
-	public void setRefreshButtonEnabled(final View view, final boolean enabled) {
-		if(view!=null){
-			Button refreshbutton = (Button)view.findViewById(R.id.refreshbutton);
-			if(refreshbutton!=null) { refreshbutton.setEnabled(enabled); }
-		}
-	}
-
-	public void setProgressCircleVisible(final View view, final int visibility) {
-		if(view!=null) {
-			ProgressBar progresscircle = (ProgressBar)view.findViewById(R.id.progresscircle);
-			if(progresscircle!=null) { progresscircle.setVisibility(visibility); }
-		}
-	}
-
 	public QuickAction createQuickAction(final View view) {
 		final ActionItem deleteSnapshotMenuItem = new ActionItem(0, "Delete", getResources().getDrawable(R.drawable.bin));
 		

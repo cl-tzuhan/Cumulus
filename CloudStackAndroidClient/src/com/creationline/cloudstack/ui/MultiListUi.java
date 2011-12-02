@@ -1,6 +1,5 @@
 package com.creationline.cloudstack.ui;
 
-import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -19,8 +18,8 @@ import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Errors;
+import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.QuickActionUtils;
 import com.viewpagerindicator.TitlePageIndicator;
 
@@ -91,8 +90,9 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
     					Errors._ID,
     					Errors.ERRORTEXT
     			};
-    			Cursor errorLog = getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, "_ID DESC");
-    			if(errorLog==null || errorLog.getCount()>=0) {
+    			Cursor errorLog = getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
+    			if(errorLog==null || errorLog.getCount()<=0) {
+    				ClLog.e("MultiListUi.registerForErrorsDbUpdate()->errors content observer", "Returned errorLog was null or 0 results.");
     				return;
     			}
     			
@@ -127,18 +127,13 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
     			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
     		}
     	};
-    	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when vms db is changed
+    	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when db is changed
     }
-
-//    protected void onclick_sideMenu(View view) {
-//    	//TODO: do something with me or remove!!
-//    	Toast.makeText(getBaseContext(), "-> got clicked!", Toast.LENGTH_SHORT).show();
-//    }
 
 	@Override
 	protected void onPause() {
-		Intent csRestServiceIntent = new Intent(this, CsRestService.class);
-        stopService(csRestServiceIntent);
+//		Intent csRestServiceIntent = new Intent(this, CsRestService.class);
+//        stopService(csRestServiceIntent);
         
 		super.onPause();
 	}
@@ -183,7 +178,7 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
 		TextView t = new TextView(this);
 		t.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
 		t.setTextSize(15);
-		t.setTextColor(Color.YELLOW);
+		t.setTextColor(R.color.error);
 		return t;
 	}
 

@@ -311,7 +311,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
 		}
 	}
 
-	public void makeDeleteVmCall(View itemView, final String commandName) {
+	public void makeDeleteSnapshotCall(View itemView, final String commandName) {
 		TextView idText = (TextView)itemView.findViewById(R.id.id);
 		final String snapshotId = idText.getText().toString();
 
@@ -347,7 +347,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
 		deleteSnapshotButton.setOnClickListener(new OnClickListener() {
 		    @Override
 		    public void onClick(View v) {
-		      	makeDeleteVmCall(view, CsApiConstants.API.deleteSnapshot);
+		      	makeDeleteSnapshotCall(view, CsApiConstants.API.deleteSnapshot);
 		    }
 		  });
 	}

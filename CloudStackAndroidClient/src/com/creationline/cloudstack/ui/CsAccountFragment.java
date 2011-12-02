@@ -479,7 +479,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				Bundle apiCmd = new Bundle();
 				apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
 				apiCmd.putString(Vms.ACCOUNT, username);
-		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_VMLIST);
+		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);
 				Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
 				getActivity().startService(csRestServiceIntent);
 			}

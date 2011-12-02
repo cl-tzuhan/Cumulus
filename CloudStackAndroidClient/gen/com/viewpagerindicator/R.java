@@ -397,7 +397,6 @@ containing a value of this type.
         public static final int csvmdetailscrollview=0x7f050064;
         public static final int csvmdetailsfragment=0x7f050060;
         public static final int csvmdetailview=0x7f050065;
-        public static final int csvmlist=0x7f05009e;
         public static final int csvmlistcommandfooter=0x7f050090;
         public static final int csvmlistcommandfooterviewswitcher=0x7f05008f;
         public static final int csvmlistitem=0x7f050091;
@@ -462,6 +461,7 @@ containing a value of this type.
         public static final int memorylabel=0x7f050070;
         public static final int memoryunit=0x7f05006d;
         public static final int miscellaneoussectiontitle=0x7f050041;
+        public static final int multilistui=0x7f05009e;
         public static final int name=0x7f050033;
         public static final int networkkbread=0x7f050075;
         public static final int networkkbreadlabel=0x7f05007b;

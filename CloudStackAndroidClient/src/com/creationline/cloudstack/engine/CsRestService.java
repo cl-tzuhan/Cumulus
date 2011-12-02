@@ -205,6 +205,16 @@ public class CsRestService extends IntentService {
 		} catch (IOException e) {
 			addToErrorLog(null, e.getMessage(), inProgressTransaction.toString());
 			updateCallAsAbortedOnDb(inProgressTransaction);
+			
+			Bundle bundle = findTransactionRequestAndCallbackForRow(inProgressTransaction);
+			final String originalRequest = bundle.getString(Transactions.REQUEST);
+			final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
+			final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+			if(id!=null) {
+				informCallerFragmentOfCallCompletion(callbackIntentFilter, id, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+			} else {
+				informCallerOfCallCompletion(inProgressTransaction, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+			}
 		}
 		
 		inProgressTransactionList.remove(inProgressTransaction);
@@ -554,13 +564,14 @@ public class CsRestService extends IntentService {
 		}
 	}
 
-	public void informCallerOfCallCompletion(final Uri uriToUpdate) {
+	public void informCallerOfCallCompletion(final Uri uriToUpdate, final int successOrFailure) {
 		Bundle requestAndCallback = findTransactionRequestAndCallbackForRow(uriToUpdate);
 		final String callbackIntentFilter = requestAndCallback.getString(Transactions.CALLBACK_INTENT_FILTER);
 		if(callbackIntentFilter!=null) {
 			Intent broadcastIntent = new Intent(callbackIntentFilter);
 			Bundle bundle = new Bundle();
 			bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
+			bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
 			broadcastIntent.putExtras(bundle);
 			sendBroadcast(broadcastIntent);
 		}
@@ -716,7 +727,7 @@ public class CsRestService extends IntentService {
 			e.printStackTrace();
 		}
 
-		informCallerOfCallCompletion(uriToUpdate);
+		informCallerOfCallCompletion(uriToUpdate, CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS);
 	}
 
 	private void parseReplyBody_startOrStopOrRebootVirtualMachine(final Uri uriToUpdate, JsonNode responseDataNode) {
@@ -758,7 +769,7 @@ public class CsRestService extends IntentService {
 			e.printStackTrace();
 		}
 		
-		informCallerOfCallCompletion(uriToUpdate);
+		informCallerOfCallCompletion(uriToUpdate, CsRestService.CALL_STATUS_VALUES.CALL_SUCCESS);
 	}
 	
 	

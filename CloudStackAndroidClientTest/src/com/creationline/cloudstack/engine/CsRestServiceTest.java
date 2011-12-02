@@ -528,10 +528,17 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	private void executeAndCheck_listSnapshots(final String jsonData, final String[] columns) {
+		//insert sample transaction record as it is needed by processAndSaveJsonReplyData()
+		ContentValues cv = new ContentValues();
+		cv.put(Transactions.REQUEST, "test request");
+		cv.put(Transactions.REQUEST_DATETIME, "test request datetime");
+		cv.put(Transactions.STATUS, "test status");
+		cv.put(Transactions.CALLBACK_INTENT_FILTER, "test callback");
+		final Uri uriToUpdate = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the snapshots db for this
 		CsRestService csRestService = startCsRestService();
-		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for listVirtualMachines call
+		csRestService.processAndSaveJsonReplyData(uriToUpdate, jsonData);
 		
 		//grab the data saved directly from db so we can check the saved values below
 		Cursor c = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, columns, null, null, null);
