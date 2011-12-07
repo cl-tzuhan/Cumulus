@@ -22,8 +22,8 @@ package com.creationline.cloudstack.util;
 
 public class Version {
 	// MAJOR_VER and MINOR_VER can be edited by hand.
-	public static final int MAJOR_VER = 0;
-	public static final int MINOR_VER = 2;
+	public static final int MAJOR_VER = 1;
+	public static final int MINOR_VER = 0;
 	
     @Override
 	public String toString() {
