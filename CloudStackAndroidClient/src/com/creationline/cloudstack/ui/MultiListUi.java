@@ -2,30 +2,22 @@ package com.creationline.cloudstack.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.ContentObserver;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.SimpleOnPageChangeListener;
-import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.TextSwitcher;
 import android.widget.TextView;
-import android.widget.ViewSwitcher;
+import android.widget.Toast;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.engine.db.Errors;
-import com.creationline.cloudstack.util.ClLog;
 import com.creationline.cloudstack.util.QuickActionUtils;
 import com.viewpagerindicator.TitlePageIndicator;
 
-public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFactory {
+public class MultiListUi extends FragmentActivity /*implements ViewSwitcher.ViewFactory*/ {
 	
 //	private BroadcastReceiver broadcastReceiver = null;
 	
@@ -61,7 +53,6 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
         tpi.setOnPageChangeListener(new CurrentPageListener());
         final Animation slide_leftToRight_slow = AnimationUtils.loadAnimation(this, R.anim.slide_lefttoright_slow);
         tpi.setAnimation(slide_leftToRight_slow);
-        tpi.setCurrentItem(1);  //make the "Instances" page the default page shown
         
         //set animation for apptitle
         TextView apptitle_pt1 = (TextView)findViewById(R.id.apptitle_pt1);
@@ -70,17 +61,40 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
         apptitle_pt1.setAnimation(slide_rightToLeft_slow);
         apptitle_pt2.setAnimation(slide_rightToLeft_slow);
         
-        //set-up error log view to update with animation
-        TextSwitcher ts = (TextSwitcher)findViewById(R.id.errorLogTextView);
-        ts.setFactory(this);
-        Animation in = AnimationUtils.loadAnimation(this,  android.R.anim.fade_in);
-        Animation out = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
-        ts.setInAnimation(in);
-        ts.setOutAnimation(out);
+//        //set animation for logdrawer
+//        final SlidingDrawer logdrawer = (SlidingDrawer)findViewById(R.id.logdrawer);
+//        final Animation slide_bottomtotop = AnimationUtils.loadAnimation(this, R.anim.slide_bottomtotop);
+//        logdrawer.setAnimation(slide_bottomtotop);
+//        //set bottom half of drawer "cloud" to act as the drawer handle like the top half
+//        setTextViewAsSecondSlidingDrawerHandle(logdrawer, R.id.name);
+//        logdrawer.setOnDrawerCloseListener(new SlidingDrawer.OnDrawerCloseListener() {
+//			@Override
+//			public void onDrawerClosed() {
+//				removeErrorLogIconAndText();
+//			}
+//		});
+        
+//        //prevent touch events from falling through the drawer (comes into play when we have no errors and no list is shown)
+//        FrameLayout logdrawercontentbg = (FrameLayout)findViewById(R.id.logdrawercontentbg);
+//        logdrawercontentbg.setOnTouchListener(new View.OnTouchListener() {
+//			@Override
+//			public boolean onTouch(View v, MotionEvent event) {
+//				return true;  //eat all events
+//			}
+//		});
+//        
+//        //set-up error log view to update with animation
+//        TextSwitcher ts = (TextSwitcher)findViewById(R.id.errorLogTextView);
+//        ts.setFactory(this);
+//        Animation fade_in = AnimationUtils.loadAnimation(this,  android.R.anim.fade_in);
+//        Animation fade_out = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
+//        ts.setInAnimation(fade_in);
+//        ts.setOutAnimation(fade_out);
                 
-        registerForErrorsDbUpdate();
+//        registerForErrorsDbUpdate();
         
         new QuickActionUtils(this);
+        
         
 		//select the starting page shown to user depending on whether we are provisioned or not
 		SharedPreferences preferences = getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
@@ -93,43 +107,52 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
 		}
     }
 
-    
-    private void registerForErrorsDbUpdate() {
-    	final Runnable updatedUiWithResults = new Runnable() {
-    		//This handles notifs from CsRestContentProvider upon changes in db
-    		public void run() {
-    			final String columns[] = new String[] {
-    					Errors._ID,
-    					Errors.ERRORTEXT
-    			};
-    			Cursor errorLog = getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
-    			if(errorLog==null || errorLog.getCount()<=0) {
-    				ClLog.e("MultiListUi.registerForErrorsDbUpdate()->errors content observer", "Returned errorLog was null or 0 results.");
-    				return;
-    			}
-    			
-    			errorLog.moveToFirst();
-    			final int latestErrorMsgId = errorLog.getInt(errorLog.getColumnIndex(Errors._ID));
-    			final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
-    			
-    			TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
-    			errorLogTextView.setText(latestErrorMsgId+": "+latestErrorMsg);
-    		}
-    	};
-    	
-    	registerForDbUpdate(Errors.META_DATA.CONTENT_URI, updatedUiWithResults);
-    }
-    
-    private void registerForDbUpdate(final Uri contentUriToObserve, final Runnable updatedUiWithResults) {
-    	final Handler handler = new Handler();
-    	ContentObserver contentObserver = new ContentObserver(null) {
-    		@Override
-    		public void onChange(boolean selfChange) {
-    			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
-    		}
-    	};
-    	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when db is changed
-    }
+//	public void setTextViewAsSecondSlidingDrawerHandle(final SlidingDrawer slidingDrawer, final int contentTopId) {
+//		TextView logdrawercontenttop = (TextView)findViewById(contentTopId);
+//		logdrawercontenttop.setOnTouchListener(new View.OnTouchListener() {
+//			@Override
+//			public boolean onTouch(View v, MotionEvent event) {
+//				//make contentdrawertop also act as a handle for the logdrawer
+//				return slidingDrawer.dispatchTouchEvent(event);
+//			}
+//		});
+//	}
+
+//    private void registerForErrorsDbUpdate() {
+//    	final Runnable updatedUiWithResults = new Runnable() {
+//    		//This handles notifs from CsRestContentProvider upon changes in db
+//    		public void run() {
+//    			final String columns[] = new String[] {
+//    					Errors._ID,
+//    					Errors.ERRORTEXT
+//    			};
+//    			Cursor errorLog = getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
+//    			if(errorLog==null || errorLog.getCount()<=0) {
+//    				ClLog.e("MultiListUi.registerForErrorsDbUpdate()->errors content observer", "Returned errorLog was null or 0 results.");
+//    				return;
+//    			}
+//    			
+//    			errorLog.moveToFirst();
+//    			//final int latestErrorMsgId = errorLog.getInt(errorLog.getColumnIndex(Errors._ID));
+//    			final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
+//    			
+//    			setErrorLogIconAndText(latestErrorMsg);
+//    		}
+//
+//    	};
+//    	registerForDbUpdate(Errors.META_DATA.CONTENT_URI, updatedUiWithResults);
+//    }
+//    
+//    private void registerForDbUpdate(final Uri contentUriToObserve, final Runnable updatedUiWithResults) {
+//    	final Handler handler = new Handler();
+//    	ContentObserver contentObserver = new ContentObserver(null) {
+//    		@Override
+//    		public void onChange(boolean selfChange) {
+//    			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
+//    		}
+//    	};
+//    	getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when db is changed
+//    }
 
 	@Override
 	protected void onPause() {
@@ -172,17 +195,44 @@ public class MultiListUi extends FragmentActivity implements ViewSwitcher.ViewFa
 //		}
 		super.onDestroy();
 	}
+	
+
+//	@Override
+//	public View makeView() {
+//		TextView t = new TextView(this);
+//		t.setTextSize(15);
+//		t.setTextColor(getResources().getColor(R.color.error));
+//		t.setSingleLine();
+//		t.setHorizontalFadingEdgeEnabled(true);
+//		return t;
+//	}
 
 
-	@Override
-	public View makeView() {
-		TextView t = new TextView(this);
-		t.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
-		t.setTextSize(15);
-		t.setTextColor(R.color.error);
-		return t;
+	public void onContentDrawerTopClick(View view) {
+		Toast.makeText(getApplicationContext(), "clickeD!", Toast.LENGTH_SHORT).show();
+
 	}
-
-
+	
+//	public void setErrorLogIconAndText(final String latestErrorMsg) {
+//		ImageView logdrawericon = (ImageView)findViewById(R.id.logdrawericon);
+//		final Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
+//		logdrawericon.startAnimation(shake);
+//		logdrawericon.setVisibility(View.VISIBLE);
+//
+//		TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
+//		errorLogTextView.setText(latestErrorMsg);
+//	}
+//
+//	public void removeErrorLogIconAndText() {
+//		ImageView logdrawericon = (ImageView)findViewById(R.id.logdrawericon);
+//		if(logdrawericon.getVisibility()==View.VISIBLE) {
+//			Animation fade_out = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
+//			logdrawericon.startAnimation(fade_out);
+//			logdrawericon.setVisibility(View.INVISIBLE);
+//		}
+//
+//		TextSwitcher errorLogTextView = (TextSwitcher)findViewById(R.id.errorLogTextView);
+//		errorLogTextView.setText("");
+//	}
     
 }

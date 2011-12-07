@@ -686,17 +686,22 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		final Uri uri = Uri.parse("");
 		final StringBuilder replyBody = new StringBuilder();
 		
-		csRestService.unpackAndSaveReplyBodyData(uri, null, replyBody);
-		//we'll consider this a pass if we don't crash
-		
-		csRestService.unpackAndSaveReplyBodyData(null, null, replyBody);
-		//we'll consider this a pass if we don't crash
-		
-		csRestService.unpackAndSaveReplyBodyData(uri, null, null);
-		//we'll consider this a pass if we don't crash
-		
-		csRestService.unpackAndSaveReplyBodyData(null, null, null);
-		//we'll consider this a pass if we don't crash
+		try {
+			csRestService.unpackAndSaveReplyBodyData(uri, null, replyBody);
+			//we'll consider this a pass if we don't crash
+
+			csRestService.unpackAndSaveReplyBodyData(null, null, replyBody);
+			//we'll consider this a pass if we don't crash
+
+			csRestService.unpackAndSaveReplyBodyData(uri, null, null);
+			//we'll consider this a pass if we don't crash
+
+			csRestService.unpackAndSaveReplyBodyData(null, null, null);
+			//we'll consider this a pass if we don't crash
+
+		} catch (IOException e) {
+			fail("throwing an exception from unpackAndSaveReplyBodyData means we failed");
+		}
 	}
 	
 	public void testFindTransactionRequestAndCallback() {

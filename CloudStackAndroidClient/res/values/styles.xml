@@ -56,7 +56,7 @@
         <item name="footerIndicatorHeight">0dp</item>
         <item name="footerIndicatorUnderlinePadding">25dp</item>
         <item name="footerColor">#00000000</item>
-        <item name="textSize">30sp</item>
+        <item name="textSize">31sp</item>
         <item name="textColor">@color/viewPagerIndicator_unselectedColor</item>
         <item name="selectedColor">@color/viewPagerIndicator_selectedColor</item>
         <item name="selectedBold">false</item>

@@ -403,7 +403,7 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 	}
 
 	public void testMakeCreateTableSqlStr_errors() {
-		final String correctAnswer = "CREATE TABLE errors ( _id INTEGER PRIMARY KEY AUTOINCREMENT, errorcode TEXT, errortext TEXT, originatingcall TEXT );";
+		final String correctAnswer = "CREATE TABLE errors ( _id INTEGER PRIMARY KEY AUTOINCREMENT, errorcode TEXT, errortext TEXT, occurred TEXT, originatingcall TEXT, unread TEXT );";
 		
 		final String vmsTableCreateStatement = CsRestContentProvider.SQLiteDatabaseHelper.makeCreateTableSqlStr(new Errors());
 		assertEquals(correctAnswer, vmsTableCreateStatement);

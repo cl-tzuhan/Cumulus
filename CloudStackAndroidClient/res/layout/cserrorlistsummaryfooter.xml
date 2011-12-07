@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ViewSwitcher android:id="@+id/cssnapshotlistsummaryfooterviewswitcher"
+<ViewSwitcher android:id="@+id/cserrorlistsummaryfooterviewswitcher"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content" android:layout_width="wrap_content"
 	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 	android:inAnimation="@anim/fadein" android:outAnimation="@anim/fadeout_decelerate" >
 
 	<!-- child==0 of ViewSwitcher: RelativeLayout composing the footer we usually want to show -->
-	<RelativeLayout android:id="@+id/cssnapshotlistsummaryfooter"
+	<RelativeLayout android:id="@+id/cserrorlistsummaryfooter"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:paddingTop="20dp" android:paddingLeft="30dp" android:paddingRight="30dp" android:paddingBottom="0dp"
 		android:minHeight="?android:attr/listPreferredItemHeight">
@@ -14,26 +14,27 @@
 		<RelativeLayout android:id="@+id/footertitle" 
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:layout_centerHorizontal="true" >
-			<TextView android:id="@+id/footersnapshotnum"
+			<TextView android:id="@+id/footererrornum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:textSize="17sp"
 				android:textColor="@color/grey_a5" android:typeface="monospace"
 				android:text="X" />
 			<TextView
-				android:layout_toRightOf="@id/footersnapshotnum" android:layout_alignBaseline="@id/footersnapshotnum"
+				android:layout_toRightOf="@id/footererrornum" android:layout_alignBaseline="@id/footererrornum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 		    	android:layout_marginLeft="3dp"
 				android:textSize="14sp" android:layout_centerHorizontal="true"
 				android:textColor="@color/grey_a5"
-				android:text="snapshots" />
+				android:text="errors" />
 		</RelativeLayout>
 	    <TextView android:id="@+id/footermessage"
 	    	android:layout_below="@id/footertitle"
 	    	android:layout_width="fill_parent" android:layout_height="wrap_content"
 	    	android:layout_marginTop="2dp"
+	    	android:paddingBottom="50dp"
 			android:textSize="10sp" android:layout_centerHorizontal="true"
 			android:textColor="@color/grey_66"
-			android:text="This screen displays the snapshots you have taken.  Snapshots are a copy of the state of your virtual machine at a certain point in time, which are backed up to secondary storage." />
+			android:text="These are the errors that have occurred in the app at one time or another in the past." />
 	</RelativeLayout>
 
 	<!-- child==1 of ViewSwitcher: using empty TextView here to show blank space -->

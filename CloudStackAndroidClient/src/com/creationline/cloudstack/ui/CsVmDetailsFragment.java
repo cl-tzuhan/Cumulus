@@ -1,7 +1,10 @@
 package com.creationline.cloudstack.ui;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -28,6 +31,7 @@ import com.creationline.cloudstack.util.QuickActionUtils;
 public class CsVmDetailsFragment extends Fragment {
 	
 	private ContentObserver vmsContentObserver = null;
+    private BroadcastReceiver startStopRebootVmCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
 
 	
 	public CsVmDetailsFragment() {
@@ -38,6 +42,7 @@ public class CsVmDetailsFragment extends Fragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		registerStartStopRebootVmCallbackReceiver();
 	}
 
 	@Override
@@ -50,8 +55,8 @@ public class CsVmDetailsFragment extends Fragment {
 
 	@Override
 	public void onDestroy() {
-		
 		unregisterVmsDbUpdate();
+		unregisterCallbackReceiver(startStopRebootVmCallbackReceiver);
 		
 		super.onDestroy();
 	}
@@ -277,6 +282,51 @@ public class CsVmDetailsFragment extends Fragment {
 
 	}
 	
+	public void registerStartStopRebootVmCallbackReceiver() {
+		startStopRebootVmCallbackReceiver = new BroadcastReceiver(){
+			//This handles callback intents broadcasted by CsRestService
+			@Override
+			public void onReceive(Context contenxt, Intent intent) {
+				Bundle bundle = intent.getExtras();
+				final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
+				final String vmId = bundle.getString(Vms.ID);
+
+				if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
+					//the request failed, so revert the state of vm back to what it was based on call, and refresh
+					View csvmdetailsfragment = getActivity().findViewById(R.id.csvmdetailsfragment);
+					TextView stateText = (TextView)csvmdetailsfragment.findViewById(R.id.state);
+					final String inProgressState = stateText.getText().toString();
+					
+					if(Vms.STATE_VALUES.STARTING.equals(inProgressState)) {
+						updateVmStateOnDb(vmId, Vms.STATE_VALUES.STOPPED);
+					} else if(Vms.STATE_VALUES.STOPPING.equals(inProgressState) || Vms.STATE_VALUES.REBOOTING.equals(inProgressState)) {
+						updateVmStateOnDb(vmId, Vms.STATE_VALUES.RUNNING);
+					} else {
+						ClLog.e("CsVmDetailsFragment.registerStartStopRebootVmCallbackReceiver():onReceive():", "got unknown inProgressState="+inProgressState);
+					}
+					
+					setDisplayWidgetsAndConfigure(csvmdetailsfragment);  //refresh the view
+
+				} else {
+					;  //do nothing on success as the memory-state/db-state comparison code will know when an operation has succeeded and show the appropriate toast
+				}
+			}
+		};
+		getActivity().registerReceiver(startStopRebootVmCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_STARTSTOPREBOOTVM action)
+	}
+	
+	public void unregisterCallbackReceiver(BroadcastReceiver broadcastReceiver) {
+		if(broadcastReceiver!=null) {
+			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
+			try {
+				getActivity().unregisterReceiver(broadcastReceiver);
+			} catch (IllegalArgumentException e) {
+				//will get this exception if listSnapshotsCallbackReceiver has already been unregistered (or was never registered); will just ignore here
+				;
+			}
+		}
+	}
+	
 	private void registerForVmsDbUpdate() {
 		final Runnable updatedUiWithResults = new Runnable() {
 			//This handles notifs from CsRestContentProvider upon changes in db
@@ -331,7 +381,7 @@ public class CsVmDetailsFragment extends Fragment {
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Vms.ID, vmid);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);  //NOTE: currently, no broadcast receiver has been implemented in this fragment to handle callbacks on CALLBACK_LISTVM
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM);
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}

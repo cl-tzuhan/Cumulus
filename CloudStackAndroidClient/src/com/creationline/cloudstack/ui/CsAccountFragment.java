@@ -51,7 +51,6 @@ import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
-import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.util.ClLog;
@@ -480,7 +479,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				Bundle apiCmd = new Bundle();
 				apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
 				apiCmd.putString(Vms.ACCOUNT, username);
-		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);
+		        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVMS);
 				Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
 				getActivity().startService(csRestServiceIntent);
 			}

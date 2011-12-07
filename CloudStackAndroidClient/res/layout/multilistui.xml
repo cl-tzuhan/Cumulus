@@ -22,14 +22,6 @@
 			android:text="Stack" />
 	</LinearLayout>
 	
-	<!--
-	<fragment class="com.creationline.cloudstack.ui.CsVmListFragment"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true"
-		android:layout_alignParentRight="true" android:id="@+id/csvmlistfragment">
-	</fragment>
-	-->
-	
 	<android.support.v4.view.ViewPager android:id="@+id/viewpager"
 		android:layout_below="@+id/viewpagerindicator"
 		android:layout_marginTop="-4dp"
@@ -40,15 +32,11 @@
 	     viewpager here so it appears over viewpager on the z-axis (to prevent
 	     cutting off of title text for letters that go below baseline) -->
 	<com.viewpagerindicator.TitlePageIndicator android:id="@id/viewpagerindicator"
-	 	android:layout_marginTop="2dp"
+	 	android:layout_marginTop="4dp" android:layout_marginBottom="8dp"
 	 	android:layout_width="fill_parent" android:layout_height="wrap_content"
 		style="@style/Widget.CsacTitlepageIndicator" />
 
-		
-	<TextSwitcher android:textAppearance="?android:attr/textAppearanceSmall"
-		android:id="@+id/errorLogTextView" android:text="error log"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
-		android:fadingEdge="horizontal"></TextSwitcher>
+
+	<include layout="@layout/logdrawer" />
 
 </RelativeLayout>

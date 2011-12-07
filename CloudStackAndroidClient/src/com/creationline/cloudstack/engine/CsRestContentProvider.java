@@ -43,7 +43,7 @@ public class CsRestContentProvider extends ContentProvider {
 	public static final String DB_NAME = "CsRestTransaction.db";
 	private	SQLiteDatabase sqlDb;
 	private SQLiteDatabaseHelper sqlDbHelper;
-	private static final int DB_VERSION = 6;
+	private static final int DB_VERSION = 7;
 	
 	
 	public static class SQLiteDatabaseHelper extends SQLiteOpenHelper {
@@ -55,8 +55,6 @@ public class CsRestContentProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			///Create db tables
-			
 			//creating the Transactions table manually b/c I want a specific ordering to the columns that's not alphabetical
 			final String tableColumns = ", "
 										+ Transactions.REQUEST+" TEXT, "
@@ -68,11 +66,9 @@ public class CsRestContentProvider extends ContentProvider {
 										+ Transactions.CALLBACK_INTENT_FILTER+" TEXT";
 			db.execSQL("CREATE TABLE " + Transactions.META_DATA.TABLE_NAME + " ( "+Transactions._ID+" INTEGER PRIMARY KEY AUTOINCREMENT" + tableColumns + ");");
 			
-			
 			//create the ui-use tables from the appropriate column definition classes
 			db.execSQL(makeCreateTableSqlStr(new Vms()));
 			db.execSQL(makeCreateTableSqlStr(new Snapshots()));
-			
 			
 			//create the errors table
 			db.execSQL(makeCreateTableSqlStr(new Errors()));

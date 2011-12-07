@@ -173,18 +173,19 @@
 		
 		
 			<LinearLayout android:id="@+id/commandbuttonline"
-			android:layout_alignLeft="@id/iconframe" android:layout_below="@id/created"
-			android:layout_height="wrap_content" android:layout_width="match_parent"
-			android:gravity="center_horizontal" >
-			<Button android:id="@+id/deletesnapshotbutton"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_marginTop="30dp"
-				android:background="@drawable/action_item_btn"
-				android:drawableTop="@drawable/bin_selector"
-				android:drawablePadding="-10dp"
-				android:padding="5dp"
-				android:textColor="@color/primaryinfo_color_selector"
-				android:text="Delete Snapshot" />
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/created"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:paddingBottom="50dp"
+				android:gravity="center_horizontal" >
+				<Button android:id="@+id/deletesnapshotbutton"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:layout_marginTop="30dp"
+					android:background="@drawable/action_item_btn"
+					android:drawableTop="@drawable/bin_selector"
+					android:drawablePadding="-10dp"
+					android:padding="5dp"
+					android:textColor="@color/primaryinfo_color_selector"
+					android:text="Delete Snapshot" />
 			</LinearLayout>
 
 			<TextView android:id="@+id/inprogress_state"

@@ -15,6 +15,8 @@ public class Errors implements BaseColumns {
 	public static final String ERRORTEXT = "errortext";
 	public static final String ERRORCODE = "errorcode";
 	public static final String ORIGINATINGCALL = "originatingcall";
+	public static final String OCCURRED = "occurred";
+	public static final String UNREAD = "unread";  //boolean value on db
 
 	
 	public static final class META_DATA {

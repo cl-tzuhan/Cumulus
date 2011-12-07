@@ -37,14 +37,14 @@ import com.creationline.cloudstack.util.QuickActionUtils;
 
 public class CsVmListFragment extends CsListFragmentBase implements LoaderManager.LoaderCallbacks<Cursor> {
 	public static class INTENT_ACTION {
-		public static final String CALLBACK_LISTVM = "com.creationline.cloudstack.ui.CsVmListFragment.CALLBACK_LISTVM";
+		public static final String CALLBACK_LISTVMS = "com.creationline.cloudstack.ui.CsVmListFragment.CALLBACK_LISTVMS";
+		public static final String CALLBACK_STARTSTOPREBOOTVM = "com.creationline.cloudstack.ui.CsVmListFragment.CALLBACK_STARTSTOPREBOOTVM";
 	}
 
-//	public static final int CSVM_LIST_FRAGMENT_ID = 200;
-	
 	private static final int CSVM_LIST_LOADER = 0x01;
     private CsVmListAdapter adapter = null;  //backer for this list
-    private BroadcastReceiver vmListCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
+    private BroadcastReceiver listVmsCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
+    private BroadcastReceiver startStopRebootVmCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
     private static Bundle vmsWithInProgressRequests = new Bundle();  //used to keep track of which VMs have requests in-progress
     private boolean isProvisioned = false;  //whether currently have api/secret key or not (determined at onCreate())
     
@@ -59,7 +59,7 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
     
 
     public class CsVmListAdapter extends ResourceCursorAdapter {
-    	//This adaptor use strictly for use with the MultiListUi class/layout, and expects specific data to fill its contents.
+    	//This adaptor use strictly for use with the CsVmListFragment class/layout, and expects specific data to fill its contents.
     	
     	public CsVmListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
@@ -237,64 +237,10 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
     	
-//    	vmListCallbackReceiver = new BroadcastReceiver(){
-//        	//This handles callback intents broadcasted by CsRestService
-//        	@Override
-//        	public void onReceive(Context contenxt, Intent intent) {
-//        		Bundle bundle = intent.getExtras();
-//        		final String updatedUriStr = bundle.getString(CsRestService.UPDATED_URI);
-//
-//        		final Uri lastestListVmTransaction = Uri.parse(updatedUriStr);
-//        		final String[] columns = new String[] {
-//        			Transactions.REPLY_DATETIME,
-//        		};
-//        		Cursor c = getActivity().getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
-//        		if(c!=null && c.getCount()>0) {
-//        			c.moveToFirst();
-//        			final String lastUpdateTimestampStr = c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME));
-//        			
-//        			Time readTime = new Time();
-//        			readTime.parse3339(lastUpdateTimestampStr);  //str was saved out using RFC3339 format, so needs to be read in as such
-//        			readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
-//        			String dateStamp = readTime.year+"-"+readTime.month+"-"+readTime.monthDay;
-//        			String timeStamp = readTime.hour+":"+readTime.minute+":"+readTime.second;
-//        			    
-//        			TextView lastupdateddatestamp = (TextView)getActivity().findViewById(R.id.lastupdateddatestamp);
-//        			TextView lastupdatedtimestamp = (TextView)getActivity().findViewById(R.id.lastupdatedtimestamp);
-//        			if(lastupdateddatestamp!=null && lastupdatedtimestamp!=null) {
-//        				lastupdateddatestamp.setText(dateStamp);
-//        				lastupdatedtimestamp.setText(timeStamp);
-//        			}
-//        		}
-//        	}
-//        };
-//        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTVM action)
-        
-    	registerVmListCallbackReceiver();
-    	
     	isProvisioned = isProvisioned();  //this needs to be done first as the isProvisioned member var is used at various places
+    	registerListVmsCallbackReceiver();
+    	registerStartStopRebootVmCallbackReceiver();
 		
-//		final boolean isFreshAppStart = savedInstanceState==null;  //a "fresh app start" means the app was started fresh by the user, not as a result of orientation changes or such
-//		if(isFreshAppStart) {
-//			if(isProvisioned) {
-//				//do an initial refresh for data since it may have been a while since we were running
-//				makeListVmCall();
-//			}
-//		} else {
-//			//if we have any saved time/date stamps of the last refresh, use them 
-//			final String savedDatestamp = savedInstanceState.getString(CSVMLIST_DATESTAMP);
-//			final String savedTimestamp = savedInstanceState.getString(CSVMLIST_TIMESTAMP);
-//
-//			if(savedDatestamp!=null) {
-//				TextView lastrefresheddatestamp = (TextView)getActivity().findViewById(R.id.lastrefresheddatestamp);
-//				if(lastrefresheddatestamp!=null) { lastrefresheddatestamp.setText(savedDatestamp); }
-//			}
-//			if(savedTimestamp!=null) {
-//				TextView lastrefreshedtimestamp = (TextView)getActivity().findViewById(R.id.lastrefreshedtimestamp);
-//				if(lastrefreshedtimestamp!=null) { lastrefreshedtimestamp.setText(savedTimestamp); }
-//			}
-//		}
-    	
 	}
 
 	/** Called when the activity is first created. */
@@ -307,13 +253,6 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
         
         //add command footer to the list
         View csvmlistcommandfooter = addAndInitFooter(savedInstanceState, R.layout.csvmlistcommandfooter, R.id.csvmlistcommandfooterviewswitcher);
-//        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.csvmlistcommandfooter, null, false);
-//        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.csvmlistcommandfooterviewswitcher);
-//        if(commandfooterviewswitcher!=null) {
-//        	commandfooterviewswitcher.setDisplayedChild(0);
-//        	commandfooterviewswitcher.setAnimateFirstView(true);
-//        }
-//        getListView().addFooterView(csvmlistcommandfooter, null, false);
         
         setRefreshButtonClickHandler(csvmlistcommandfooter);
 		if(isProvisioned) {
@@ -360,8 +299,8 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 		super.onResume();
 	}
 
-	public void registerVmListCallbackReceiver() {
-		vmListCallbackReceiver = new BroadcastReceiver(){
+	public void registerListVmsCallbackReceiver() {
+		listVmsCallbackReceiver = new BroadcastReceiver(){
         	//This handles callback intents broadcasted by CsRestService
         	@Override
         	public void onReceive(Context contenxt, Intent intent) {
@@ -370,8 +309,6 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
         			return;
         		}
         		
-//        		setRefreshButtonEnabled(true);
-//        		setProgressCircleVisible(ProgressBar.INVISIBLE);
         		View csvmlistcommandfooter = getActivity().findViewById(R.id.csvmlistcommandfooter);
         		if(csvmlistcommandfooter==null) {
         			return;
@@ -380,33 +317,12 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
         		setProgressCircleVisible(csvmlistcommandfooter, ProgressBar.INVISIBLE);
 
         		Bundle bundle = intent.getExtras();
+        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
         		final String updatedUriStr = bundle.getString(CsRestService.UPDATED_URI);
-        		if(updatedUriStr==null) {
+        		if(updatedUriStr==null || successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
         			return;
         		}
 
-//        		final Uri lastestListVmTransaction = Uri.parse(updatedUriStr);
-//        		final String[] columns = new String[] {
-//        			Transactions.REPLY_DATETIME,
-//        		};
-//				Cursor c = activity.getContentResolver().query(lastestListVmTransaction, columns, null, null, Transactions._ID);
-//        		if(c!=null && c.getCount()>0) {
-//        			c.moveToFirst();
-//        			final String lastUpdateTimestampStr = c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME));
-//        			
-//        			Time readTime = new Time();
-//        			readTime.parse3339(lastUpdateTimestampStr);  //str was saved out using RFC3339 format, so needs to be read in as such
-//        			readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
-//        			String dateStamp = readTime.year+"-"+readTime.month+"-"+readTime.monthDay;
-//        			String timeStamp = readTime.hour+":"+readTime.minute+":"+readTime.second;
-//        			    
-//        			TextView lastrefresheddatestamp = (TextView)activity.findViewById(R.id.lastrefresheddatestamp);
-//        			TextView lastrefreshedtimestamp = (TextView)activity.findViewById(R.id.lastrefreshedtimestamp);
-//        			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null) {
-//        				lastrefresheddatestamp.setText(dateStamp);
-//        				lastrefreshedtimestamp.setText(timeStamp);
-//        			}
-//        		}
         		final Bundle parsedDateTime =  CsRestContentProvider.getReplyDateTimeFor(activity, updatedUriStr);
         		if(parsedDateTime!=null) {
         			setTextView(csvmlistcommandfooter, R.id.lastrefresheddatestamp, parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
@@ -414,21 +330,50 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
         		}
         	}
         };
-        getActivity().registerReceiver(vmListCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTVM action)
+        getActivity().registerReceiver(listVmsCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVMS));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTVMS action)
+	}
+
+	public void registerStartStopRebootVmCallbackReceiver() {
+		startStopRebootVmCallbackReceiver = new BroadcastReceiver(){
+			//This handles callback intents broadcasted by CsRestService
+			@Override
+			public void onReceive(Context contenxt, Intent intent) {
+				Bundle bundle = intent.getExtras();
+				final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
+				final String vmId = bundle.getString(Vms.ID);
+
+				if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
+					//the request failed, so revert the state of vm back to what it was based on call, and refresh
+					final String inProgressState = vmsWithInProgressRequests.getString(vmId);
+					if(Vms.STATE_VALUES.STARTING.equals(inProgressState)) {
+						updateVmStateOnDb(vmId, Vms.STATE_VALUES.STOPPED);
+					} else if(Vms.STATE_VALUES.STOPPING.equals(inProgressState) || Vms.STATE_VALUES.REBOOTING.equals(inProgressState)) {
+						updateVmStateOnDb(vmId, Vms.STATE_VALUES.RUNNING);
+					} else {
+						ClLog.e("CsVmListFragment.registerStartStopRebootVmCallbackReceiver():onReceive():", "got unknown inProgressState="+inProgressState);
+					}
+					adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
+
+				} else {
+					;  //do nothing on success as the memory-state/db-state comparison code will know when an operation has succeeded and show the appropriate toast
+				}
+			}
+		};
+		getActivity().registerReceiver(startStopRebootVmCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_STARTSTOPREBOOTVM action)
 	}
 	
 	@Override
 	public void onPause() {
-//		if(vmListCallbackReceiver!=null) {
+//		if(listVmsCallbackReceiver!=null) {
 //			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
 //			try {
-//				getActivity().unregisterReceiver(vmListCallbackReceiver);
+//				getActivity().unregisterReceiver(listVmsCallbackReceiver);
 //			} catch (IllegalArgumentException e) {
 //				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
 //				;
 //			}
 //		}
-//		unregisterCallbackReceiver(vmListCallbackReceiver);
+//		unregisterCallbackReceiver(listVmsCallbackReceiver);
 		
 //		setRefreshButtonEnabled(true);
 //		setProgressCircleVisible(ProgressBar.INVISIBLE);
@@ -438,7 +383,8 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 
 	@Override
 	public void onDestroy() {
-		unregisterCallbackReceiver(vmListCallbackReceiver);
+		unregisterCallbackReceiver(listVmsCallbackReceiver);
+		unregisterCallbackReceiver(startStopRebootVmCallbackReceiver);
 
 		super.onDestroy();
 	}
@@ -543,7 +489,7 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
         Bundle apiCmd = new Bundle();
         apiCmd.putString(CsRestService.COMMAND, commandName);
         apiCmd.putString(Vms.ID, vmid);
-        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);  //NOTE: currently, we are not using this CALLBACK_LISTVM.  If we do use it, may need new action const if we want to differentiate between list and start/stop/restart calls
+        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM);
         Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);
         getActivity().startService(csRestServiceIntent);
 	}
@@ -570,8 +516,6 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 
-//		setRefreshButtonEnabled(false);
-//		setProgressCircleVisible(ProgressBar.VISIBLE);
 		View csvmlistcommandfooter = getActivity().findViewById(R.id.csvmlistcommandfooter);
 		setRefreshButtonEnabled(csvmlistcommandfooter, false);
 		setProgressCircleVisible(csvmlistcommandfooter, ProgressBar.VISIBLE);
@@ -580,9 +524,9 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 			//make the rest call to cs server for vm data
 			final String action = CsRestService.TEST_CALL;   
 			Bundle apiCmd = new Bundle();
-			apiCmd.putString(CsRestService.COMMAND, "listVirtualMachines");
+			apiCmd.putString(CsRestService.COMMAND, CsApiConstants.API.listVirtualMachines);
 			apiCmd.putString(Vms.ACCOUNT, username);
-	        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVM);
+	        apiCmd.putString(Transactions.CALLBACK_INTENT_FILTER, CsVmListFragment.INTENT_ACTION.CALLBACK_LISTVMS);
 			Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
 			getActivity().startService(csRestServiceIntent);
 		}

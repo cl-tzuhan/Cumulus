@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SlidingDrawer android:id="@+id/logdrawer" xmlns:android="http://schemas.android.com/apk/res/android" 
+	android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:allowSingleTap="true" android:topOffset="3dp" android:handle="@+id/logdrawerhandle"
+	android:content="@+id/logdrawercontent">
+
+	<RelativeLayout android:id="@id/logdrawerhandle"
+		android:layout_width="match_parent" android:layout_height="32dp"
+		android:orientation="horizontal">
+		<RelativeLayout android:layout_width="match_parent"
+			android:layout_height="wrap_content" android:layout_marginTop="2dp"
+			android:layout_marginLeft="-47dp" android:background="@drawable/cloud_light_top_bgtile" />
+		<RelativeLayout android:layout_width="match_parent"
+			android:layout_height="wrap_content" android:layout_marginTop="7dp"
+			android:layout_marginLeft="-27dp" android:background="@drawable/cloud_light_top_bgtile" />
+		<RelativeLayout android:layout_width="match_parent"
+			android:layout_height="wrap_content" android:layout_marginTop="4dp"
+			android:layout_marginLeft="-159dp" android:background="@drawable/cloud_light_top_bgtile" />
+
+		<ImageView android:id="@+id/logdrawericon"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_marginTop="5dp" android:visibility="invisible"
+			android:src="@drawable/exclamation_selector" />
+		<TextSwitcher android:id="@+id/logdrawertextswitcher"
+			android:layout_toRightOf="@id/logdrawericon" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:layout_alignBaseline="@id/logdrawericon"
+			android:layout_marginTop="8dp" android:layout_marginLeft="0dp"></TextSwitcher>
+	</RelativeLayout>
+
+	<RelativeLayout android:id="@id/logdrawercontent"
+		android:layout_width="match_parent" android:layout_height="match_parent"
+		android:orientation="vertical">
+		<FrameLayout android:id="@+id/logdrawercontentbg"
+			android:layout_below="@+id/logdrawercontenttop" android:layout_width="match_parent"
+			android:layout_height="match_parent" android:background="@android:color/background_dark">
+			<fragment android:id="@+id/cserrorlistfragment"
+				class="com.creationline.cloudstack.ui.CsErrorListFragment"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+			</fragment>
+		</FrameLayout>
+		<RelativeLayout android:id="@id/logdrawercontenttop"
+			android:layout_width="match_parent" android:layout_height="45dp"
+			android:layout_alignParentTop="true" android:background="@drawable/cloud_backing_bottom_bgtile" />
+		<RelativeLayout android:id="@+id/logdrawercontenttop2"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:background="@drawable/cloud_light_bottom_bgtile" />
+		<RelativeLayout android:id="@+id/logdrawercontenttop3"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginTop="-3dp" android:layout_marginLeft="-27dp"
+			android:background="@drawable/cloud_light_bottom_bgtile" />
+		<RelativeLayout android:id="@+id/logdrawercontenttop4"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginTop="-7dp" android:layout_marginLeft="-159dp"
+			android:background="@drawable/cloud_light_bottom_bgtile" />
+
+		<TextView android:id="@+id/logdrawercontenttitle" android:layout_height="wrap_content"
+			android:layout_width="match_parent" android:paddingTop="10sp"
+			android:paddingRight="10sp" android:gravity="right" android:textSize="30sp"
+			android:textColor="@color/viewPagerIndicator_selectedColor"
+			android:text="Errors" />
+	</RelativeLayout>
+</SlidingDrawer>

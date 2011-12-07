@@ -55,14 +55,14 @@ public class CsListFragmentBase extends ListFragment {
 	
 	public View addAndInitFooter(Bundle savedInstanceState, final int footerId, final int footerSwitcherId) {
 		View footer = getLayoutInflater(savedInstanceState).inflate(footerId, null, false);
-        ViewSwitcher footerSwitcher = (ViewSwitcher)footer.findViewById(footerSwitcherId);
-        if(footerSwitcher!=null) {
-        	footerSwitcher.setDisplayedChild(0);
-        	footerSwitcher.setAnimateFirstView(true);
-        }
-        getListView().addFooterView(footer, null, false);
-        
-        return footer;
+		ViewSwitcher footerSwitcher = (ViewSwitcher)footer.findViewById(footerSwitcherId);
+		if(footerSwitcher!=null) {
+			footerSwitcher.setDisplayedChild(0);
+			footerSwitcher.setAnimateFirstView(true);
+		}
+		getListView().addFooterView(footer, null, false);
+		
+		return footer;
 	}
 	
 	

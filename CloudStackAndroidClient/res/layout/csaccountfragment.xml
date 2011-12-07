@@ -135,6 +135,7 @@
 				<RelativeLayout android:id="@+id/keysdisplayframe"
 	 		   		android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:paddingBottom="100dp"
 					android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
 					
 					<TextView android:id="@+id/accountintrotext1"

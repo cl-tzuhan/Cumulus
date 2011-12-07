@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.text.format.Time;
+import android.util.TimeFormatException;
 import android.widget.TextView;
 
 public class DateTimeParser {
@@ -13,9 +15,10 @@ public class DateTimeParser {
 	private static SimpleDateFormat datePrinter = null;
 	
 	/**
-	 * Specifically sets the "created" and "createdTime" textviews in the specified view with
-	 * parsed output from passed-in datetimeStr.  Format of datetimeStr is assumed to be fixed.
-	 * In the case datetimeStr cannot be successfully parsed/formated, the textviews will not be set.
+	 * Specifically sets the specified textviews with parsed output from passed-in datetimeStr.
+	 * Format of datetimeStr is assumed to be fixed.
+	 * In the case datetimeStr cannot be successfully parsed/formated,
+	 * the date textview will be set with the unparsed datetimeStr
 	 * @param dateText the textview which will get the parsed datestamp set as text
 	 * @param timeText the textview which will get the parsed timestamp set as text
 	 * @param datetimeStr string in pre-determined format of the datetime to parse
@@ -30,15 +33,38 @@ public class DateTimeParser {
 			final Date date = datetimeParser.parse(datetimeStr);  //parse the date string
 			
 			dateText.setText(datePrinter.format(date));  //set just the date info
-			
-//			dateText = (TextView) view.findViewById(R.id.createdtime);
-//			dateText.setText(timePrinter.format(date));  //set the time info separately from date info
 			timeText.setText(timePrinter.format(date));  //set the time info separately from date info
 
 		} catch (ParseException e) {
 			//in the case of an un-parse-able datetime str, we will just display the str as is instead of trying to prettify it
-			ClLog.e("setTextViewWithString():", "created timestamp could not be parsed; skipping");
-			ClLog.e("setTextViewWithString():", e);
+			ClLog.e("setParsedDateTime():", "created timestamp could not be parsed; skipping");
+			ClLog.e("setParsedDateTime():", e);
+			dateText.setText(datetimeStr);
+		}
+	}
+	
+	/**
+	 * Specifically sets the specified textviews with parsed output from passed-in datetimeStr.
+	 * Format of datetimeStr is assumed to be in RFC 3339 format.
+	 * In the case datetimeStr cannot be successfully parsed/formated,
+	 * the date textview will be set with the unparsed datetimeStr
+	 * @param dateText the textview which will get the parsed datestamp set as text
+	 * @param timeText the textview which will get the parsed timestamp set as text
+	 * @param datetimeStr string in pre-determined format of the datetime to parse
+	 */
+	public static void setParsedDateTime3999(TextView dateText, TextView timeText, String datetimeStr) {
+	    Time readTime = new Time();
+	    try {
+			if(readTime.parse3339(datetimeStr)) {  //str was saved out using RFC3339 format, so needs to be read in as such
+			    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+
+			    dateText.setText(readTime.format("%Y-%m-%d"));
+			    timeText.setText(readTime.format("%X"));
+			}
+		} catch (TimeFormatException e) {
+			//in the case of an un-parse-able datetime str, we will just display the str as is instead of trying to prettify it
+			ClLog.e("setParsedDateTime3999():", "created timestamp could not be parsed; skipping");
+			ClLog.e("setParsedDateTime3999():", e);
 			dateText.setText(datetimeStr);
 		}
 	}

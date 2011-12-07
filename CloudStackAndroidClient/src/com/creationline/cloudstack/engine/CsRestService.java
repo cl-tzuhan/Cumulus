@@ -84,15 +84,10 @@ public class CsRestService extends IntentService {
 	private static final int ASYNCJOB_COMPLETED = 1;
 	private static final int ASYNCJOB_FAILEDTOCOMPLETE = 2;
 	
-//	private Uri inProgressTransaction = null;  //TODO: this only keeps track of 1 uri when there may be multiple transactions in-progress, but having a cache instead wouldn't work anyways as it would get re-created upon every orientation change (which restarts the activity), unless we make it static
 	private static List<Uri> inProgressTransactionList = new ArrayList<Uri>();
 	private static Time time = null;
 	private HttpClient httpclient = null;  //one httpclient for use by multiple requests as suggested by android
 
-	
-	// ApiKey and secretKey as given by your CloudStack vendor
-//	private String apiKey = "cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g";    //rickson@219.117.239.169:8080/client/ use
-//	private String secretKey = "lodAuMftOyg0nWiwU5JUy__nn9YO1uJ34oxE9PvdLplJQOTmrEzpoe3wXjG0u1-AsY2y9636GTGDs5LsinxK7Q"; //rickson@219.117.239.169:8080/client/ use
 	
 	public class JsonNameNodePair {
 		private String responseName;
@@ -207,13 +202,15 @@ public class CsRestService extends IntentService {
 			updateCallAsAbortedOnDb(inProgressTransaction);
 			
 			Bundle bundle = findTransactionRequestAndCallbackForRow(inProgressTransaction);
-			final String originalRequest = bundle.getString(Transactions.REQUEST);
-			final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
-			final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
-			if(id!=null) {
-				informCallerFragmentOfCallCompletion(callbackIntentFilter, id, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
-			} else {
-				informCallerOfCallCompletion(inProgressTransaction, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+			if(bundle!=null) {
+				final String originalRequest = bundle.getString(Transactions.REQUEST);
+				final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
+				final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
+				if(id!=null) {
+					informCallerFragmentOfCallCompletion(callbackIntentFilter, id, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+				} else {
+					informCallerOfCallCompletion(inProgressTransaction, CsRestService.CALL_STATUS_VALUES.CALL_FAILURE);
+				}
 			}
 		}
 		
@@ -232,17 +229,21 @@ public class CsRestService extends IntentService {
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(Transactions.REQUEST, request);
 		contentValues.put(Transactions.STATUS, Transactions.STATUS_VALUES.IN_PROGRESS);
-		time.setToNow();
-		contentValues.put(Transactions.REQUEST_DATETIME, time.format3339(false));
-		///To change the saved REQUEST_DATETIME str back into a Time object, use the following:
-		//    Time readTime = new Time();
-		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
-		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
+		contentValues.put(Transactions.REQUEST_DATETIME, getCurrentTimeAsString());
 		contentValues.put(Transactions.CALLBACK_INTENT_FILTER, apiCmd.getString(Transactions.CALLBACK_INTENT_FILTER));
 		
 		Uri newUri = getBaseContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, contentValues);
 		ClLog.d(TAG, "added new API request to db at " + newUri);
 		return newUri;
+	}
+
+	public String getCurrentTimeAsString() {
+		time.setToNow();
+		return time.format3339(false);
+		///To change this str back into a Time object, use the following:
+		//    Time readTime = new Time();
+		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
+		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
 	}
 	
 	/**
@@ -260,13 +261,8 @@ public class CsRestService extends IntentService {
 																			throws InvalidParameterException, IllegalArgumentException {
 		final String TAG = "CsRestService.buildFinalUrl()";
 		
-		//String HOST = "http://192.168.3.11:8080/client/api";  //CL CS user api base url
-		//String HOST = "http://72.52.126.24/client/api";  //Citrix CS user api base url
-//		String HOST = "http://219.117.239.169:8080/client/api";  //SakauePark CS user api base url
-		String csHostUrl = "http://fake";  //SakauePark CS user api base url
-		
+		String csHostUrl = "http://fake";  //non-existent CS user api base url
 		if (specifiedHost!=null) {csHostUrl = specifiedHost;}  //use any caller-specified host over the default value
-		
 		csHostUrl = makeHostIntoApiUrlIfNecessary(csHostUrl);
 
 		try {
@@ -375,15 +371,15 @@ public class CsRestService extends IntentService {
 	 *   
 	 * @param url url to send an http GET to
 	 * @param originatingTransactionUri uri of row in transactions db table that records this call (used to link an error in the errors db table to the specific transaction in the case of a failure)
+	 * @throws IOException 
 	 */
-	private HttpResponse doRestCall(final String url, final Uri originatingTransactionUri) {
+	private HttpResponse doRestCall(final String url, final Uri originatingTransactionUri) throws IOException {
 		final String TAG = "CsRestService.doRestCall()";
 		
 		if(url==null) {
 			return null;
 		}
 		
-//        HttpClient httpclient = new DefaultHttpClient();
         try {
             final HttpGet httpGet = new HttpGet(url);
             //final HttpPost httpPost = new HttpPost(url);
@@ -397,30 +393,28 @@ public class CsRestService extends IntentService {
         } catch (ClientProtocolException e) {
         	ClLog.e(TAG, "got ClientProtocolException! [" + e.toString() +"]");
         	ClLog.e(TAG, e);
-			return null;
+        	throw e;
 		} catch (IllegalArgumentException e) {
 			ClLog.e(TAG, "got IllegalArgumentException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
-			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			//addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			throw e;
 		} catch (IOException e) {
 			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
-			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			//addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			throw e;
 		} catch (IllegalStateException e) {
 			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
 			ClLog.e(TAG, e);
 			//save the error to errors db as well
-			addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			//addToErrorLog(null, e.getMessage(), originatingTransactionUri.toString());
+			throw e;
 		} finally {
-            // When HttpClient instance is no longer needed,
-            // shut down the connection manager to ensure
-            // immediate deallocation of all system resources
-//            httpclient.getConnectionManager().shutdown();
-        }
-		
-		return null;
+			//nothing done here currently
+		}
 	}
 
 	public Uri addToErrorLog(final String errorCode, final String errorText, final String originatingTransactionUri) {
@@ -428,6 +422,8 @@ public class CsRestService extends IntentService {
 		if(errorCode!=null) { cv.put(Errors.ERRORCODE, errorCode); };
 		if(errorText!=null) { cv.put(Errors.ERRORTEXT, errorText); };
 		if(originatingTransactionUri!=null) { cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString()); };
+		cv.put(Errors.OCCURRED, getCurrentTimeAsString());
+		cv.put(Errors.UNREAD, true);
 		return getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
@@ -484,7 +480,7 @@ public class CsRestService extends IntentService {
 		
 	}
 	
-	public void unpackAndSaveReplyBodyData(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) {
+	public void unpackAndSaveReplyBodyData(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) throws IOException {
 		
 		if(uriToUpdate==null || reply==null || replyBody==null) {
 			return;
@@ -496,7 +492,7 @@ public class CsRestService extends IntentService {
 		if(callReturnedOk) {
 			processAndSaveJsonReplyData(uriToUpdate, replyBody.toString());
 		} else if(ranInto404){
-			addToErrorLog(String.valueOf(statusCode), "CloudStack instance not found at saved URL (404)", uriToUpdate.toString());
+			throw new IOException("CloudStack instance not found at saved URL (404)");
 		} else {
 			parseErrorAndAddToDb(uriToUpdate, statusCode, replyBody.toString());
 		}
@@ -537,6 +533,10 @@ public class CsRestService extends IntentService {
 
 	public void informCallerFragmentOfCallFailure(final Uri uriToUpdate) {
 		Bundle bundle = findTransactionRequestAndCallbackForRow(uriToUpdate);
+		if(bundle==null) {
+			return;
+		}
+		
 		final String originalRequest = bundle.getString(Transactions.REQUEST);
 		final String id = extractParamValueFromUriStr(originalRequest, Snapshots.ID);  //using "Snapshots.ID" here, but as this is a common method, what's really needed is just the "id" value
 		final String callbackIntentFilter = bundle.getString(Transactions.CALLBACK_INTENT_FILTER);
@@ -911,7 +911,7 @@ public class CsRestService extends IntentService {
 	 * @param paramValueToExtract name of param whose value to return
 	 * @return value of param as a String if found, null otherwise
 	 */
-	public String extractParamValueFromUriStr(final String uriStr, final String paramValueToExtract) {
+	public static String extractParamValueFromUriStr(final String uriStr, final String paramValueToExtract) {
 		if(uriStr==null || paramValueToExtract==null) {
 			return null;
 		}

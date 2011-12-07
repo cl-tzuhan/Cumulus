@@ -54,7 +54,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
     private static final String CSSNAPSHOTLIST_TIMESTAMP = "com.creationline.cloudstack.ui.CsSnapshotListFragment.CSSNAPSHOTLIST_TIMESTAMP";
     
     private class CsSnapshotListAdapter extends ResourceCursorAdapter {
-    	//This adaptor used strictly for use with the CsSnapshot class/layout, and expects specific data to fill its contents.
+    	//This adaptor used strictly for use with the CsSnapshotListFragment class/layout, and expects specific data to fill its contents.
     	
 		public CsSnapshotListAdapter(Context context, int layout, Cursor c, int flags) {
 			super(context, layout, c, flags);
@@ -246,7 +246,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		//add the summary footer to the list
-		addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistsummaryfooter, R.id.csvmlistsummaryfooterviewswitcher);
+		addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistsummaryfooter, R.id.cssnapshotlistsummaryfooterviewswitcher);
 //        View cssnapshotlistsummaryfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistsummaryfooter, null, false);
 //        ViewSwitcher footerviewswitcher = (ViewSwitcher)cssnapshotlistsummaryfooter.findViewById(R.id.footerviewswitcher);
 //        if(footerviewswitcher!=null) {
@@ -295,7 +295,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 				setTextView(cssnapshotlistcommandfooter, R.id.lastrefreshedtimestamp, savedTimestamp);
 			}
 		}
-        
+		
         super.onActivityCreated(savedInstanceState);
 	}
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/cserrorlistitem"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content"
+	android:paddingTop="14dp" android:paddingBottom="14dp"
+	android:minHeight="?android:attr/listPreferredItemHeight">
+
+	<LinearLayout android:id="@+id/erroriconframe"
+		android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layoutAnimation="@anim/fadein_layoutanim">
+		<Button android:id="@+id/deleteerrorbutton"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_marginTop="0sp"
+			android:background="@drawable/action_item_btn"
+			android:drawableTop="@drawable/button_cross_36x36"
+			android:drawablePadding="-25dp"
+			android:padding="4dp" />
+	</LinearLayout>
+	
+	<TextView android:id="@+id/occurredlabel"
+		android:layout_alignParentRight="true" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="4dp"
+		android:textSize="16sp" android:textColor="@color/label"
+		android:text="occurred" />
+	<TextView android:id="@+id/occurredtime"
+		android:layout_toLeftOf="@id/occurredlabel"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/occurredlabel"
+		android:layout_marginLeft="4dp"
+		android:textSize="15sp" android:textColor="@color/supplementary"
+		android:typeface="serif"
+		android:text="Time" />
+	<TextView android:id="@+id/occurred"
+		android:layout_toLeftOf="@id/occurredtime"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/occurredlabel"
+		android:layout_marginTop="4dp"
+		android:textSize="15sp" android:textColor="@color/primary"
+		android:typeface="serif"
+		android:text="Date" />
+		
+	<TextView android:id="@+id/errortext"
+		android:layout_toRightOf="@id/erroriconframe" android:layout_below="@id/occurred"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:layout_marginLeft="4dp"
+		android:textSize="14sp" android:textColor="@color/primary"
+		android:text="" />
+	<TextView android:id="@+id/errorcode"
+		android:layout_toLeftOf="@id/errortext"
+		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/errortext"
+		android:textSize="13sp" android:textColor="@color/supplementary"
+		android:text="" />
+		
+	<TextView android:id="@+id/dbentryid"
+		android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="12sp" android:textColor="#aa3333"
+		android:text="" />
+
+</RelativeLayout>

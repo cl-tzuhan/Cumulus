@@ -7,7 +7,12 @@
    <color name="label">#4a4a4a</color>
 
    <color name="active">#1e8eee</color>
-   <color name="error">#e5e818</color>
+   <color name="error">#ff6a25</color>
+   <color name="error_yellow">#e5e818</color>
+   
+   <color name="primary">#eeeeee</color>
+   <color name="supplementary">#959595</color>
+   
 
    <color name="viewPagerIndicator_unselectedColor">#333333</color>
    <color name="viewPagerIndicator_selectedColor">#888888</color>
