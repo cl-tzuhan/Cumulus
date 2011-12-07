@@ -1,0 +1,53 @@
+Cumulus: a CloudStack Android Client
+------------------------------------
+Cumulus (CloudStackAndroidclient) is an Android app for accessing your CloudStack account and data.  It pulls your virtual machine and other data from the CloudStack and saves it locally on the device for quick access and offline viewing.  You can also perform operations on the device, which is executed on the CloudStack in realtime.
+
+We are in the early stages of this project, with only a small number of possible operations implemented at this point.  Further functionality is planned to be implemented after assessing user needs and reaction.  Some candidates for future functionality include creation-related operations, monitoring functionality, and alerts/alarms.
+
+
+What are the pre-requisites?
+----------------------------
+- CloudStack URL (+optional domain)
+- CloudStack username & password
+- api/secret keys have been generated for user
+
+You will need a valid CloudStack URL and user login credentials to provision the client.  The provisioning process will login with your credentials against the specified CloudStack instance, then fetch the api/secret keys for your user.  Cumulus then throws away your password and uses just these keys for further connections to the CloudStack, so your user must have api/secret keys generated before you can provision. (If you do not have administrator-level rights, please ask your administrator to generate the keys for your user with the "Actions->Generate Keys" command in the Accounts>* Accounts>{some account}>Users tab).  Please note that if your api/secret keys are changed on the CloudStack, you will need to re-provision your account on the client for it to continue to work.
+
+
+How can I install it?
+---------------------
+The quickest way to just get a working app is to download the compiled CloudStackAndroidClient.apk file and install it directly on your Android device.  Note that to install apps directly from the APK file, your ÅgSettings->Application Settings->Unknown SourcesÅh setting must be enabled.  You can transfer the APK file via an SD card, using a service like Dropbox to transfer it wirelessly, or even email it to yourself.
+
+What Android phones can I use it on?
+------------------------------------
+Cumulus currently supports Android API Level 10 and above.
+It was developed on a Softbank Galapagos 003SH handset, and has not currently been tested on other devices.
+Usage and testing on other devices are definitely welcome!
+
+
+What if I want to build the source?
+-----------------------------------
+The Cumulus code is being developed on Eclipse using, obviously, the Android SDK.  Other libraries like Android Compatibility Library v4 and various other open source libraries are also used by the Cumulus code, but these are all included in this source already.
+
+Besides the actual Cumulus source in the CloudStackAndroidClient folder, there is also a CloudStackAndroidClientTest folder which contains JUnit tests for the client.  Currently there is just a small battery of tests, though we would like to create more and more test coverage.
+
+There is a Python script (generateRevision.py) currently in the source that is an artifact of an automatic version-increment system for Bazaar.  You are free to ignore this script as it does not directly affect the functioning of the app, though the revision information for the app will not be automatically updated in this case.
+
+How is it licensed?
+-------------------
+Released under the Apache License, v2.0.
+The LICENSE file can be found in the CloudStackAndroidClient folder.
+
+
+AND
+
+
+Special thanks to the following people/parties, whose work is used in the implementation of Cumulus!
+----------------------------------------------------------------------------------------------------
+(in no particular order)
+- Jake Wharton for his fantastic Android ViewPagerIndicator widget
+- Lorensius W. L. T for his awesome NewQuickAction3D widget
+- Actuate Corporation for their trimQuotes code
+- Adrian Cowham and AndroidCookbook.com for his Haptic feedback recipe
+- Subrat Nayak(~ipapun) for the devine Devine-Icons Part-2 icon set
+- Jack Cai(Double-J Design) for the super Super Mono icon set

@@ -191,7 +191,7 @@
 				android:layout_height="wrap_content" android:layout_width="wrap_content"
 				android:layout_marginLeft="5dp"
 				android:textSize="16sp" android:textColor="@color/label"
-				android:text="Haptic feedback recepie" />
+				android:text="Haptic feedback recipe" />
 			<TextView android:id="@+id/devineiconscreator"
 				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/hapticfeedbackrecepielabel"
 				android:layout_height="wrap_content" android:layout_width="wrap_content"
