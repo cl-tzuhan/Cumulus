@@ -38,6 +38,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -76,7 +77,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	
 	private CsSessionBasedRequestTask provisionTaskHandle = null;  //task member var so we can have a handle to cancel in-progress tasks on exit
 
-//    private BroadcastReceiver accountCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
  
 	private class CsSessionBasedRequestTask extends AsyncTask<Bundle, Void, Bundle> {
 
@@ -250,9 +250,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			//revert progress-circle back to button icon
 			switchLoginProgress();
 			
-//			//we made login button unclickable after the first click, so reset it
-//			Button loginbutton = (Button)getActivity().findViewById(R.id.loginbutton);
-//			if(loginbutton!=null) { loginbutton.setClickable(true); }
 		}
 
 	}
@@ -294,15 +291,19 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			final String TAG = "CsAccountFragment.CsLoginTask.makeLoginCall()";
 				
 			final String csHost = apiParams.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING);
+			final String csDomain = apiParams.getString(CsApiConstants.LOGIN_PARAMS.DOMAIN);
     		final String username = apiParams.getString(CsApiConstants.LOGIN_PARAMS.USERNAME);
     		String password = apiParams.getString(CsApiConstants.LOGIN_PARAMS.PASSWORD);
 
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
 			final String hashedPassword = md5(password);
-    		final String finalUrl = csHostUrl + "?" + "response=json"
+    		String finalUrl = csHostUrl + "?" + "response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.login
     								+ "&"+CsApiConstants.LOGIN_PARAMS.USERNAME+"="+urlEncode(username)
     								+ "&"+CsApiConstants.LOGIN_PARAMS.PASSWORD+"="+urlEncode(hashedPassword);
+    		if(csDomain!=null) {
+    			finalUrl += "&"+CsApiConstants.LOGIN_PARAMS.DOMAIN+"="+urlEncode(csDomain);
+    		}
     		ClLog.d(TAG, "finalUrl="+finalUrl);
     		
     		HttpResponse response = executeHttpRequest(finalUrl, returnBundle);
@@ -581,23 +582,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-//        accountCallbackReceiver = new BroadcastReceiver(){
-//        	//This handles callback intents broadcasted by CsRestService
-//        	@Override
-//        	public void onReceive(Context contenxt, Intent intent) {
-//        		Bundle bundle = intent.getExtras();
-//        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
-//        		final String snapshotId = bundle.getString(Snapshots.ID);
-//        		
-//        		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
-//        			
-//        		} else {
-//        		
-//        		}
-//        	}
-//        };
-//        getActivity().registerReceiver(accountCallbackReceiver, new IntentFilter(CsAccountFragment.INTENT_ACTION.LOGIN));  //activity will now get intents broadcast by CsRestService (filtered by LOGIN action)
-        
     }
 	
 	@Override
@@ -636,8 +620,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         	final boolean loginIsInProgress = preferences.getBoolean(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS, false);
         	if(loginIsInProgress) {
         		//show progress-circle
-//        		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-//    			if(loginprogressswitcher!=null) { loginprogressswitcher.showNext(); }
         		switchLoginProgress();
         	}
         	
@@ -699,16 +681,6 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	@Override
 	public void onDestroy() {
 		
-//		if(accountCallbackReceiver!=null) {
-//			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-//			try {
-//				getActivity().unregisterReceiver(accountCallbackReceiver);
-//			} catch (IllegalArgumentException e) {
-//				//will get this exception if snapshotListCallbackReceiver has already been unregistered (or was never registered); will just ignore here
-//				;
-//			}
-//		}
-		
 		if(provisionTaskHandle!=null) {
 			provisionTaskHandle.cancel(false);
 			removePreferenceSetting(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);  //mark login as no longer in progress so we don't have a never-ending progress circle once we return. If the provision call does complete, we can always re-do it anyways
@@ -724,11 +696,11 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String savedCsHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+		final String savedCsDomain = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_DOMAIN_SETTING, null);
 		final String savedUsername = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
-//		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
-//		final String savedSecretKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.SECRETKEY_SETTING, null);
 		
         setTextWatcherAndValueForEditText(csaccountfragment, R.id.cshostfield, CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, savedCsHost);
+        setTextWatcherAndValueForEditText(csaccountfragment, R.id.csdomainfield, CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_DOMAIN_SETTING, savedCsDomain);
         setTextWatcherAndValueForEditText(csaccountfragment, R.id.usernamefield, CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, savedUsername);
 
         setLoginButtonClickHandler(csaccountfragment);
@@ -757,6 +729,13 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 					Matcher matcher = csHostPattern.matcher(inputtedString);
 					if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
 						showLoginErrorMessage(R.id.hosterrorframe, "host value must be a valid URL");
+					} else {
+						showLoginErrorMessage(R.id.hosterrorframe, "");
+					}
+				} else if(idOfEditTextToWatch==R.id.csdomainfield){
+					Matcher matcher = csHostPattern.matcher(inputtedString);  //we'll re-use the csHost regex check here since we don't have a more stringent check for the domain specifically
+					if(!matcher.matches()) { //csDomain cannot contain 1-byte nor 2-byte spaces
+						showLoginErrorMessage(R.id.hosterrorframe, "domain value must not have spaces");
 					} else {
 						showLoginErrorMessage(R.id.hosterrorframe, "");
 					}
@@ -798,6 +777,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			@Override
 			public void onClick(View v) {
 				loginButton.setClickable(false);
+				
+				//automatically close the soft keyboard
+				final EditText passwordfield = (EditText)csaccountfragment.findViewById(R.id.passwordfield);
+				InputMethodManager mgr = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+				mgr.hideSoftInputFromWindow(passwordfield.getWindowToken(), 0);
+				
 				makeLoginCall(csaccountfragment);
 			}
 		});
@@ -805,19 +790,17 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 	public void makeLoginCall(View itemView) {
 		
-//		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
-//		loginprogressswitcher.showNext();
 		switchLoginProgress();
 		
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
-		String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+		final String csHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
+		final String csDomain = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_DOMAIN_SETTING, null);
 		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 		TextView passwordText = (TextView)getActivity().findViewById(R.id.passwordfield);
 		final String password = passwordText.getText().toString();
 
 		clearErrorFrames();
 		if(inputValidationFailed(csHost, username, password)) {
-//			loginprogressswitcher.showNext();
 			switchLoginProgress();
 			return;  //if input validation failed, short-circuit the rest of the method
 		}
@@ -828,6 +811,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         apiCmd.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, csHost);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, username);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.PASSWORD, password);
+        if(csDomain!=null) {
+        	apiCmd.putString(CsApiConstants.LOGIN_PARAMS.DOMAIN, csDomain);
+        };
         provisionTaskHandle = new CsLoginTask();
         provisionTaskHandle.execute(apiCmd);
 	}
@@ -847,7 +833,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		editor.commit();
 	}
 
-	public boolean inputValidationFailed(String csHost, final String username, final String password) {
+	public boolean inputValidationFailed(final String csHost, final String username, final String password) {
 		boolean improperInputExists = false;
 		
 		if(csHost==null || csHost.isEmpty()) {
@@ -889,6 +875,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		
 		//clear the edittexts of previous values
 		setTextViewValue(R.id.cshostfield, "");
+		setTextViewValue(R.id.csdomainfield, "");
 		setTextViewValue(R.id.usernamefield, "");
 		setTextViewValue(R.id.passwordfield, "");
 	}

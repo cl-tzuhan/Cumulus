@@ -22,6 +22,7 @@ public class CsApiConstants {
 	public static class LOGIN_PARAMS {
 		public static final String USERNAME = "username";
 		public static final String PASSWORD = "password";
+		public static final String DOMAIN = "domain";
 		
 		public static final String SESSIONKEY = "sessionkey";
 	}

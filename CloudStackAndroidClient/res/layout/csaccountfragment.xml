@@ -31,14 +31,22 @@
 		 		   		android:layout_alignLeft="@id/cshostfieldtitle" android:layout_below="@id/cshostfieldtitle"
 		 		   		android:layout_height="40sp" android:layout_width="match_parent"
 		 		   		android:layout_marginTop="4dp" android:layout_marginLeft="0dp"
-		 		   		android:textSize="16sp" android:textColor="#1e8eee"
+		 		   		android:textSize="16sp" android:textColor="@color/active"
 		 		   		android:inputType="textUri"
 				    	android:maxLines="1"
 		 		   		android:hint="CloudStack URL[:port]" >
 		    		</EditText>
+		    		<EditText android:id="@+id/csdomainfield" 
+		 		   		android:layout_alignLeft="@id/cshostfieldtitle" android:layout_below="@id/cshostfield"
+				    	android:layout_height="34sp" android:layout_width="match_parent"
+				    	android:inputType="textUri" android:textColor="@color/active"
+		 		   		android:textSize="13sp"
+				    	android:maxLines="1"
+				    	android:hint="domain (optional)" >
+				    </EditText>
 		    		
 		    		<TextSwitcher android:id="@+id/hosterrorframe"
-		 		   		android:layout_alignLeft="@id/cshostfieldtitle" android:layout_below="@id/cshostfield"
+		 		   		android:layout_alignLeft="@id/cshostfieldtitle" android:layout_below="@id/csdomainfield"
 						android:layout_width="match_parent" android:layout_height="wrap_content"
 						android:layout_marginTop="-7sp"
 						android:paddingLeft="4sp"
@@ -62,7 +70,7 @@
 		 		   		android:layout_alignLeft="@id/logintitle" android:layout_below="@id/logintitle"
 		 		   		android:layout_height="50sp" android:layout_width="match_parent"
 		 		   		android:layout_marginTop="4dp" android:layout_marginLeft="0dp"
-		 		   		android:textSize="24sp" android:textColor="#1e8eee"
+		 		   		android:textSize="24sp" android:textColor="@color/active"
 				    	android:inputType="textEmailAddress"
 				    	android:maxLines="1"
 		 		   		android:hint="username" >
@@ -71,7 +79,7 @@
 				    <EditText android:id="@+id/passwordfield" 
 		 		   		android:layout_alignLeft="@id/usernamefield" android:layout_below="@id/usernamefield"
 				    	android:layout_height="50sp" android:layout_width="match_parent"
-				    	android:inputType="textPassword" android:textColor="#1e8eee"
+				    	android:inputType="textPassword" android:textColor="@color/active"
 		 		   		android:textSize="24sp"
 				    	android:maxLines="1"
 				    	android:hint="password" >
@@ -107,7 +115,7 @@
 						android:layout_height="wrap_content" android:layout_width="match_parent"
 						android:layout_marginTop="8dp" android:layout_marginLeft="5dp"
 						android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
-						android:text="Logging in will generate a token that is saved on your Android phone.  This token will be used thereafter to connect to the CloudStack.  Your password is thrown away after login is complete." />
+						android:text="Logging in will retrieve keys that are saved on your Android phone.  These keys will be used thereafter to connect to the CloudStack.  Your password is thrown away after login is complete." />
 				
 					<TextSwitcher android:id="@+id/loginerrorframe"
 		 		   		android:layout_alignLeft="@id/usernamefield" android:layout_below="@id/loginprogressswitcher"

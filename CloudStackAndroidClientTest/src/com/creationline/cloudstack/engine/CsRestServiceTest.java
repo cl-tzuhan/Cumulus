@@ -93,24 +93,22 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testInputStreamToString() {
-		CsRestService csRestService = startCsRestService();
-
 		try {
 			final String sampleText = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !#$%&\'()-^\\@[;:],./=~|`{+*}<>?";
 			InputStream sampleTextStream = new StringBufferInputStream(sampleText);
 			StringBuilder result1;
-			result1 = csRestService.inputStreamToString(sampleTextStream);
+			result1 = CsRestService.inputStreamToString(sampleTextStream);
 			assertEquals(sampleText, result1.toString());
 
 			final String emptyStr = "";
 			InputStream emptyStream = new StringBufferInputStream(emptyStr);
-			StringBuilder result2 = csRestService.inputStreamToString(emptyStream);
+			StringBuilder result2 = CsRestService.inputStreamToString(emptyStream);
 			assertEquals(emptyStr, result2.toString());
 
 			String bigStr = sampleText + sampleText + sampleText + sampleText + sampleText + sampleText + sampleText;
 			bigStr = bigStr + bigStr + bigStr + bigStr + bigStr;
 			InputStream bigStrStream = new StringBufferInputStream(bigStr);
-			StringBuilder result3 = csRestService.inputStreamToString(bigStrStream);
+			StringBuilder result3 = CsRestService.inputStreamToString(bigStrStream);
 			assertEquals(bigStr, result3.toString());
 		} catch (IOException e) {
 			fail("inputStreamToString ran into error trying to process stream");
@@ -1255,26 +1253,24 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testExtractParamValueFromUriStr() {
-		CsRestService csRestService = startCsRestService();
-		
 		String testUri1 = "http://192.168.3.11:8080/client/api?response=json&command=listVirtualMachines&account=thsu-account&domainid=2&apiKey=namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ&signature=AZW5TbyF8QY07lPWxk0JZyMwFx0%3D";
-		assertEquals("json", csRestService.extractParamValueFromUriStr(testUri1, "response"));
-		assertEquals("listVirtualMachines", csRestService.extractParamValueFromUriStr(testUri1, "command"));
-		assertEquals("thsu-account", csRestService.extractParamValueFromUriStr(testUri1, "account"));
-		assertEquals("2", csRestService.extractParamValueFromUriStr(testUri1, "domainid"));
-		assertEquals("namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ", csRestService.extractParamValueFromUriStr(testUri1, "apiKey"));
-		assertEquals("AZW5TbyF8QY07lPWxk0JZyMwFx0%3D", csRestService.extractParamValueFromUriStr(testUri1, "signature"));
+		assertEquals("json", CsRestService.extractParamValueFromUriStr(testUri1, "response"));
+		assertEquals("listVirtualMachines", CsRestService.extractParamValueFromUriStr(testUri1, "command"));
+		assertEquals("thsu-account", CsRestService.extractParamValueFromUriStr(testUri1, "account"));
+		assertEquals("2", CsRestService.extractParamValueFromUriStr(testUri1, "domainid"));
+		assertEquals("namomNgZ8Qt5DuNFUWf3qpGlQmB4650tY36wFOrhUtrzK13d66qNpttKw52Brj02dbtIHs01y-lCLz1UOzTxVQ", CsRestService.extractParamValueFromUriStr(testUri1, "apiKey"));
+		assertEquals("AZW5TbyF8QY07lPWxk0JZyMwFx0%3D", CsRestService.extractParamValueFromUriStr(testUri1, "signature"));
 
 		String testUri2 = "response=json&command=deleteSnapshot&id=25&apiKey=cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g&signature=YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D";
-		assertEquals("json", csRestService.extractParamValueFromUriStr(testUri2, "response"));
-		assertEquals("deleteSnapshot", csRestService.extractParamValueFromUriStr(testUri2, "command"));
-		assertEquals("25", csRestService.extractParamValueFromUriStr(testUri2, "id"));
-		assertEquals("cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g", csRestService.extractParamValueFromUriStr(testUri2, "apiKey"));
-		assertEquals("YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D", csRestService.extractParamValueFromUriStr(testUri2, "signature"));
+		assertEquals("json", CsRestService.extractParamValueFromUriStr(testUri2, "response"));
+		assertEquals("deleteSnapshot", CsRestService.extractParamValueFromUriStr(testUri2, "command"));
+		assertEquals("25", CsRestService.extractParamValueFromUriStr(testUri2, "id"));
+		assertEquals("cqLtNDMDYAeIZ6ZdZQG2QInyE5Sx4M914eSeb-rsJTewTvcCcGLRMe-zh_IPQQKmcIGJzNBa_UGrLDhS_LEy-g", CsRestService.extractParamValueFromUriStr(testUri2, "apiKey"));
+		assertEquals("YA0v%2BrUSF8%2B%2Fubqj7WxvY9iVvSM%3D", CsRestService.extractParamValueFromUriStr(testUri2, "signature"));
 
-		assertNull(csRestService.extractParamValueFromUriStr(testUri1, "non-existent field"));
-		assertNull(csRestService.extractParamValueFromUriStr(null, "response"));
-		assertNull(csRestService.extractParamValueFromUriStr(null, null));
+		assertNull(CsRestService.extractParamValueFromUriStr(testUri1, "non-existent field"));
+		assertNull(CsRestService.extractParamValueFromUriStr(null, "response"));
+		assertNull(CsRestService.extractParamValueFromUriStr(null, null));
 	}
 	
 	public void testparseAndSaveReply_returnedErrorResult() {
