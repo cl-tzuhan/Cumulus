@@ -13,6 +13,8 @@ What are the pre-requisites?
 
 You will need a valid CloudStack URL and user login credentials to provision the client.  The provisioning process will login with your credentials against the specified CloudStack instance, then fetch the api/secret keys for your user.  Cumulus then throws away your password and uses just these keys for further connections to the CloudStack, so your user must have api/secret keys generated before you can provision. (If you do not have administrator-level rights, please ask your administrator to generate the keys for your user with the "Actions->Generate Keys" command in the Accounts>* Accounts>{some account}>Users tab).  Please note that if your api/secret keys are changed on the CloudStack, you will need to re-provision your account on the client for it to continue to work.
 
+Currently, the client does not provide functionality to create accounts or data, so you must have this data already on the CloudStack before you will be able to see them on Cumulus.
+
 
 How can I install it?
 ---------------------
@@ -39,15 +41,29 @@ Released under the Apache License, v2.0.
 The LICENSE file can be found in the CloudStackAndroidClient folder.
 
 
-AND
+
+
 
 
 Special thanks to the following people/parties, whose work is used in the implementation of Cumulus!
 ----------------------------------------------------------------------------------------------------
 (in no particular order)
 - Jake Wharton for his fantastic Android ViewPagerIndicator widget
+  Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
 - Lorensius W. L. T for his awesome NewQuickAction3D widget
+  Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
 - Actuate Corporation for their trimQuotes code
+  Eclipse Public License v1.0 [http://www.eclipse.org/legal/epl-v10.html]
 - Adrian Cowham and AndroidCookbook.com for his Haptic feedback recipe
+  Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
 - Subrat Nayak(~ipapun) for the devine Devine-Icons Part-2 icon set
+  Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
 - Jack Cai(Double-J Design) for the super Super Mono icon set
+  Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
+- Alvin J. Alexander (DevDaily.com) for the helpful ClientWithResponseHandler example
+  Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
+
+Credits
+-------
+Sponsor: Creationline,Inc. [www.creationline.com]
+Creator: Tzu-Han Hsu [tzuhan@creationline.com]

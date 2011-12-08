@@ -226,6 +226,23 @@
 				android:layout_marginLeft="5dp"
 				android:textSize="16sp" android:textColor="@color/label"
 				android:text="Super Mono" />
+			<TextView android:id="@+id/clientwithresponderhandlerexamplecreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/supermonoiconscreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Alvin J. Alexander" />
+			<TextView android:id="@+id/clientwithresponderhandlerexamplecreatorsupplement"
+			    android:layout_toRightOf="@id/clientwithresponderhandlerexamplecreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/clientwithresponderhandlerexamplecreator"
+				android:layout_marginLeft="4dp"
+				android:textSize="12sp" android:textColor="@color/supplementaryinfo_color_selector"
+				android:text="(DevDaily.com)" />
+			<TextView android:id="@+id/clientwithresponderhandlerexamplecreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/clientwithresponderhandlerexamplecreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="ClientWithResponseHandler example" />
 
 		</RelativeLayout>
 
