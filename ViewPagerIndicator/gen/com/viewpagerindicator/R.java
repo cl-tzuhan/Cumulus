@@ -17,12 +17,12 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int centered=0x7f010002;
+        public static int centered=0x7f010002;
         /**  Style of the circle indicator. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int circlePageIndicatorStyle=0x7f010000;
+        public static int circlePageIndicatorStyle=0x7f010000;
         /**  Screen edge padding. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -33,7 +33,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int clipPadding=0x7f010009;
+        public static int clipPadding=0x7f010009;
         /**  Color of the filled circle that represents the current page. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
@@ -43,7 +43,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int fillColor=0x7f010003;
+        public static int fillColor=0x7f010003;
         /**  Color of the footer line and indicator. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
@@ -53,7 +53,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int footerColor=0x7f01000a;
+        public static int footerColor=0x7f01000a;
         /**  Height of the indicator above the footer line. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -64,7 +64,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int footerIndicatorHeight=0x7f01000d;
+        public static int footerIndicatorHeight=0x7f01000d;
         /**  Style of the indicator. Default is triangle. 
          <p>Must be one of the following constant values.</p>
 <table>
@@ -77,7 +77,7 @@ containing a value of this type.
 <tr><td><code>underline</code></td><td>2</td><td></td></tr>
 </table>
          */
-        public static final int footerIndicatorStyle=0x7f01000c;
+        public static int footerIndicatorStyle=0x7f01000c;
         /**  Left and right padding of the underline indicator. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -88,7 +88,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int footerIndicatorUnderlinePadding=0x7f01000e;
+        public static int footerIndicatorUnderlinePadding=0x7f01000e;
         /**  Height of the footer line. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -99,7 +99,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int footerLineHeight=0x7f01000b;
+        public static int footerLineHeight=0x7f01000b;
         /**  Padding between the bottom of the title and the footer. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -110,7 +110,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int footerPadding=0x7f01000f;
+        public static int footerPadding=0x7f01000f;
         /**  Orientation of the indicator. 
          <p>Must be one of the following constant values.</p>
 <table>
@@ -122,7 +122,7 @@ containing a value of this type.
 <tr><td><code>vertical</code></td><td>1</td><td></td></tr>
 </table>
          */
-        public static final int orientation=0x7f010004;
+        public static int orientation=0x7f010004;
         /**  Radius of the circles. This is also the spacing between circles. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -133,7 +133,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int radius=0x7f010005;
+        public static int radius=0x7f010005;
         /**  Whether or not the selected item is displayed as bold. 
          <p>Must be a boolean value, either "<code>true</code>" or "<code>false</code>".
 <p>This may also be a reference to a resource (in the form
@@ -142,7 +142,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int selectedBold=0x7f010011;
+        public static int selectedBold=0x7f010011;
         /**  Color of the selected title. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
@@ -152,7 +152,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int selectedColor=0x7f010010;
+        public static int selectedColor=0x7f010010;
         /**  Whether or not the selected indicator snaps to the circles. 
          <p>Must be a boolean value, either "<code>true</code>" or "<code>false</code>".
 <p>This may also be a reference to a resource (in the form
@@ -161,7 +161,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int snap=0x7f010006;
+        public static int snap=0x7f010006;
         /**  Color of the open circles. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
@@ -171,7 +171,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int strokeColor=0x7f010007;
+        public static int strokeColor=0x7f010007;
         /**  Width of the stroke used to draw the circles. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -182,7 +182,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int strokeWidth=0x7f010008;
+        public static int strokeWidth=0x7f010008;
         /**  Color of regular titles. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
@@ -192,7 +192,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int textColor=0x7f010012;
+        public static int textColor=0x7f010012;
         /**  Size of title text. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -203,7 +203,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int textSize=0x7f010013;
+        public static int textSize=0x7f010013;
         /**  Padding between titles when bumping into each other. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -214,12 +214,12 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int titlePadding=0x7f010014;
+        public static int titlePadding=0x7f010014;
         /**  Style of the title indicator. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int titlePageIndicatorStyle=0x7f010001;
+        public static int titlePageIndicatorStyle=0x7f010001;
         /**  Padding between titles and the top of the View. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
 Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
@@ -230,57 +230,57 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int topPadding=0x7f010015;
+        public static int topPadding=0x7f010015;
     }
     public static final class bool {
-        public static final int default_circle_indicator_centered=0x7f050000;
-        public static final int default_circle_indicator_snap=0x7f050001;
-        public static final int default_title_indicator_selected_bold=0x7f050002;
+        public static int default_circle_indicator_centered=0x7f050000;
+        public static int default_circle_indicator_snap=0x7f050001;
+        public static int default_title_indicator_selected_bold=0x7f050002;
     }
     public static final class color {
-        public static final int default_circle_indicator_fill_color=0x7f060000;
-        public static final int default_circle_indicator_stroke_color=0x7f060001;
-        public static final int default_title_indicator_footer_color=0x7f060002;
-        public static final int default_title_indicator_selected_color=0x7f060003;
-        public static final int default_title_indicator_text_color=0x7f060004;
+        public static int default_circle_indicator_fill_color=0x7f060000;
+        public static int default_circle_indicator_stroke_color=0x7f060001;
+        public static int default_title_indicator_footer_color=0x7f060002;
+        public static int default_title_indicator_selected_color=0x7f060003;
+        public static int default_title_indicator_text_color=0x7f060004;
     }
     public static final class dimen {
-        public static final int default_circle_indicator_radius=0x7f080000;
-        public static final int default_circle_indicator_stroke_width=0x7f080001;
-        public static final int default_title_indicator_clip_padding=0x7f080002;
-        public static final int default_title_indicator_footer_indicator_height=0x7f080004;
-        public static final int default_title_indicator_footer_indicator_underline_padding=0x7f080005;
-        public static final int default_title_indicator_footer_line_height=0x7f080003;
-        public static final int default_title_indicator_footer_padding=0x7f080006;
-        public static final int default_title_indicator_text_size=0x7f080007;
-        public static final int default_title_indicator_title_padding=0x7f080008;
-        public static final int default_title_indicator_top_padding=0x7f080009;
+        public static int default_circle_indicator_radius=0x7f080000;
+        public static int default_circle_indicator_stroke_width=0x7f080001;
+        public static int default_title_indicator_clip_padding=0x7f080002;
+        public static int default_title_indicator_footer_indicator_height=0x7f080004;
+        public static int default_title_indicator_footer_indicator_underline_padding=0x7f080005;
+        public static int default_title_indicator_footer_line_height=0x7f080003;
+        public static int default_title_indicator_footer_padding=0x7f080006;
+        public static int default_title_indicator_text_size=0x7f080007;
+        public static int default_title_indicator_title_padding=0x7f080008;
+        public static int default_title_indicator_top_padding=0x7f080009;
     }
     public static final class drawable {
-        public static final int icon=0x7f020000;
+        public static int icon=0x7f020000;
     }
     public static final class id {
-        public static final int horizontal=0x7f040000;
-        public static final int none=0x7f040002;
-        public static final int triangle=0x7f040003;
-        public static final int underline=0x7f040004;
-        public static final int vertical=0x7f040001;
+        public static int horizontal=0x7f040000;
+        public static int none=0x7f040002;
+        public static int triangle=0x7f040003;
+        public static int underline=0x7f040004;
+        public static int vertical=0x7f040001;
     }
     public static final class integer {
-        public static final int default_circle_indicator_orientation=0x7f070000;
-        public static final int default_title_indicator_footer_indicator_style=0x7f070001;
+        public static int default_circle_indicator_orientation=0x7f070000;
+        public static int default_title_indicator_footer_indicator_style=0x7f070001;
     }
     public static final class layout {
-        public static final int main=0x7f030000;
+        public static int main=0x7f030000;
     }
     public static final class string {
-        public static final int app_name=0x7f090001;
-        public static final int hello=0x7f090000;
+        public static int app_name=0x7f090001;
+        public static int hello=0x7f090000;
     }
     public static final class style {
-        public static final int Theme_PageIndicatorDefaults=0x7f0a0000;
-        public static final int Widget_CirclePageIndicator=0x7f0a0001;
-        public static final int Widget_TitlePageIndicator=0x7f0a0002;
+        public static int Theme_PageIndicatorDefaults=0x7f0a0000;
+        public static int Widget_CirclePageIndicator=0x7f0a0001;
+        public static int Widget_TitlePageIndicator=0x7f0a0002;
     }
     public static final class styleable {
         /** Attributes that can be used with a CirclePageIndicator.
