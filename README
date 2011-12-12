@@ -49,18 +49,25 @@ Special thanks to the following people/parties, whose work is used in the implem
 ----------------------------------------------------------------------------------------------------
 (in no particular order)
 - Jake Wharton for his fantastic Android ViewPagerIndicator widget
+  [https://github.com/JakeWharton/Android-ViewPagerIndicator]
   Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
 - Lorensius W. L. T for his awesome NewQuickAction3D widget
+  [https://github.com/lorensiuswlt/NewQuickAction3D]
   Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
 - Actuate Corporation for their trimQuotes code
+  [http://www.java2s.com/Code/Java/Data-Type/Trimsthequotes.htm]
   Eclipse Public License v1.0 [http://www.eclipse.org/legal/epl-v10.html]
 - Adrian Cowham and AndroidCookbook.com for his Haptic feedback recipe
+  [http://androidcookbook.com/Recipe.seam?recipeId=1242&recipeFrom=ViewTOC&cid=7905]
   Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
 - Subrat Nayak(~ipapun) for the devine Devine-Icons Part-2 icon set
+  [http://ipapun.deviantart.com/]
   Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
 - Jack Cai(Double-J Design) for the super Super Mono icon set
+  [http://www.doublejdesign.co.uk]
   Creative Commons CC-BY license [http://creativecommons.org/licenses/by/3.0/]
 - Alvin J. Alexander (DevDaily.com) for the helpful ClientWithResponseHandler example
+  [http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml]
   Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
 
 Credits
