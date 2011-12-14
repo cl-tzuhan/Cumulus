@@ -115,9 +115,4 @@ public class MultiListUi extends FragmentActivity {
 		super.onDestroy();
 	}
 	
-	public void onContentDrawerTopClick(View view) {
-		Toast.makeText(getApplicationContext(), "clickeD!", Toast.LENGTH_SHORT).show();
-
-	}
-	
 }

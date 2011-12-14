@@ -231,7 +231,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     	final Runnable updatedUiWithResults = new Runnable() {
     		//This handles notifs from CsRestContentProvider upon changes in db
     		public void run() {
-    			String TAG = "MultiListUi.registerForErrorsDbUpdate()->errors content observer";
+    			String TAG = "CsErrorListFragment.registerForErrorsDbUpdate(): errors content observer";
     			Activity activity = getActivity();
 				if(activity==null) {
     				ClLog.e(TAG, "activity was null");
@@ -249,7 +249,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     			};
     			Cursor errorLog = getActivity().getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
     			if(errorLog==null || errorLog.getCount()<=0) {
-    				ClLog.e(TAG, "Returned errorLog was null or 0 results.");
+    				ClLog.i(TAG, "Returned errorLog was null or 0 results.");
     				return;
     			}
     			
