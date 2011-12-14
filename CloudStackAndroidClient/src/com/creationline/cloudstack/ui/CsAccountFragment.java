@@ -431,6 +431,10 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			if(callReturnedOk) {
 				final String loggedInUsername = apiParams.getString(CsApiConstants.LOGIN_PARAMS.USERNAME);
 				final JsonNode userObject = extractUserObjFor(replyBody, loggedInUsername);
+				if(userObject==null) {
+					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "No matching user found.  Please double-check your username.");
+					return;
+				}
 				
 				final String apikey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.APIKEY);
 				final String secretkey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.SECRETKEY);
@@ -741,28 +745,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				preferencesEditor.putString(preferenceKey, inputtedString);
 				preferencesEditor.commit();
 				
-				if(idOfEditTextToWatch==R.id.cshostfield){
-					Matcher matcher = csHostPattern.matcher(inputtedString);
-					if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
-						showLoginErrorMessage(R.id.hosterrorframe, "host value must be a valid URL");
-					} else {
-						showLoginErrorMessage(R.id.hosterrorframe, "");
-					}
-				} else if(idOfEditTextToWatch==R.id.csdomainfield){
-					Matcher matcher = csHostPattern.matcher(inputtedString);  //we'll re-use the csHost regex check here since we don't have a more stringent check for the domain specifically
-					if(!matcher.matches()) { //csDomain cannot contain 1-byte nor 2-byte spaces
-						showLoginErrorMessage(R.id.hosterrorframe, "domain value must not have spaces");
-					} else {
-						showLoginErrorMessage(R.id.hosterrorframe, "");
-					}
-				} else if(idOfEditTextToWatch==R.id.usernamefield) {
-					Matcher matcher = usernamePattern.matcher(inputtedString);
-					if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
-						showLoginErrorMessage(R.id.usernamepassworderrorframe, "username cannot contain special characters");
-					} else {
-						showLoginErrorMessage(R.id.usernamepassworderrorframe, "");
-					}
-				}
+				validateTextInput(idOfEditTextToWatch, inputtedString);
 			}
 
 			@Override
@@ -816,7 +799,14 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		final String password = passwordText.getText().toString();
 
 		clearErrorFrames();
-		if(inputValidationFailed(csHost, username, password)) {
+		if(emptyInputValidationFailed(csHost, username, password)) {
+			switchLoginProgress();
+			return;  //if input validation failed, short-circuit the rest of the method
+		}
+		final boolean csHostFieldHasInvalidInput = !validateTextInput(R.id.cshostfield, csHost);
+		final boolean csDomainFieldHasInvalidInput = TextUtils.isEmpty(csDomain)? false : !validateTextInput(R.id.csdomainfield, csDomain); //csDomain field is optional, so don't bother validating if there is no input
+		final boolean usernameFieldHasInvalidInput = !validateTextInput(R.id.usernamefield, username);
+		if(csHostFieldHasInvalidInput || csDomainFieldHasInvalidInput || usernameFieldHasInvalidInput) {
 			switchLoginProgress();
 			return;  //if input validation failed, short-circuit the rest of the method
 		}
@@ -827,7 +817,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         apiCmd.putString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, csHost);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.USERNAME, username);
         apiCmd.putString(CsApiConstants.LOGIN_PARAMS.PASSWORD, password);
-        if(csDomain!=null) {
+        if(!TextUtils.isEmpty(csDomain)) {
         	apiCmd.putString(CsApiConstants.LOGIN_PARAMS.DOMAIN, csDomain);
         };
         provisionTaskHandle = new CsLoginTask();
@@ -849,20 +839,52 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		editor.commit();
 	}
 
-	public boolean inputValidationFailed(final String csHost, final String username, final String password) {
-		boolean improperInputExists = false;
+	public boolean emptyInputValidationFailed(final String csHost, final String username, final String password) {
+		boolean inputIsEmpty = false;
 		
 		if(TextUtils.isEmpty(csHost)) {
 			showLoginErrorMessage(R.id.hosterrorframe, "please enter a valid CloudStack URL");
-			improperInputExists = true;
+			inputIsEmpty = true;
 		}
 		
 		if(TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
 			showLoginErrorMessage(R.id.usernamepassworderrorframe, "enter your username and password");
-			improperInputExists = true;
+			inputIsEmpty = true;
 		}
 		
-		return improperInputExists;
+		return inputIsEmpty;
+	}
+	
+	public boolean validateTextInput(final int idOfEditTextBeingValidated, final String stringToValidate) {
+		if(idOfEditTextBeingValidated==R.id.cshostfield){
+			Matcher matcher = csHostPattern.matcher(stringToValidate);
+			if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
+				showLoginErrorMessage(R.id.hosterrorframe, "host value must be a valid URL");
+				return false;
+			} else {
+				showLoginErrorMessage(R.id.hosterrorframe, "");
+				return true;
+			}
+		} else if(idOfEditTextBeingValidated==R.id.csdomainfield){
+			Matcher matcher = csHostPattern.matcher(stringToValidate);  //we'll re-use the csHost regex check here since we don't have a more stringent check for the domain specifically
+			if(!matcher.matches()) { //csDomain cannot contain 1-byte nor 2-byte spaces
+				showLoginErrorMessage(R.id.hosterrorframe, "domain value must not have spaces");
+				return false;
+			} else {
+				showLoginErrorMessage(R.id.hosterrorframe, "");
+				return true;
+			}
+		} else if(idOfEditTextBeingValidated==R.id.usernamefield) {
+			Matcher matcher = usernamePattern.matcher(stringToValidate);
+			if(!matcher.matches()) { //csHost cannot contain 1-byte nor 2-byte spaces
+				showLoginErrorMessage(R.id.usernamepassworderrorframe, "username cannot contain special characters");
+				return false;
+			} else {
+				showLoginErrorMessage(R.id.usernamepassworderrorframe, "");
+				return true;
+			}
+		}
+		return false;  //fail validation as default
 	}
 	
 	private void showLoginErrorMessage(final int errorFrameId, final String message) {
