@@ -29,6 +29,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.ResourceCursorAdapter;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -190,7 +191,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 		removeErrorLogIconAndText();
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String onDisplayError = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.ERRORLOG_ONDISPLAYERROR, null);
-		if(onDisplayError!=null && !onDisplayError.isEmpty()) {
+		if(!TextUtils.isEmpty(onDisplayError)) {
 				setErrorLogIconAndText(onDisplayError);
 		}
         

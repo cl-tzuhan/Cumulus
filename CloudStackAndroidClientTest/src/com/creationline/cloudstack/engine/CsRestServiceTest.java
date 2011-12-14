@@ -162,6 +162,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testProcessAndSaveJsonReplyData_listVirtualMachines() {
+		CsRestService csRestService = startCsRestService();
+		
 		final String columns[] = new String[] {
 				Vms.ID,
 				Vms.NAME,
@@ -193,15 +195,15 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 				Vms.HYPERVISOR};
 
 		final String sampleBodyWith1Vm = "{ \"listvirtualmachinesresponse\" : { \"virtualmachine\" : [  {\"id\":2027,\"name\":\"i-39-2027-VM\",\"displayname\":\"i-39-2027-VM\",\"account\":\"iizuka\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-09-10T02:43:42-0700\",\"state\":\"Running\",\"haenable\":false,\"zoneid\":1,\"zonename\":\"San Jose\",\"templateid\":259,\"templatename\":\"CentOS 5.3 (64 bit) vSphere\",\"templatedisplaytext\":\"CentOS 5.3 (64 bit) vSphere Password enabled\",\"passwordenabled\":true,\"serviceofferingid\":1,\"serviceofferingname\":\"Small Instance\",\"cpunumber\":1,\"cpuspeed\":500,\"memory\":512,\"cpuused\":\"0%\",\"networkkbsread\":0,\"networkkbswrite\":0,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"nic\":[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"VMware\"} ] } }";
-		executeAndCheck_listVirtualMachines(sampleBodyWith1Vm, columns);
+		executeAndCheck_listVirtualMachines(csRestService, sampleBodyWith1Vm, columns);
 
 		final String sampleBodyWith3Vms = "{ \"listvirtualmachinesresponse\" : { \"virtualmachine\" : [  {\"id\":1123,\"name\":\"AWS-i2236.ao\",\"displayname\":\"My big AWS VM\",\"account\":\"kamehameha\",\"domainid\":1000,\"domain\":\"ROOTS!\",\"created\":\"2001-01-01T00:00:00-0700\",\"state\":\"STOPPED\",\"haenable\":false,\"zoneid\":12,\"zonename\":\"Mars (the planet)\",\"templateid\":1111111,\"templatename\":\"AWS Cloud OS version 0.0.0001x\",\"templatedisplaytext\":\"TOP SECRET OS!!  FOR YOUR EYES ONLY!!!\",\"passwordenabled\":true,\"serviceofferingid\":11111,\"serviceofferingname\":\"Cloud instance\",\"cpunumber\":11111,\"cpuspeed\":500001,\"memory\":51200123,\"cpuused\":\"10%\",\"networkkbsread\":1220,\"networkkbswrite\":45110,\"guestosid\":1232,\"rootdeviceid\":10,\"rootdevicetype\":\"IZUMOFilesystem\",\"nic\":[{\"id\":5522,\"networkid\":2475555,\"netmask\":\"113.25.255.0\",\"gateway\":\"10.0.0.1\",\"ipaddress\":\"100.100.100.129\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}],\"hypervisor\":\"AWSware\"}, "
 			+"{\"id\":2394,\"name\":\"i-39-2394-VM\",\"displayname\":\"Don't look at me\",\"account\":\"kamehameha\",\"domainid\":0,\"domain\":\"AROMA!\",\"created\":\"1034-10-10T10:10:10-0700\",\"state\":\"Running\",\"haenable\":true,\"zoneid\":986,\"zonename\":\"Mars (the symphony)\",\"templateid\":222222222,\"templatename\":\"Unknown OS\",\"templatedisplaytext\":\"If you are the owner of this OS, please contact 080-1456-2235\",\"passwordenabled\":false,\"serviceofferingid\":0,\"serviceofferingname\":\"Unknown instance\",\"cpunumber\":0,\"cpuspeed\":0,\"memory\":0,\"cpuused\":\"100%\",\"networkkbsread\":1098765,\"networkkbswrite\":56789,\"guestosid\":0,\"rootdeviceid\":333,\"rootdevicetype\":\"Unknown\",\"nic\":[{\"id\":883,\"networkid\":0,\"netmask\":\"0.0.0.0\",\"gateway\":\"0.0.0.0\",\"ipaddress\":\"0.0.0.0\",\"traffictype\":\"System\",\"type\":\"Real\",\"isdefault\":false}],\"hypervisor\":\"Megavisor!\"},"
 			+"{\"id\":838272,\"name\":\"AWOL in the numerious battlefields of Kondak\",\"displayname\":\"_\",\"account\":\"kamehameha\",\"domainid\":99,\"domain\":\"none\",\"created\":\"2011-11-11T11:11:11-0700\",\"state\":\"Running\",\"haenable\":true,\"zoneid\":66346,\"zonename\":\"Mars (the candybar)\",\"templateid\":1,\"templatename\":\"Android OS for iPhone\",\"templatedisplaytext\":\"#%=(+%*?@$%')\",\"passwordenabled\":false,\"serviceofferingid\":259,\"serviceofferingname\":\"Android for iPhone instance\",\"cpunumber\":10000001,\"cpuspeed\":1340,\"memory\":5520,\"cpuused\":\"50%\",\"networkkbsread\":22,\"networkkbswrite\":4,\"guestosid\":20,\"rootdeviceid\":2,\"rootdevicetype\":\"ContentProvider store\",\"nic\":[{\"id\":883,\"networkid\":0,\"netmask\":\"0.0.0.0\",\"gateway\":\"0.0.0.0\",\"ipaddress\":\"0.0.0.0\",\"traffictype\":\"Admin\",\"type\":\"Worldly\",\"isdefault\":false}],\"hypervisor\":\"Googavisor!\"} ] } }";
-		executeAndCheck_listVirtualMachines(sampleBodyWith3Vms, columns);
+		executeAndCheck_listVirtualMachines(csRestService, sampleBodyWith3Vms, columns);
 	}
 	
-	private void executeAndCheck_listVirtualMachines(final String jsonData, final String[] columns) {
+	private void executeAndCheck_listVirtualMachines(CsRestService csRestService, final String jsonData, final String[] columns) {
 		deleteAllData();
 		
 		//insert sample transaction record as it is needed by processAndSaveJsonReplyData()
@@ -213,7 +215,6 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		final Uri uriToUpdate = getContext().getContentResolver().insert(Transactions.META_DATA.CONTENT_URI, cv);
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the vms db for this
-		CsRestService csRestService = startCsRestService();
 		csRestService.processAndSaveJsonReplyData(uriToUpdate, jsonData);
 		
 		//grab the data saved directly from db so we can check the saved values below
@@ -251,6 +252,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 		
 		assertEquals("Number of VM objects in db does not match expected number", numVms, c.getCount());
+		c.close();
 	}
 
 	public void testProcessAndSaveJsonReplyData_startVirtualMachines() {
@@ -313,11 +315,14 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		final String expectedJobid = rootNode.findValue("jobid").asText();
 		final String retreivedJobid = c.getString(c.getColumnIndex(Transactions.JOBID));
+		c.close();
 		
 		assertEquals("Jobids do not match!", expectedJobid, retreivedJobid);
 	}
 	
 	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_success() {
+		CsRestService csRestService = startCsRestService();
+		
 		final String columns[] = new String[] {
 			Vms.ID,
 			Vms.NAME,
@@ -352,14 +357,14 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		//sample reply from a startVirtualMachine call
 		final String vmid1 = "51";
 		final String sampleBody1 = "{ \"queryasyncjobresultresponse\" : {\"jobid\":423,\"jobstatus\":1,\"jobprocstatus\":0,\"jobresultcode\":0,\"jobresulttype\":\"object\",\"jobresult\":{\"virtualmachine\":{\"id\":"+vmid1+",\"name\":\"i-13-51-VM\",\"displayname\":\"èCìl\",\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-10-20T17:02:16+0900\",\"state\":\"Stopped\",\"haenable\":false,\"groupid\":9,\"group\":\"MMA\",\"zoneid\":2,\"zonename\":\"zone2\",\"templateid\":2,\"templatename\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"templatedisplaytext\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"passwordenabled\":false,\"serviceofferingid\":10,\"serviceofferingname\":\"mini Instance\",\"cpunumber\":1,\"cpuspeed\":140,\"memory\":256,\"cpuused\":\"0.02%\",\"networkkbsread\":154373515,\"networkkbswrite\":111849502,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"securitygroup\":[],\"nic\":[{\"id\":113,\"networkid\":220,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.45\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true,\"macaddress\":\"02:00:62:2d:00:03\"}],\"hypervisor\":\"XenServer\"}}} }";
-		executeAndCheck_queryAsyncJobResult_success(sampleBody1, columns, vmid1);
+		executeAndCheck_queryAsyncJobResult_success(csRestService, sampleBody1, columns, vmid1);
 		
 		//sample reply form a rebootVirtualMachine call
 		final String vmid2 = "49";
 		final String sampleBody2 = "{ \"queryasyncjobresultresponse\" : {\"jobid\":424,\"jobstatus\":1,\"jobprocstatus\":0,\"jobresultcode\":0,\"jobresulttype\":\"object\",\"jobresult\":{\"virtualmachine\":{\"id\":"+vmid2+",\"name\":\"i-13-49-VM\",\"displayname\":\"Brazilian Jujitsu\",\"account\":\"rickson\",\"domainid\":1,\"domain\":\"ROOT\",\"created\":\"2011-10-20T16:30:14+0900\",\"state\":\"Running\",\"haenable\":false,\"groupid\":9,\"group\":\"MMA\",\"zoneid\":2,\"zonename\":\"zone2\",\"templateid\":2,\"templatename\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"templatedisplaytext\":\"CentOS 5.3(64-bit) no GUI (XenServer)\",\"passwordenabled\":false,\"serviceofferingid\":11,\"serviceofferingname\":\"sakaue instance\",\"cpunumber\":1,\"cpuspeed\":400,\"memory\":512,\"cpuused\":\"0.1%\",\"networkkbsread\":8957853,\"networkkbswrite\":8948577,\"guestosid\":12,\"rootdeviceid\":0,\"rootdevicetype\":\"NetworkFilesystem\",\"securitygroup\":[],\"nic\":[{\"id\":109,\"networkid\":220,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.64\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true,\"macaddress\":\"02:00:2b:20:00:01\"}],\"hypervisor\":\"XenServer\"}}} }";
-		executeAndCheck_queryAsyncJobResult_success(sampleBody2, columns, vmid2);
+		executeAndCheck_queryAsyncJobResult_success(csRestService, sampleBody2, columns, vmid2);
 	}
-	private void executeAndCheck_queryAsyncJobResult_success(final String jsonData, final String[] columns, final String vmid) {
+	private void executeAndCheck_queryAsyncJobResult_success(CsRestService csRestService, final String jsonData, final String[] columns, final String vmid) {
 		deleteAllData();
 		
 		//insert sample record so we can test whether it is successfully updated below
@@ -375,7 +380,6 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		getContext().getContentResolver().insert(Vms.META_DATA.CONTENT_URI, cv);
 		
 		//ask CsRestService to parse the passed-in json; CsRestService will actually go and update the vms db for this
-		CsRestService csRestService = startCsRestService();
 		csRestService.processAndSaveJsonReplyData(null, jsonData);  //uriToUpdate parameter not used for queryAsyncJobResult call
 		
 		//grab the data saved directly from db so we can check the saved values below
@@ -405,6 +409,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 			final String retrievedValue = c.getString(c.getColumnIndex(columnName));
 			assertEquals(trimDoubleQuotes(expectedValue), trimDoubleQuotes(retrievedValue));
 		}
+		
+		c.close();
 	}
 
 	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_failure() {
@@ -457,6 +463,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(expectedErrorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 		assertEquals(expectedErrorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 		assertEquals(sampleRequest, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+		
+		c.close();
 	}
 	
 	public void testProcessAndSaveJsonReplyData_queryAsyncJobResult_failure_failedToRebootVmInstance() {
@@ -501,6 +509,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		assertEquals(1, c.getCount());
 		assertEquals("rebooting VMs getting this error should be automatically marked as stopped", Vms.STATE_VALUES.STOPPED, c.getString(c.getColumnIndex(Vms.STATE)));
+
+		c.close();
 	}
 	
 	public void testProcessAndSaveJsonReplyData_listSnapshots() {
@@ -582,6 +592,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 		
 		assertEquals("Number of snapshot objects in db does not match expected number", numVms, c.getCount());
+		
+		c.close();
 	}
 	
 	public void testParseErrorAndAddToDb() {
@@ -609,6 +621,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(sampleStatusCode, c.getInt(c.getColumnIndex(Errors.ERRORCODE)));
 		assertEquals(sampleErrorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 		assertEquals(sampleUriToUpdate, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+		
+		c.close();
 	}
 	
 	public void testUpdateCallWithReplyOnDb() {
@@ -644,6 +658,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(sampleUpdatedStatus, c.getString(c.getColumnIndex(Transactions.STATUS)));  //should have been changed
 		assertEquals(sampleReplyBodyJson, c.getString(c.getColumnIndex(Transactions.REPLY)));  //should have been added
 		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't get the exact timestamp that's added automatically by CsRestService, so will just check that it exists
+		c.close();
 	}
 	
 	public void testUpdateCallAsAbortedOnDb() {
@@ -676,6 +691,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(Transactions.STATUS_VALUES.ABORTED, c.getString(c.getColumnIndex(Transactions.STATUS)));  //should have been changed
 		assertNull("Reply field should remain empty after a call abort", c.getString(c.getColumnIndex(Transactions.REPLY)));  //should have no change
 		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't get the exact timestamp that's added automatically by CsRestService, so will just check that it exists
+		c.close();
 	}
 	
 	public void testUnpackAndSaveReplyBodyData() {
@@ -857,7 +873,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		}
 	}
 	
-	public void testFindRequestForJobid_edegeCases() {
+	public void testFindRequestForJobid_edgeCases() {
 		CsRestService csRestService = startCsRestService();
 		
 		assertNull("findRequestForJobid() should fail gracefully with null", csRestService.findTransactionRequestAndCallbackForJobid(null));
@@ -867,59 +883,67 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	public void testAddToErrorLog() {
+		CsRestService csRestService = startCsRestService();
+
 		{
 			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
 			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
 			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
-			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(csRestService, errorCode, errorText, originatingTransactionUri);
 			assertEquals(1, c.getCount());
 			c.moveToFirst();
 			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+			c.close();
 		}
 
 		{
 			final String errorCode = null;
 			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
 			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
-			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(csRestService, errorCode, errorText, originatingTransactionUri);
 			assertEquals(1, c.getCount());
 			c.moveToFirst();
 			assertTrue("no errorCode value should have been inserted", c.isNull(c.getColumnIndex((Errors.ERRORCODE))));
 			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+			c.close();
 		}
 
 		{
 			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
 			final String errorText = null;
 			final String originatingTransactionUri = "!QASZ23ewdfsvcx&RTUDHGFN87uj)OL<<uo78iBNGFDTY$&XZdqZDFE!";
-			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(csRestService, errorCode, errorText, originatingTransactionUri);
 			assertEquals(1, c.getCount());
 			c.moveToFirst();
 			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 			assertTrue("no errorText value should have been inserted", c.isNull(c.getColumnIndex((Errors.ERRORTEXT))));
 			assertEquals(originatingTransactionUri, c.getString(c.getColumnIndex(Errors.ORIGINATINGCALL)));
+			c.close();
 		}
 		
 		{
 			final String errorCode = "134567890-^^[@poiuytrewsdfjkl;.,mnbvc";
 			final String errorText = "DSAFAEYN&UQOHLAPV$LT=GIVOBLPE LHG#`LG PT$VK 0GK KG";
 			final String originatingTransactionUri = null;
-			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(errorCode, errorText, originatingTransactionUri);
+			Cursor c = addToErrorLogAndReturnQueryFromErrorsDb(csRestService, errorCode, errorText, originatingTransactionUri);
 			assertEquals(1, c.getCount());
 			c.moveToFirst();
 			assertEquals(errorCode, c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 			assertEquals(errorText, c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
 			assertTrue("no originatingTransactionUri value should have been inserted", c.isNull(c.getColumnIndex((Errors.ORIGINATINGCALL))));
+			c.close();
 		}
 	}
-	public Cursor addToErrorLogAndReturnQueryFromErrorsDb(
+	/**
+	 * Caller has responsibility of closing returned Cursor.
+	 */
+	public Cursor addToErrorLogAndReturnQueryFromErrorsDb(CsRestService csRestService,
 			final String errorCode, final String errorText,
 			final String originatingTransactionUri) {
 		deleteAllData();
-		CsRestService csRestService = startCsRestService();
 		
 		final Uri uri = csRestService.addToErrorLog(errorCode, errorText, originatingTransactionUri);
 		assertNotNull(uri);
@@ -1081,13 +1105,17 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(1, c.getCount());
 		c.moveToFirst();
 		assertEquals(snapshotId, c.getString(c.getColumnIndex(Snapshots.ID)));
+		c.close();
 
 		csRestService.handleJobresultBasedOnApi(jobIdOfRequest, true);  //handling a success result should remove the snapshot from db
 		Cursor shouldBeEmpty = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
 		assertEquals("the previously saved snapshot should no longer exist", 0, shouldBeEmpty.getCount());
+		shouldBeEmpty.close();
+		
 		final String whereClause = Snapshots.ID+"="+snapshotId;
 		shouldBeEmpty = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, whereClause, null, null);
 		assertEquals("double checking a snapshot with the same id does not exist", 0, shouldBeEmpty.getCount());
+		shouldBeEmpty.close();
 	}
 	
 	public void testUpdateVmState() {
@@ -1150,6 +1178,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 					assertEquals(sampleText, retrievedValue);
 				}
 			}
+			c.close();
 		}
 
 		{ //updating again to meaningless state and checking whether it took
@@ -1168,6 +1197,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 					assertEquals(sampleText, retrievedValue);
 				}
 			}
+			c.close();
 		}
 		
 		{ //updating again to no state and checking whether it took
@@ -1185,6 +1215,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 					assertEquals(sampleText, retrievedValue);
 				}
 			}
+			c.close();
 		}
 		
 	}
@@ -1204,6 +1235,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 			assertEquals(1, numDeleted);
 			Cursor c = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
 			assertEquals(0, c.getCount());
+			c.close();
 		}
 
 		{
@@ -1218,6 +1250,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 			assertEquals(1, numDeleted);
 			Cursor c = getContext().getContentResolver().query(snapshotUri, null, null, null, null);
 			assertEquals(0, c.getCount());
+			c.close();
 		}
 	}
 
@@ -1240,14 +1273,16 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 			final int numDeleted = csRestService.deleteSnapshotWithId(String.valueOf(i));
 			assertEquals(1, numDeleted);
 			Cursor c = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, null, null, null);
-			assertEquals("move than 1 row was deleted by deleteSnapshotWithId()!", numRowsCap-i, c.getCount());
-			c.moveToFirst();
+			assertEquals("more than 1 row was deleted by deleteSnapshotWithId()!", numRowsCap-i, c.getCount());
+			//c.moveToFirst();
+			c.close();
 			for(int k=i+1; k<=numRowsCap; k++) {
 				//go through each remaining row and check to see the id what we expect to be undeleted
 				final String whereClause = Snapshots.ID+"=?";
 				final String[] selectionArgs = new String[] { String.valueOf(k) };
 				Cursor specificRow = getContext().getContentResolver().query(Snapshots.META_DATA.CONTENT_URI, null, whereClause, selectionArgs, null);
 				assertEquals("row for this specific id was deleted when it shouldn't have been", 1, specificRow.getCount());
+				specificRow.close();
 			}
 		}
 	}
@@ -1297,6 +1332,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		
 		assertEquals("530", c.getString(c.getColumnIndex(Errors.ERRORCODE)));
 		assertEquals("Internal error executing command, please contact your system administrator", c.getString(c.getColumnIndex(Errors.ERRORTEXT)));
+		c.close();
 	}
 
 	public void testParseAndSaveReply_vmList() {
@@ -1360,6 +1396,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 				assertEquals("[{\"id\":2122,\"networkid\":247,\"netmask\":\"255.255.255.0\",\"gateway\":\"10.1.1.1\",\"ipaddress\":\"10.1.1.131\",\"traffictype\":\"Guest\",\"type\":\"Virtual\",\"isdefault\":true}]", c.getString(c.getColumnIndex(Vms.NIC)));
 				assertEquals("VMware B'yond", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
 			}
+			
+			c.close();
 		}
 		
 		{ //after vms have been inserted above, now do the update tests
@@ -1423,6 +1461,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 				assertEquals("VMware B'yond", c.getString(c.getColumnIndex(Vms.HYPERVISOR)));
 				assertEquals("Unknown", c.getString(c.getColumnIndex(Vms.STATE)));
 			}
+			
+			c.close();
 		}
 	}
 	

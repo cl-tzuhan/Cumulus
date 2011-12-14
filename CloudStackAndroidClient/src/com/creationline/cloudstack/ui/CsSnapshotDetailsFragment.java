@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -215,12 +216,9 @@ public class CsSnapshotDetailsFragment extends Fragment {
 		TextView stateText = (TextView)view.findViewById(R.id.state);
 		String state = stateText.getText().toString();
 		TextView inProgressStateText = (TextView)view.findViewById(R.id.inprogress_state);
-//		final CharSequence inProgressState = inProgressStateText.getText();
-//		if(inProgressState!=null && inProgressState.length()>0) {
-//			state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
-//		}
+
 		final String inProgressState = inProgressStateText.getText().toString();
-		if(!inProgressState.isEmpty() && !inProgressState.equalsIgnoreCase("show_icon")) {
+		if(!TextUtils.isEmpty(inProgressState) && !inProgressState.equalsIgnoreCase("show_icon")) {
 			state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
 		}
 		if(inProgressState.equalsIgnoreCase("show_icon")) {

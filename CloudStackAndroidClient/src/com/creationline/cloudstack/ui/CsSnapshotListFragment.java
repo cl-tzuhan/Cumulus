@@ -32,6 +32,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.ResourceCursorAdapter;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -134,7 +135,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 			TextView inProgressStateText = (TextView)view.findViewById(R.id.inprogress_state);
 
 			final String inProgressState = inProgressStateText.getText().toString();
-			if(!inProgressState.isEmpty() && !inProgressState.equalsIgnoreCase("show_icon")) {
+			if(!TextUtils.isEmpty(inProgressState) && !inProgressState.equalsIgnoreCase("show_icon")) {
 				state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
 			}
 			

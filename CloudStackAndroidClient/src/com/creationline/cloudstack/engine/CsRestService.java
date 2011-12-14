@@ -978,6 +978,7 @@ public class CsRestService extends IntentService {
 		Cursor c = getContentResolver().query(transactionsUri, columns, whereClause, selectionArgs, null);
 		
 		if(c==null || c.getCount()<1) {
+			if(c!=null) { c.close(); };
 			return null;
 		}
 		
@@ -991,7 +992,8 @@ public class CsRestService extends IntentService {
 		if(hasValidCallbackIntentFilter) {
 			returnBundle.putString(Transactions.CALLBACK_INTENT_FILTER, c.getString(callbackIntentFilterColumnIndex));
 		}
-
+		
+		c.close();
 		return returnBundle;
 	}
 	

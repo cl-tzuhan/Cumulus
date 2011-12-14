@@ -45,6 +45,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -434,7 +435,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 				final String apikey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.APIKEY);
 				final String secretkey = extractValueForKey(userObject, CsApiConstants.LISTACCOUNTS_PARAMS.SECRETKEY);
 
-				final boolean ifApiKeysHaveNotBeenGenerated = apikey==null || apikey.isEmpty() || secretkey==null || secretkey.isEmpty();
+				final boolean ifApiKeysHaveNotBeenGenerated = TextUtils.isEmpty(apikey) || TextUtils.isEmpty(secretkey);
 				if(ifApiKeysHaveNotBeenGenerated) {
 					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "You must first generate API/secret keys on CloudStack for login to complete.  Please ask your administrator for details and try again after the keys have been generated.");
 					return;
@@ -851,12 +852,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	public boolean inputValidationFailed(final String csHost, final String username, final String password) {
 		boolean improperInputExists = false;
 		
-		if(csHost==null || csHost.isEmpty()) {
+		if(TextUtils.isEmpty(csHost)) {
 			showLoginErrorMessage(R.id.hosterrorframe, "please enter a valid CloudStack URL");
 			improperInputExists = true;
 		}
 		
-		if(username==null || username.isEmpty() || password==null || password.isEmpty()) {
+		if(TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
 			showLoginErrorMessage(R.id.usernamepassworderrorframe, "enter your username and password");
 			improperInputExists = true;
 		}

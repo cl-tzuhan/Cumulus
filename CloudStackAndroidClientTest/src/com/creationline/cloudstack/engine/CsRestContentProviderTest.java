@@ -173,12 +173,12 @@ public class CsRestContentProviderTest extends AndroidTestCase {
 		
 		Cursor emptyResults = cr.query(Transactions.META_DATA.CONTENT_URI, null, null, null, null);
 		assertEquals(0, emptyResults.getCount());
+		emptyResults.close();
 		
 		
 		Uri nonexistentUri = ContentUris.appendId(Transactions.META_DATA.CONTENT_URI.buildUpon(), 1).build();  //look for arbitrary _id=1 record, which does not exist
 		emptyResults = cr.query(nonexistentUri, null, null, null, null);
 		assertEquals(0, emptyResults.getCount());
-		
 		emptyResults.close();
 	}
 

@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 
 import com.creationline.cloudstack.util.ClLog;
@@ -64,10 +65,10 @@ public class CloudStackAndroidClient extends FragmentActivity {
         final String savedUsername = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
 		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
 		
-		final boolean noSavedCsHost = savedCsHost==null || savedCsHost.isEmpty();
-		final boolean noSavedCsDomain = savedCsDomain==null || savedCsDomain.isEmpty();
-		final boolean noSavedUsername = savedUsername==null || savedUsername.isEmpty();
-		final boolean noSavedApiKey = savedApiKey==null || savedApiKey.isEmpty();
+		final boolean noSavedCsHost = TextUtils.isEmpty(savedCsHost);
+		final boolean noSavedCsDomain = TextUtils.isEmpty(savedCsDomain);
+		final boolean noSavedUsername = TextUtils.isEmpty(savedUsername);
+		final boolean noSavedApiKey = TextUtils.isEmpty(savedApiKey);
 		final boolean noSavedAccountInfo = noSavedCsHost && noSavedCsDomain && noSavedUsername && noSavedApiKey;
 		
 		return noSavedAccountInfo;
