@@ -133,6 +133,19 @@ public class QuickActionUtils {
 		quickActionProgress.setVisibility(View.VISIBLE);
 	}
 
+	public static void showNeitherQuickAction(final ImageView quickActionIcon, final ProgressBar quickActionProgress, final boolean animate) {
+		quickActionIcon.setClickable(false);
+		if(animate) {
+			quickActionIcon.startAnimation(fadeout_decelerate);
+		}
+		quickActionIcon.setVisibility(View.INVISIBLE);
+		
+		if(animate) {
+			quickActionProgress.startAnimation(fadeout_decelerate);
+		}
+		quickActionProgress.setVisibility(View.INVISIBLE);
+	}
+
 	
 	
 	

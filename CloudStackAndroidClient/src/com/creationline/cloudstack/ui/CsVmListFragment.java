@@ -159,7 +159,7 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 			} else {
 				//if we run into an unknown state, give...
 				stateText.setTextColor(getResources().getColorStateList(R.color.vmunknown_color_selector));  //...state a default color
-				//...and no quickaction (perhaps change the icon to something looking unclick-able here?)
+				QuickActionUtils.showNeitherQuickAction(quickActionIcon, quickActionProgress, stateUpdated); //...and no quickaction nor progresscircle
 			}
 			
 		}
