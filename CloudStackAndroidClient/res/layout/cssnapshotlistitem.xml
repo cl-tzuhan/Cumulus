@@ -54,7 +54,7 @@
 		android:layout_toRightOf="@id/createdtime"
 		android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/created"
 		android:layout_marginLeft="4dp"
-		android:textSize="12sp" android:textColor="@color/label"
+		android:textSize="13sp" android:textColor="@color/label"
 		android:text="create date" />
 		
 	<TextView android:id="@+id/volumename" android:layout_alignLeft="@id/name"
