@@ -15,6 +15,9 @@
  ******************************************************************************/
 package com.creationline.cloudstack.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.londatiga.android.ActionItem;
 import net.londatiga.android.QuickAction;
 import android.content.BroadcastReceiver;
@@ -64,6 +67,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
     private BroadcastReceiver listSnapshotsCallbackReceiver = null;  //used to receive list snapshots complete notifs from CsRestService
     private BroadcastReceiver deleteSnapshotCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
     private boolean isProvisioned = false;  //whether we currently have api/secret key or not
+    private List<String> animateQuickActionButtonSwitchList = new ArrayList<String>();  //ids in this list represent snapshot list items that should animate next time there is an icon->progresscircle/progresscircle->icon switch for its quickaction button
 
     //constants used as keys for saving/restoring app state on pause/resume
     private static final String CSSNAPSHOTLIST_DATESTAMP = "com.creationline.cloudstack.ui.CsSnapshotListFragment.CSSNAPSHOTLIST_DATESTAMP";
@@ -86,27 +90,11 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 			setTextViewWithString(view, R.id.state, cursor, Snapshots.STATE);
 			
 			setTextViewWithString(view, R.id.inprogress_state, cursor, Snapshots.INPROGRESS_STATE);
-			
-			configureAttributesBasedOnState(view);
-			setStateColor(view);
-		
-			
-			//NOTE: This is not an ideal location as bindView() is called on each item in the list,
-			//      and we only need this to be called once whenever the db changes.  Unfortunately,
-			//      because of the ViewPager, it is possible that the CsSnapshotListFragment view is
-			//      not yet created when the snapshot db is already updated (from, say, a listSnapshots
-			//      call), so trying to update #-of-Snapshots when the view does not exist yet causes a crash.
-//			updateSnapshotNum(view);
-    	}
+			overrideStateWithInProgressStateIfNeeded(view, cursor);
 
-//		public void updateSnapshotNum(View view) {
-//			TextView footersnapshotnum = (TextView)getListView().findViewById(R.id.footersnapshotnum);
-//			if(footersnapshotnum!=null) {
-//				//update the current #-of-snapshots count
-//				final int count = getCursor().getCount();
-//				footersnapshotnum.setText(String.valueOf(count));
-//			}
-//		}
+			configureAttributesBasedOnState(view, cursor);
+			setStateColor(view);
+		}
 
 		public void setStateColor(View view) {
 			TextView stateText = (TextView)view.findViewById(R.id.state);
@@ -126,33 +114,36 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 			stateText.setTextColor(colorStateList);
 		}
 
-		public void configureAttributesBasedOnState(View view) {
+		public void configureAttributesBasedOnState(View view, Cursor cursor) {
 			ImageView quickActionIcon = (ImageView)view.findViewById(R.id.quickactionicon);
 			ProgressBar quickActionProgress = (ProgressBar)view.findViewById(R.id.quickactionprogress);
 			
-			TextView stateText = (TextView)view.findViewById(R.id.state);
-			String state = stateText.getText().toString();
-			TextView inProgressStateText = (TextView)view.findViewById(R.id.inprogress_state);
-
-			final String inProgressState = inProgressStateText.getText().toString();
-			if(!TextUtils.isEmpty(inProgressState) && !inProgressState.equalsIgnoreCase("show_icon")) {
-				state = inProgressState.toString();  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
+			boolean animate = false;
+			String state = cursor.getString(cursor.getColumnIndex(Snapshots.STATE));
+			final String inProgressState = cursor.getString(cursor.getColumnIndex(Snapshots.INPROGRESS_STATE));
+			if(!TextUtils.isEmpty(inProgressState)) {
+				state = inProgressState;  //if it exists, inprogress_state values takes precedence over state values for ui-display purposes
+			}
+			final String snapshotId = cursor.getString(cursor.getColumnIndex(Snapshots.ID));
+			if(animateQuickActionButtonSwitchList.contains(snapshotId)) {
+				animate = true;  //any items in the animateQuickActionButtonSwitchList are meant to have an animated transition from icon->progresscircle or vice versa
+				animateQuickActionButtonSwitchList.remove(snapshotId);  //we only need the animation to play once
 			}
 			
 			quickActionIcon.setEnabled(true);
 			//for the vm state text, we change its color depending on the current state of the vm
 			if(Snapshots.STATE_VALUES.BACKEDUP.equalsIgnoreCase(state)) {
 				QuickActionUtils.assignQuickActionTo(view, quickActionIcon, createQuickAction(view));
-				QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, false);
+				QuickActionUtils.showQuickActionIcon(quickActionIcon, quickActionProgress, animate);
 				
 			} else if (Snapshots.STATE_VALUES.BACKINGUP.equalsIgnoreCase(state)) {
-				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, animate);
 				
 			} else if (Snapshots.STATE_VALUES.CREATING.equalsIgnoreCase(state)) {
-				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, animate);
 				
 			} else if (Snapshots.STATE_VALUES.DELETING.equalsIgnoreCase(state)) {
-				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, false);
+				QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, animate);
 				
 			} else {
 				//if we run into an unknown state, give...
@@ -174,16 +165,18 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 			if(textViewId==R.id.created) {
 				TextView timeText = (TextView)view.findViewById(R.id.createdtime);
 				DateTimeParser.setParsedDateTime(tv, timeText, text);
-			} else if (textViewId==R.id.inprogress_state) {
-				//inprogress_state values takes precedence over state values for ui-display purposes
-				if(text!=null) {
-					TextView stateText = (TextView) view.findViewById(R.id.state);
-					stateText.setText(text);
-				}
-				tv.setText(text);
 			} else {
 				//for non-special cases, just output text as is
 				tv.setText(text);
+			}
+		}
+		
+		public void overrideStateWithInProgressStateIfNeeded(View view, Cursor cursor) {
+			final String inProgressState = cursor.getString(cursor.getColumnIndex(Snapshots.INPROGRESS_STATE));
+			if(!TextUtils.isEmpty(inProgressState)) {
+				//we replace the actual state with any existing inprogress state
+				TextView stateText = (TextView) view.findViewById(R.id.state);
+				stateText.setText(inProgressState);
 			}
 		}
 
@@ -217,69 +210,19 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-//        listSnapshotsCallbackReceiver = new BroadcastReceiver(){
-//        	//This handles callback intents broadcasted by CsRestService
-//        	@Override
-//        	public void onReceive(Context contenxt, Intent intent) {
-//        		Bundle bundle = intent.getExtras();
-//        		final int successOrFailure = bundle.getInt(CsRestService.CALL_STATUS);
-//        		final String snapshotId = bundle.getString(Snapshots.ID);
-//        		
-//        		//as the request is finished, mark inprogress_state as null signifying there is no pending operation left
-//        		updateSnapshotInProgressStateOnDb(snapshotId, null);
-//        		
-//        		if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
-//        			//if deleteSnapshot failed, revert the progress-circle back to icon again
-//        			adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
-//        			
-//        		} else {
-//        			//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
-//    				Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
-//        		}
-//        	}
-//        };
-//        getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
-
         isProvisioned = isProvisioned();  //this needs to be done first as the isProvisioned member var is used at various places
 
         registerListSnapshotsCallbackReceiver();
         registerDeleteSnapshotCallbackReceiver();
-        
-//        SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
-//		final String username = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.USERNAME_SETTING, null);
-//
-//		if(username!=null) {
-//			//make the rest call to cs server for data
-//			final String action = CsRestService.TEST_CALL;   
-//			Bundle apiCmd = new Bundle();
-//			apiCmd.putString(CsRestService.COMMAND, "listSnapshots");
-//			apiCmd.putString(Snapshots.ACCOUNT, username);
-//			Intent csRestServiceIntent = CsRestService.createCsRestServiceIntent(getActivity(), action, apiCmd);  //user api
-//			getActivity().startService(csRestServiceIntent);
-//		}
     }
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		//add the summary footer to the list
 		addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistsummaryfooter, R.id.cssnapshotlistsummaryfooterviewswitcher);
-//        View cssnapshotlistsummaryfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistsummaryfooter, null, false);
-//        ViewSwitcher footerviewswitcher = (ViewSwitcher)cssnapshotlistsummaryfooter.findViewById(R.id.footerviewswitcher);
-//        if(footerviewswitcher!=null) {
-//        	footerviewswitcher.setDisplayedChild(0);
-//        	footerviewswitcher.setAnimateFirstView(true);
-//        	getListView().addFooterView(cssnapshotlistsummaryfooter, null, false);
-//        }
         
         //add command footer to the list
 		View cssnapshotlistcommandfooter = addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistcommandfooter, R.id.cssnapshotlistcommandfooterviewswitcher);
-//        View csvmlistcommandfooter = getLayoutInflater(savedInstanceState).inflate(R.layout.cssnapshotlistcommandfooter, null, false);
-//        ViewSwitcher commandfooterviewswitcher = (ViewSwitcher)csvmlistcommandfooter.findViewById(R.id.cssnapshotlistcommandfooterviewswitcher);
-//        if(commandfooterviewswitcher!=null) {
-//        	commandfooterviewswitcher.setDisplayedChild(0);
-//        	commandfooterviewswitcher.setAnimateFirstView(true);
-//        }
-//        getListView().addFooterView(csvmlistcommandfooter, null, false);
         
         setRefreshButtonClickHandler(cssnapshotlistcommandfooter);
 		if(isProvisioned) {
@@ -344,20 +287,12 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 	
 	@Override
 	public void onResume() {
-//		registerListSnapshotsCallbackReceiver();
-//      registerDeleteSnapshotCallbackReceiver();
         
 		super.onResume();
 	}
 	
 	@Override
 	public void onPause() {
-//		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
-//		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
-		
-//		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
-//		setRefreshButtonEnabled(cssnapshotlistcommandfooter, true);
-//		setProgressCircleVisible(cssnapshotlistcommandfooter, ProgressBar.INVISIBLE);
 		
 		super.onPause();
 	}
@@ -366,15 +301,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 	public void onDestroy() {
 		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
 		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
-//		if(listSnapshotsCallbackReceiver!=null) {
-//			//catch-all here as a safeguard against cases where the activity is exited before BroadcastReceiver.onReceive() has been called-back
-//			try {
-//				getActivity().unregisterReceiver(listSnapshotsCallbackReceiver);
-//			} catch (IllegalArgumentException e) {
-//				//will get this exception if listSnapshotsCallbackReceiver has already been unregistered (or was never registered); will just ignore here
-//				;
-//			}
-//		}
+
 		super.onDestroy();
 	}
 	
@@ -406,12 +333,6 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
         			setTextView(cssnapshotlistcommandfooter, R.id.lastrefresheddatestamp, parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
         			setTextView(cssnapshotlistcommandfooter, R.id.lastrefreshedtimestamp, parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
         		}
-//    			TextView lastrefresheddatestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefresheddatestamp);
-//    			TextView lastrefreshedtimestamp = (TextView)cssnapshotlistcommandfooter.findViewById(R.id.lastrefreshedtimestamp);
-//    			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null && parsedDateTime!=null) {
-//    				lastrefresheddatestamp.setText(parsedDateTime.getString(CsRestContentProvider.DATESTAMP));
-//    				lastrefreshedtimestamp.setText(parsedDateTime.getString(CsRestContentProvider.TIMESTAMP));
-//    			}
         	}
         };
         getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_LISTSNAPSHOTS));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTSNAPSHOTS action)
@@ -427,12 +348,15 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 				final String snapshotId = bundle.getString(Snapshots.ID);
 
 				//as the request is finished, mark inprogress_state as null signifying there is no pending operation left
+				//and mark list item to animate progresscircle->icon
+				//(note that we will attempt to update the inprogress_state regardless of whether the delete call
+				// succeeded or not.  If it didn't, we are reverting the snapshot to the state previous the delete
+				// call.  If it did, there is no entry on db to update and the update call will just do nothing)
+				animateQuickActionButtonSwitchList.add(snapshotId);
 				updateSnapshotInProgressStateOnDb(snapshotId, null);
 
 				if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
-					//if deleteSnapshot failed, revert the progress-circle back to icon again
-					adapter.notifyDataSetChanged();  //faking a data set change so the list will refresh itself
-
+					; //do nothing on failure as the updateSnapshotInProgressStateOnDb() will force a list reload
 				} else {
 					//if deleteSnapshot succeeded, CsRestService has already done the deletion for for us, so just stop tracking this id
 					Toast.makeText(getActivity(), "Snapshot ("+snapshotId+") deleted", Toast.LENGTH_SHORT).show();
@@ -497,11 +421,8 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 		TextView idText = (TextView)itemView.findViewById(R.id.id);
 		final String snapshotId = idText.getText().toString();
 
-		ImageView quickActionIcon = (ImageView)itemView.findViewById(R.id.quickactionicon);
-		ProgressBar quickActionProgress = (ProgressBar)itemView.findViewById(R.id.quickactionprogress);
-		QuickActionUtils.showQuickActionProgress(quickActionIcon, quickActionProgress, true);
-		
-		//set the inprogress_state so the ui will know this snapshot has a pending command
+		//set the inprogress_state as deleting and mark list item for icon->progresscircle animation
+		animateQuickActionButtonSwitchList.add(snapshotId);
 		updateSnapshotInProgressStateOnDb(snapshotId, Snapshots.STATE_VALUES.DELETING);
 
         //make the rest call to cs server to start/stop/reboot vm represented by itemView

@@ -54,7 +54,7 @@ public class Snapshots implements BaseColumns {
 		public static final String BACKINGUP = "BackingUp";
 		public static final String BACKEDUP = "BackedUp";
 		
-		public static final String DELETING = "Deleting...";  //this is not a real CS API value; this used locally by CSAC
+		public static final String DELETING = "Deleting...";  //this is not a real CS API value; this used locally by CSAC to show snapshots that are in the process of being deleted
 	}
 	
 	public static final class META_DATA {

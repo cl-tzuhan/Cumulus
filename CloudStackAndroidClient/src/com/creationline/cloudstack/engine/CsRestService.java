@@ -631,7 +631,7 @@ public class CsRestService extends IntentService {
 		
 		ClLog.d(TAG, "marked as aborted " + uriToUpdate);
 		
-		informCallerFragmentOfCallFailure(uriToUpdate);
+//		informCallerFragmentOfCallFailure(uriToUpdate);
 	}
 
 	/**

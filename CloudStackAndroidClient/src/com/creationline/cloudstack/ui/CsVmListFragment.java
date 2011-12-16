@@ -129,6 +129,9 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 			final String vmid = vmidText.getText().toString();
 			final String state = stateText.getText().toString();
 			
+			//NOTE: The way this inprogress processing (and subsequent quickaction button animation) is done currently
+			//      is hacky and is not usable cross-activity.  It would be cleaner to implement more like how
+			//      CsSnapshotListFragment handles its inprogress/animation processing.
 			final boolean stateUpdated = determineIfStateHasBeenUpdatedByServer(vmid, state);
 
 			//for the vm state text, we change its color depending on the current state of the vm
