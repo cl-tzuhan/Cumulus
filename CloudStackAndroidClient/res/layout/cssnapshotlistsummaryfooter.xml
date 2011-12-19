@@ -33,7 +33,7 @@
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:textSize="17sp"
 				android:textColor="@color/grey_a5" android:typeface="monospace"
-				android:text="X" />
+				android:text="0" />
 			<TextView
 				android:layout_toRightOf="@id/footersnapshotnum" android:layout_alignBaseline="@id/footersnapshotnum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"

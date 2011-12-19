@@ -33,7 +33,7 @@
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:textSize="17sp"
 				android:textColor="@color/grey_a5" android:typeface="monospace"
-				android:text="Z" />
+				android:text="0" />
 			<TextView android:id="@+id/footervmnumlabel"
 				android:layout_toRightOf="@id/footervmnum" android:layout_alignBaseline="@id/footervmnum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -54,7 +54,7 @@
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:textSize="15sp"
 				android:textColor="#95c595" android:typeface="monospace"
-				android:text="X" />
+				android:text="0" />
 			<TextView android:id="@+id/footerrunningvmnumlabel"
 				android:layout_toRightOf="@id/footerrunningvmnum" android:layout_alignBaseline="@id/footervmnum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -77,7 +77,7 @@
 		    	android:layout_marginLeft="3dp"
 				android:textSize="15sp"
 				android:textColor="#c59595" android:typeface="monospace"
-				android:text="Y" />
+				android:text="0" />
 			<TextView android:id="@+id/footerstoppedvmnumlabel"
 				android:layout_toRightOf="@id/footerstoppedvmnum" android:layout_alignBaseline="@id/footervmnum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
