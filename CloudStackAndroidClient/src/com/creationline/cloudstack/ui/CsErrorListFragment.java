@@ -139,6 +139,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 				int unreadErrorCount = 0;
 				if(unreadErrors!=null) {
 					unreadErrorCount = unreadErrors.getCount();
+					unreadErrors.close();
 				}
 				footerunreaderrornum.setText(String.valueOf(unreadErrorCount));
 			}
@@ -293,6 +294,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     				final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
     				setErrorLogIconAndText(latestErrorMsg);
     			}
+    			errorLog.close();
     		}
 
     	};

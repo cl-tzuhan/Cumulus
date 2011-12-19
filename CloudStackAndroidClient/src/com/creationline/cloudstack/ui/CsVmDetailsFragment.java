@@ -177,6 +177,8 @@ public class CsVmDetailsFragment extends Fragment {
 		setTextViewWithString(view, R.id.domain, c, Vms.DOMAIN);
 		setTextViewWithString(view, R.id.account, c, Vms.ACCOUNT);
 		setTextViewWithString(view, R.id.created, c, Vms.CREATED);
+		
+		c.close();
 	}
 	
 	/**

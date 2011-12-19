@@ -315,13 +315,8 @@ public class CsRestContentProvider extends ContentProvider {
 			returnBundle = new Bundle();
 			returnBundle.putString(CsRestContentProvider.DATESTAMP, dateStamp);
 			returnBundle.putString(CsRestContentProvider.TIMESTAMP, timeStamp);
-			    
-//			TextView lastrefresheddatestamp = (TextView)activity.findViewById(R.id.lastrefresheddatestamp);
-//			TextView lastrefreshedtimestamp = (TextView)activity.findViewById(R.id.lastrefreshedtimestamp);
-//			if(lastrefresheddatestamp!=null && lastrefreshedtimestamp!=null) {
-//				lastrefresheddatestamp.setText(dateStamp);
-//				lastrefreshedtimestamp.setText(timeStamp);
-//			}
+
+			c.close();
 		}
 		
 		return returnBundle;

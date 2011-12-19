@@ -223,6 +223,7 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 				Cursor runningVms = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
 				final int runningVmCount = runningVms.getCount();
 				footerrunningvmnum.setText(String.valueOf(runningVmCount));
+				runningVms.close();
 			}
 
 			//update the current #-of-stopped-vm count
@@ -232,6 +233,7 @@ public class CsVmListFragment extends CsListFragmentBase implements LoaderManage
 				Cursor stoppedVms = getActivity().getContentResolver().query(Vms.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
 				final int stoppedVmCount = stoppedVms.getCount();
 				footerstoppedvmnum.setText(String.valueOf(stoppedVmCount));
+				stoppedVms.close();
 			}
 			
 			//double-check whether we are still provisioned (use could have reset account in the mean time) and update button state if necessary

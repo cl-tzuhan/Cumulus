@@ -175,6 +175,8 @@ public class CsSnapshotDetailsFragment extends Fragment {
 		setTextViewWithString(view, R.id.created, c, Snapshots.CREATED);
 
 		setTextViewWithString(view, R.id.inprogress_state, c, Snapshots.INPROGRESS_STATE);
+		
+		c.close();
 	}
 	
 	/**
