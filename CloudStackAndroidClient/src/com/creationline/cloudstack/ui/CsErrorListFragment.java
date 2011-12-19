@@ -17,10 +17,12 @@ package com.creationline.cloudstack.ui;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -89,26 +91,56 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 				if(text!=null) { DateTimeParser.setParsedDateTime3999(tv, occurredtime, text); }
 			} else if(textViewId==R.id.dbentryid) {
 				tv.setText(text);
-				Button deleteerrorbutton = (Button) view.findViewById(R.id.deleteerrorbutton);
-				deleteerrorbutton.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						deleteError(text);
-					}
-				});
+				setDeleteErrorButtonOnClickHandler(view, text);
+			} else if(textViewId==R.id.errortext) {
+				tv.setText(text);
+				setErrorTextAppearance(cursor, tv);
 			} else {
 				//for non-special cases, just output text as is
 				tv.setText(text);
 			}
 		}
 
+		public void setDeleteErrorButtonOnClickHandler(View view, final String text) {
+			Button deleteerrorbutton = (Button)view.findViewById(R.id.deleteerrorbutton);
+			deleteerrorbutton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					deleteError(text);
+				}
+			});
+		}
+
+		public void setErrorTextAppearance(Cursor cursor, TextView tv) {
+			final String unread = cursor.getString(cursor.getColumnIndex(Errors.UNREAD));
+			if(Errors.UNREAD_VALUES.TRUE.equalsIgnoreCase(unread)) {
+				tv.setTypeface(null, Typeface.BOLD);
+				tv.setTextColor(getResources().getColor(R.color.error));
+			} else {
+				tv.setTypeface(null, Typeface.NORMAL);
+				tv.setTextColor(getResources().getColor(R.color.grey_a5));
+			}
+		}
+
 		@Override
 		public void notifyDataSetChanged() {
 			TextView footererrornum = (TextView)getActivity().findViewById(R.id.footererrornum);
-			if(footererrornum!=null) {
+			TextView footerunreaderrornum = (TextView)getActivity().findViewById(R.id.footerunreaderrornum);
+			if(footererrornum!=null && footerunreaderrornum!=null) {
 				//update the current #-of-errors count
 				final int count = getCursor().getCount();
 				footererrornum.setText(String.valueOf(count));
+				
+				//update the current unread-#-of-errors count
+				final String[] columns = new String[] { Errors._ID };
+				final String whereClause = Errors.UNREAD+"=?";
+				final String[] selectionArgs = new String[] { Errors.UNREAD_VALUES.TRUE }; 
+				Cursor unreadErrors = getActivity().getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, whereClause, selectionArgs, null);
+				int unreadErrorCount = 0;
+				if(unreadErrors!=null) {
+					unreadErrorCount = unreadErrors.getCount();
+				}
+				footerunreaderrornum.setText(String.valueOf(unreadErrorCount));
 			}
 			
 			super.notifyDataSetChanged();
@@ -155,6 +187,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 			@Override
 			public void onDrawerClosed() {
 				removeErrorLogIconAndText();
+				markErrorsAsRead();
 			}
 		});
         
@@ -192,7 +225,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String onDisplayError = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.ERRORLOG_ONDISPLAYERROR, null);
 		if(!TextUtils.isEmpty(onDisplayError)) {
-				setErrorLogIconAndText(onDisplayError);
+			setErrorLogIconAndText(onDisplayError);
 		}
         
 		super.onResume();
@@ -234,7 +267,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     			String TAG = "CsErrorListFragment.registerForErrorsDbUpdate(): errors content observer";
     			Activity activity = getActivity();
 				if(activity==null) {
-    				ClLog.e(TAG, "activity was null");
+    				ClLog.i(TAG, "activity was null. Probably a result of unread->read updates when closing drawer (OK to ignore if so)");
     				return;
     			}
     			ContentResolver contentResolver = activity.getContentResolver();
@@ -245,7 +278,8 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 
     			final String columns[] = new String[] {
     					Errors._ID,
-    					Errors.ERRORTEXT
+    					Errors.ERRORTEXT,
+    					Errors.UNREAD,
     			};
     			Cursor errorLog = getActivity().getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
     			if(errorLog==null || errorLog.getCount()<=0) {
@@ -254,10 +288,11 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     			}
     			
     			errorLog.moveToFirst();
-    			//final int latestErrorMsgId = errorLog.getInt(errorLog.getColumnIndex(Errors._ID));
-    			final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
-    			
-    			setErrorLogIconAndText(latestErrorMsg);
+    			final String unread = errorLog.getString(errorLog.getColumnIndex(Errors.UNREAD));
+    			if(Errors.UNREAD_VALUES.TRUE.equalsIgnoreCase(unread)) {
+    				final String latestErrorMsg = errorLog.getString(errorLog.getColumnIndex(Errors.ERRORTEXT));
+    				setErrorLogIconAndText(latestErrorMsg);
+    			}
     		}
 
     	};
@@ -321,6 +356,12 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 
 		TextSwitcher logdrawertextswitcher = (TextSwitcher)activity.findViewById(R.id.logdrawertextswitcher);
 		logdrawertextswitcher.setText("");
+	}
+	
+	public void markErrorsAsRead() {
+		ContentValues values = new ContentValues();
+		values.put(Errors.UNREAD, Errors.UNREAD_VALUES.FALSE);
+		getActivity().getContentResolver().update(Errors.META_DATA.CONTENT_URI, values, null, null);
 	}
 	
 	

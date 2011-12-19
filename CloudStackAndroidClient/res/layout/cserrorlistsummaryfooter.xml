@@ -33,14 +33,42 @@
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:textSize="17sp"
 				android:textColor="@color/grey_a5" android:typeface="monospace"
-				android:text="X" />
-			<TextView
+				android:text="0" />
+			<TextView android:id="@+id/footererrornumlabel"
 				android:layout_toRightOf="@id/footererrornum" android:layout_alignBaseline="@id/footererrornum"
 		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
 		    	android:layout_marginLeft="3dp"
 				android:textSize="14sp" android:layout_centerHorizontal="true"
 				android:textColor="@color/grey_a5"
 				android:text="errors" />
+			
+			<TextView android:id="@+id/parenthesischaracter_open"
+				android:layout_toRightOf="@id/footererrornumlabel" android:layout_alignBaseline="@id/footererrornum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:textSize="12sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text="(" />
+			<TextView android:id="@+id/footerunreaderrornum"
+				android:layout_toRightOf="@id/parenthesischaracter_open" android:layout_alignBaseline="@id/footererrornum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textSize="15sp"
+				android:textColor="@color/error_fade" android:typeface="monospace"
+				android:text="0" />
+			<TextView android:id="@+id/footerunreaderrornumlabel"
+				android:layout_toRightOf="@id/footerunreaderrornum" android:layout_alignBaseline="@id/footererrornum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+		    	android:layout_marginLeft="3dp"
+				android:textSize="12sp" android:layout_centerHorizontal="true"
+				android:textColor="@color/error_fade"
+				android:text="new" />
+			<TextView android:id="@+id/parenthesischaracter_close"
+				android:layout_toRightOf="@id/footerunreaderrornumlabel" android:layout_alignBaseline="@id/footererrornum"
+		    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginLeft="1dp"
+				android:textSize="12sp"
+				android:textColor="@color/grey_a5" android:typeface="monospace"
+				android:text=")" />
 		</RelativeLayout>
 	    <TextView android:id="@+id/footermessage"
 	    	android:layout_below="@id/footertitle"

@@ -8,6 +8,7 @@
 
    <color name="active">#1e8eee</color>
    <color name="error">#ff6a25</color>
+   <color name="error_fade">#e89e4f</color>
    <color name="error_yellow">#e5e818</color>
    
    <color name="primary">#eeeeee</color>

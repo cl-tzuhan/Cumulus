@@ -57,7 +57,7 @@
 	<TextView android:id="@+id/errortext"
 		android:layout_toRightOf="@id/erroriconframe" android:layout_below="@id/occurred"
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
-		android:textSize="14sp" android:textColor="@color/primary"
+		android:textSize="14sp" android:textColor="@color/grey_a5"
 		android:text="" />
 	<TextView android:id="@+id/errorcode"
 		android:layout_toRightOf="@id/erroriconframe" android:layout_above="@id/errortext"

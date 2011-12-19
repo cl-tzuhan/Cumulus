@@ -38,4 +38,9 @@ public class Errors implements BaseColumns {
 		public static final String TABLE_NAME = "errors";
 		public static final Uri CONTENT_URI = Uri.parse("content://"+CsRestContentProvider.AUTHORITY+"/"+TABLE_NAME);
 	}
+	
+	public static final class UNREAD_VALUES {
+		public static final String TRUE = "true";
+		public static final String FALSE = "false";
+	}
 }

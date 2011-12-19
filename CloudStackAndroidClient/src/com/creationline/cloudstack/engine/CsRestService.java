@@ -438,7 +438,7 @@ public class CsRestService extends IntentService {
 		if(errorText!=null) { cv.put(Errors.ERRORTEXT, errorText); };
 		if(originatingTransactionUri!=null) { cv.put(Errors.ORIGINATINGCALL, originatingTransactionUri.toString()); };
 		cv.put(Errors.OCCURRED, getCurrentTimeAsString());
-		cv.put(Errors.UNREAD, true);
+		cv.put(Errors.UNREAD, Errors.UNREAD_VALUES.TRUE);
 		return getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
