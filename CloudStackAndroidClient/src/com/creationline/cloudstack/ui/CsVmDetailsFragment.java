@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2011 Creationline,Inc.
+ * Copyright 2011-2012 Creationline,Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  ******************************************************************************/
 package com.creationline.cloudstack.ui;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -34,20 +36,37 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
-import com.creationline.cloudstack.util.ClLog;
-import com.creationline.cloudstack.util.DateTimeParser;
-import com.creationline.cloudstack.util.QuickActionUtils;
+import com.creationline.cloudstack.utils.DateTimeParser;
+import com.creationline.cloudstack.utils.QuickActionUtils;
+import com.creationline.common.utils.ClLog;
+import com.creationline.zabbix.chart.CpuLoadGraphFragment;
+import com.creationline.zabbix.chart.CpuLoadGraphFragmentActivity;
+import com.creationline.zabbix.chart.CpuUtilizationGraphFragment;
+import com.creationline.zabbix.chart.CpuUtilizationGraphFragmentActivity;
+import com.creationline.zabbix.chart.DiskUsageGraphFragment;
+import com.creationline.zabbix.chart.DiskUsageGraphFragmentActivity;
+import com.creationline.zabbix.chart.NetworkUtilizationGraphFragment;
+import com.creationline.zabbix.chart.NetworkUtilizationGraphFragmentActivity;
+import com.creationline.zabbix.engine.ZbxRestService;
+import com.creationline.zabbix.engine.api.ZbxApiConstants;
+import com.creationline.zabbix.engine.db.CpuLoads;
+import com.creationline.zabbix.engine.db.CpuUtilization;
+import com.creationline.zabbix.engine.db.DiskUsage;
+import com.creationline.zabbix.engine.db.NetworkUtilization;
 
 public class CsVmDetailsFragment extends Fragment {
 	
 	private ContentObserver vmsContentObserver = null;
     private BroadcastReceiver startStopRebootVmCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
 
+    //zbx-related
+    private boolean haveZbxAccountCredentials = false;  //whether we can allow user access to zbx functionality or not
 	
 	public CsVmDetailsFragment() {
 		//empty constructor is needed by Android for automatically creating fragments from XML declarations
@@ -65,7 +84,7 @@ public class CsVmDetailsFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 		
 		registerForVmsDbUpdate();
-
+		
 	}
 
 	@Override
@@ -86,6 +105,17 @@ public class CsVmDetailsFragment extends Fragment {
 		setStartVmButtonClickHandler(view);
 		setStopVmButtonClickHandler(view);
 		setRebootVmButtonClickHandler(view);
+
+		//enable zbx graphs if we have users zbx creds
+		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		final String savedAuthToken = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.ZABBIX_AUTH_TOKEN, null);
+        haveZbxAccountCredentials = savedAuthToken!=null;
+		if(haveZbxAccountCredentials) {
+			setCpuLoadButtonClickHandler(view);
+			setCpuUtilizationButtonClickHandler(view);
+			setDiskUsageButtonClickHandler(view);
+			setNetworkUtilizationButtonClickHandler(view);
+		}
 		
 		return view;
 	}
@@ -114,6 +144,7 @@ public class CsVmDetailsFragment extends Fragment {
 				Vms.ACCOUNT,
 //				Vms.DOMAINID,
 				Vms.DOMAIN,
+				Vms.IPADDRESS,
 				Vms.CREATED,
 				Vms.STATE,
 //				Vms.GROUPID,
@@ -149,6 +180,7 @@ public class CsVmDetailsFragment extends Fragment {
 		if(c==null || c.getCount()<=0) {
 			//Null check to guard against cases when CsVmDetailsFragment is called with outdated vmId.
 			//Since we can't do anything with this view w/out vm data, just refuse to start in this case.
+			if(c!=null) { c.close(); };
 			ClLog.e(TAG, "aborted start of vm details view, because data does not exist for vmId="+selectedVmId);
 			getActivity().finish();
 			return;
@@ -175,6 +207,7 @@ public class CsVmDetailsFragment extends Fragment {
 		setTextViewWithString(view, R.id.hostname, c, Vms.HOSTNAME);
 		setTextViewWithString(view, R.id.group, c, Vms.GROUPA);
 		setTextViewWithString(view, R.id.domain, c, Vms.DOMAIN);
+		setTextViewWithString(view, R.id.ipaddress, c, Vms.IPADDRESS);
 		setTextViewWithString(view, R.id.account, c, Vms.ACCOUNT);
 		setTextViewWithString(view, R.id.created, c, Vms.CREATED);
 		
@@ -311,8 +344,7 @@ public class CsVmDetailsFragment extends Fragment {
 				if(successOrFailure==CsRestService.CALL_STATUS_VALUES.CALL_FAILURE) {
 					//the request failed, so revert the state of vm back to what it was based on call, and refresh
 					View csvmdetailsfragment = getActivity().findViewById(R.id.csvmdetailsfragment);
-					TextView stateText = (TextView)csvmdetailsfragment.findViewById(R.id.state);
-					final String inProgressState = stateText.getText().toString();
+					final String inProgressState = getTextFromTextView(csvmdetailsfragment, R.id.state);
 					
 					if(Vms.STATE_VALUES.STARTING.equals(inProgressState)) {
 						updateVmStateOnDb(vmId, Vms.STATE_VALUES.STOPPED);
@@ -328,8 +360,9 @@ public class CsVmDetailsFragment extends Fragment {
 					;  //do nothing on success as the memory-state/db-state comparison code will know when an operation has succeeded and show the appropriate toast
 				}
 			}
+
 		};
-		getActivity().registerReceiver(startStopRebootVmCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_STARTSTOPREBOOTVM action)
+		getActivity().registerReceiver(startStopRebootVmCallbackReceiver, new IntentFilter(CsVmListFragment.INTENT_ACTION.CALLBACK_STARTSTOPREBOOTVM));  //activity will now GET intents broadcast by CsRestService (filtered by CALLBACK_STARTSTOPREBOOTVM action)
 	}
 	
 	public void unregisterCallbackReceiver(BroadcastReceiver broadcastReceiver) {
@@ -338,7 +371,7 @@ public class CsVmDetailsFragment extends Fragment {
 			try {
 				getActivity().unregisterReceiver(broadcastReceiver);
 			} catch (IllegalArgumentException e) {
-				//will get this exception if listSnapshotsCallbackReceiver has already been unregistered (or was never registered); will just ignore here
+				//will GET this exception if listSnapshotsCallbackReceiver has already been unregistered (or was never registered); will just ignore here
 				;
 			}
 		}
@@ -364,7 +397,7 @@ public class CsVmDetailsFragment extends Fragment {
     			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
     		}
     	};
-    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, vmsContentObserver);  //activity will now get updated when db is changed
+    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, vmsContentObserver);  //activity will now GET updated when db is changed
     }
     
 	public void unregisterVmsDbUpdate() {
@@ -440,6 +473,99 @@ public class CsVmDetailsFragment extends Fragment {
 			}
 		});
 	}
-
 	
+	//zbx-related
+	public void setCpuLoadButtonClickHandler(final View view) {
+		Button cpuloadbutton = (Button)view.findViewById(R.id.cpuloadbutton);
+		cpuloadbutton.setOnClickListener(new OnClickListener() {
+		    @Override
+		    public void onClick(View v) {
+		    	startGraphActivityAndDataDownload(view,
+		    									  CpuLoadGraphFragmentActivity.class,
+		    									  CpuLoadGraphFragment.getLegendTitles(),
+		    									  CpuLoads.META_DATA.CONTENT_URI);
+		    }
+
+		  });
+		cpuloadbutton.setEnabled(true);
+	}
+
+	//zbx-related
+	public void setCpuUtilizationButtonClickHandler(final View view) {
+		Button cpuutilizationbutton = (Button)view.findViewById(R.id.cpuutilizationbutton);
+		cpuutilizationbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startGraphActivityAndDataDownload(view,
+												  CpuUtilizationGraphFragmentActivity.class,
+												  CpuUtilizationGraphFragment.getLegendTitles(),
+												  CpuUtilization.META_DATA.CONTENT_URI);
+			}
+			
+		});
+		cpuutilizationbutton.setEnabled(true);
+	}
+
+	//zbx-related
+	public void setDiskUsageButtonClickHandler(final View view) {
+		Button diskusagebutton = (Button)view.findViewById(R.id.diskusagebutton);
+		diskusagebutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startGraphActivityAndDataDownload(view,
+						DiskUsageGraphFragmentActivity.class,
+						DiskUsageGraphFragment.getLegendTitles(),
+						DiskUsage.META_DATA.CONTENT_URI);
+			}
+			
+		});
+		diskusagebutton.setEnabled(true);
+	}
+
+	//zbx-related
+	public void setNetworkUtilizationButtonClickHandler(final View view) {
+		Button networkutilizationbutton = (Button)view.findViewById(R.id.networkutilizationbutton);
+		networkutilizationbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startGraphActivityAndDataDownload(view,
+						NetworkUtilizationGraphFragmentActivity.class,
+						NetworkUtilizationGraphFragment.getLegendTitles(),
+						NetworkUtilization.META_DATA.CONTENT_URI);
+			}
+			
+		});
+		networkutilizationbutton.setEnabled(true);
+	}
+	
+	//zbx-related
+	public void startGraphActivityAndDataDownload(final View view, Class<?> graphActivityToStart, final String[] itemNames, final Uri targetContentUri) {
+    	
+		///TESTING-USE (can be used to replace name/ipaddress declarations below)
+//		final String name = "Zabbix server";
+//		final String ipaddress = "127.0.0.1";
+		///endTESTING-USE
+    	final String name = CsVmDetailsFragment.getTextFromTextView(view, R.id.name);
+    	final String ipaddress = CsVmDetailsFragment.getTextFromTextView(view, R.id.ipaddress);
+    	ClLog.i("CsVmDetailsFragment.startGraphActivityAndDataDownload()", "starting with host name="+name+" ipaddress="+ipaddress);
+    	
+    	Activity activity = getActivity();
+    	
+    	//start graph activity first so ZbxRestService has somewhere to notify to
+    	Intent intent = new Intent(activity, graphActivityToStart);
+    	Bundle extras = new Bundle();
+    	extras.putString(ZbxApiConstants.FIELDS.HOST, name);
+    	intent.putExtras(extras);
+    	startActivity(intent);
+
+    	//make the rest call to zabbix server
+    	Intent zbxRestServiceIntent = ZbxRestService.createGetDataIntent(activity, ipaddress, name, itemNames, targetContentUri.toString());
+    	activity.startService(zbxRestServiceIntent);
+	};
+
+	public static String getTextFromTextView(final View csvmdetailsfragment, final int textViewId) {
+		TextView stateText = (TextView)csvmdetailsfragment.findViewById(textViewId);
+		final String inProgressState = stateText.getText().toString();
+		return inProgressState;
+	}
 }

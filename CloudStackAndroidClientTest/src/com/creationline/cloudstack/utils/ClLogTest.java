@@ -1,4 +1,6 @@
-package com.creationline.cloudstack.util;
+package com.creationline.cloudstack.utils;
+
+import com.creationline.common.utils.ClLog;
 
 import android.test.AndroidTestCase;
 

@@ -19,7 +19,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import com.creationline.cloudstack.util.ClLog;
+import com.creationline.common.utils.ClLog;
 import com.viewpagerindicator.TitleProvider;
 
 public class ViewPageAdapter extends FragmentPagerAdapter implements TitleProvider {

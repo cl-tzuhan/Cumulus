@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2011 Creationline,Inc.
+ * Copyright 2011-2012 Creationline,Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -52,8 +53,9 @@ import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
-import com.creationline.cloudstack.util.DateTimeParser;
-import com.creationline.cloudstack.util.QuickActionUtils;
+import com.creationline.cloudstack.utils.DateTimeParser;
+import com.creationline.cloudstack.utils.QuickActionUtils;
+import com.creationline.common.engine.RestServiceBase;
 
 public class CsSnapshotListFragment extends CsListFragmentBase implements LoaderManager.LoaderCallbacks<Cursor> {
 	public static class INTENT_ACTION {
@@ -63,7 +65,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 	}
 
 	private static final int CSSNAPSHOT_LIST_LOADER = 0x02;
-    private CsSnapshotListAdapter adapter = null;  //backer for this list
+    private ResourceCursorAdapter adapter = null;  //backer for this list
     private BroadcastReceiver listSnapshotsCallbackReceiver = null;  //used to receive list snapshots complete notifs from CsRestService
     private BroadcastReceiver deleteSnapshotCallbackReceiver = null;  //used to receive request success/failure notifs from CsRestService
     private boolean isProvisioned = false;  //whether we currently have api/secret key or not
@@ -195,7 +197,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
         		View cssnapshotlistcommandfooter = getActivity().findViewById(R.id.cssnapshotlistcommandfooter);
 				setRefreshButtonEnabled(cssnapshotlistcommandfooter, false);
 			}
-			
+
 			super.notifyDataSetChanged();
 		}
 		
@@ -217,6 +219,13 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
     }
 	
 	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		
+		adapter = setupListAdapter(CSSNAPSHOT_LIST_LOADER);
+	}
+	
+	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		//add the summary footer to the list
 		addAndInitFooter(savedInstanceState, R.layout.cssnapshotlistsummaryfooter, R.id.cssnapshotlistsummaryfooterviewswitcher);
@@ -231,10 +240,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
         	setRefreshButtonEnabled(cssnapshotlistcommandfooter, false);
         }
         
-        //set-up the loader & adapter for populating this list
-        getLoaderManager().initLoader(CSSNAPSHOT_LIST_LOADER, null, this);
-        adapter = new CsSnapshotListAdapter(getActivity().getApplicationContext(), R.layout.cssnapshotlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-        setListAdapter(adapter);
+		adapter = setupListAdapter(CSSNAPSHOT_LIST_LOADER);
         
 		final boolean isFreshAppStart = savedInstanceState==null;  //a "fresh app start" means the app was started fresh by the user, not as a result of orientation changes or such
 		if(isFreshAppStart) {
@@ -302,7 +308,28 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 		unregisterCallbackReceiver(listSnapshotsCallbackReceiver);
 		unregisterCallbackReceiver(deleteSnapshotCallbackReceiver);
 
+		releaseListAdapter();
+		
 		super.onDestroy();
+	}
+
+	public void releaseListAdapter() {
+		//zero-out list adapter-related references so gc can work
+		getLoaderManager().destroyLoader(CSSNAPSHOT_LIST_LOADER);
+		setListAdapter(null);
+		adapter = null;
+	}
+	
+	public ResourceCursorAdapter setupListAdapter(final int listLoaderId) {
+		//if we have previous, existing adapter (say, from orientation change), just use it instead of creating new one to prevent mem leak
+		ResourceCursorAdapter listAdapter = (ResourceCursorAdapter)getListAdapter();
+		if(listAdapter==null) {
+			//set-up the loader & adapter for populating this list
+			getLoaderManager().initLoader(listLoaderId, null, this);
+			listAdapter = new CsSnapshotListAdapter(getActivity().getApplicationContext(), R.layout.cssnapshotlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+			setListAdapter(listAdapter);
+		}
+		return listAdapter;
 	}
 	
 	public void registerListSnapshotsCallbackReceiver() {
@@ -323,7 +350,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
         		setProgressCircleVisible(cssnapshotlistcommandfooter, ProgressBar.INVISIBLE);
         		
         		Bundle bundle = intent.getExtras();
-        		final String updatedUriStr = bundle.getString(CsRestService.UPDATED_URI);
+        		final String updatedUriStr = bundle.getString(RestServiceBase.PAYLOAD_FIELDS.UPDATED_URI);
         		if(updatedUriStr==null) {
         			return;
         		}
@@ -335,7 +362,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
         		}
         	}
         };
-        getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_LISTSNAPSHOTS));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_LISTSNAPSHOTS action)
+        getActivity().registerReceiver(listSnapshotsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_LISTSNAPSHOTS));  //activity will now GET intents broadcast by CsRestService (filtered by CALLBACK_LISTSNAPSHOTS action)
 	}
 	
 	public void registerDeleteSnapshotCallbackReceiver() {
@@ -363,7 +390,7 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 				}
 			}
 		};
-		getActivity().registerReceiver(deleteSnapshotCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
+		getActivity().registerReceiver(deleteSnapshotCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now GET intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
 	}
 	
 	public void setRefreshButtonClickHandler(final View view) {

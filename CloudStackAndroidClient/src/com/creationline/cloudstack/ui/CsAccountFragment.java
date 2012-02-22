@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2011 Creationline,Inc.
+ * Copyright 2011-2012 Creationline,Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,12 @@ import com.creationline.cloudstack.engine.CsRestContentProvider;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
-import com.creationline.cloudstack.util.ClLog;
+import com.creationline.common.utils.ClLog;
+import com.creationline.zabbix.engine.ZbxRestContentProvider;
 
 public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFactory {
 	//loginscreenkeyscreenswitcher-related constants
-	private static final int LOGIN_SCREEN = 0;  //the viewswitcher xml declaration must define the login screen first in order for this to work
+	private static final int LOGIN_SCREEN = 0;  //the viewswitcher xml declaration must define the LOGIN screen first in order for this to work
 	private static final int KEYS_SCREEN = 1;  //the viewswitcher xml declaration must define the keys info screen second in order for this to work
 
 	public static class INTENT_ACTION {
@@ -90,10 +91,12 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 	final Pattern csHostPattern = Pattern.compile("^(((ht|f)tp(s?))\\://)?[\\w\\-\\.:/~\\+#]*");  //allows any mix of letters+digits along with period, colon, tilda, pound, slash, and optional preceding "http:", "https:", or "ftp:")
 	final Pattern usernamePattern = Pattern.compile("[\\w\\d-]*");  //allows letters(+underscore), digits, hyphen
+
+	///zbx-related members
+	private AlertDialog zbxAccountDialogGlobalHandle = null;  //reference to whatever dialog is being shown so the app can dismiss it if necessary (eg. during orientation changes)
+	private static String ZBX_ACCOUNT_DIALOG_VISIBLE = "com.creationline.cloudstack.ui.CsAccountFragment.ZBX_ACCOUNT_DIALOG_VISIBLE";
 	
 	private CsSessionBasedRequestTask provisionTaskHandle = null;  //task member var so we can have a handle to cancel in-progress tasks on exit
-
- 
 	private class CsSessionBasedRequestTask extends AsyncTask<Bundle, Void, Bundle> {
 
 		@Override
@@ -404,7 +407,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
     		final String finalUrl = csHostUrl + "?"+"response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.listAccounts
-    								+ "&"+CsApiConstants.LOGIN_PARAMS.SESSIONKEY+"="+encodedSessionKey;  //the url-encoded sessionkey returned from the login call must be included in the request to bypass CSRF protection
+    								+ "&"+CsApiConstants.LOGIN_PARAMS.SESSIONKEY+"="+encodedSessionKey;  //the url-encoded sessionkey returned from the LOGIN call must be included in the request to bypass CSRF protection
     		ClLog.d(TAG, "finalUrl="+finalUrl);
     		
     		HttpResponse response = executeHttpRequest(finalUrl, returnBundle);
@@ -441,7 +444,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 
 				final boolean ifApiKeysHaveNotBeenGenerated = TextUtils.isEmpty(apikey) || TextUtils.isEmpty(secretkey);
 				if(ifApiKeysHaveNotBeenGenerated) {
-					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "You must first generate API/secret keys on CloudStack for login to complete.  Please ask your administrator for details and try again after the keys have been generated.");
+					returnBundle.putString(CsAccountFragment.ASYNC_ERROR, "You must first generate API/secret keys on CloudStack for LOGIN to complete.  Please ask your administrator for details and try again after the keys have been generated.");
 					return;
 				}
 
@@ -545,11 +548,14 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			
 			//in case the focus was on something before the flip, clear focus here so we don't attract attention to any buttons from the get-go
 			Button resetbutton = (Button)activity.findViewById(R.id.resetbutton);
-			if(resetbutton!=null) {  resetbutton.clearFocus(); }
+			if(resetbutton!=null) { resetbutton.clearFocus(); }
 			Button aboutbutton_loginscreen = (Button)activity.findViewById(R.id.aboutbutton_loginscreen);
-			if(aboutbutton_loginscreen!=null) {  aboutbutton_loginscreen.clearFocus(); }
+			if(aboutbutton_loginscreen!=null) { aboutbutton_loginscreen.clearFocus(); }
 			Button aboutbutton_keysscreen = (Button)activity.findViewById(R.id.aboutbutton_keysscreen);
-			if(aboutbutton_keysscreen!=null) {  aboutbutton_keysscreen.clearFocus(); }
+			if(aboutbutton_keysscreen!=null) { aboutbutton_keysscreen.clearFocus(); }
+			
+			Button zbxaccountbutton = (Button)activity.findViewById(R.id.zbxaccountbutton);
+			if(zbxaccountbutton!=null) { zbxaccountbutton.clearFocus(); }
 		}
 
     }
@@ -584,7 +590,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	   		final String csHostUrl = CsRestService.makeHostIntoApiUrlIfNecessary(csHost);
     		final String finalUrl = csHostUrl + "?" + "response=json"
     								+ "&"+CsRestService.COMMAND+"="+CsApiConstants.API.logout
-    								+ "&"+CsApiConstants.LOGIN_PARAMS.SESSIONKEY+"="+encodedSessionKey;  //the url-encoded sessionkey returned from the login call must be included in the request to bypass CSRF protection
+    								+ "&"+CsApiConstants.LOGIN_PARAMS.SESSIONKEY+"="+encodedSessionKey;  //the url-encoded sessionkey returned from the LOGIN call must be included in the request to bypass CSRF protection
     		ClLog.d(TAG, "finalUrl="+finalUrl);
     		
     		HttpResponse response = executeHttpRequest(finalUrl, returnBundle);
@@ -619,12 +625,14 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         setAboutButtonOnClickHandler(activity, R.id.aboutbutton_keysscreen);
         setResetButtonOnClickHandler(activity);
         
+        setZbxAccountButtonOnClickHandler(activity, R.id.zbxaccountbutton);
+        
 		SharedPreferences preferences = getActivity().getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
 		final String savedApiKey = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.APIKEY_SETTING, null);
         final boolean isProvisioned = savedApiKey!=null;
 		if(isProvisioned) {
         	//if we are already provisioned, just show the "keys screen"
-			ViewSwitcher loginscreenkeyscreenswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginscreenkeyscreenswitcher);
+			ViewSwitcher loginscreenkeyscreenswitcher = (ViewSwitcher)activity.findViewById(R.id.loginscreenkeyscreenswitcher);
 			loginscreenkeyscreenswitcher.setDisplayedChild(KEYS_SCREEN);
 
 			final String savedCsHost = preferences.getString(CloudStackAndroidClient.SHARED_PREFERENCES.CLOUDSTACK_HOST_SETTING, null);
@@ -650,10 +658,34 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
     			if(ts!=null) { ts.setText(loginErrorMessage); }
         	}
         }
-        
+		
+		if(savedInstanceState!=null) {
+			final boolean zbxAccountDialogWasVisibleBeforePause = savedInstanceState.getBoolean(CsAccountFragment.ZBX_ACCOUNT_DIALOG_VISIBLE);
+			if(zbxAccountDialogWasVisibleBeforePause) {
+				showZbxAccountDialog(activity);
+			}
+		}
+		
         super.onActivityCreated(savedInstanceState);
 	}
 
+	public void showZbxAccountDialog(final FragmentActivity activity) {
+		if(zbxAccountDialogGlobalHandle==null) {
+			zbxAccountDialogGlobalHandle = createZbxAccountLoginDialog(activity);
+		}
+		zbxAccountDialogGlobalHandle.show();
+	}
+
+	public void setZbxAccountButtonOnClickHandler(final FragmentActivity activity, final int zbxAccountButtonId) {
+		Button aboutbutton = (Button)activity.findViewById(zbxAccountButtonId);
+		aboutbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showZbxAccountDialog(activity);
+			}
+		});
+	}
+	
 	public void setAboutButtonOnClickHandler(final FragmentActivity activity, final int aboutButtonId) {
 		Button aboutbutton = (Button)activity.findViewById(aboutButtonId);
 		aboutbutton.setOnClickListener(new OnClickListener() {
@@ -689,6 +721,15 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 			}
 		});
 	}
+	
+	public AlertDialog createZbxAccountLoginDialog(final FragmentActivity activity) {
+		//create and show the zbx account/login ui as a fragment-in-dialog
+		View zbxaccountdialog = activity.getLayoutInflater().inflate(R.layout.zbxaccountdialog, null);
+		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+		builder.setView(zbxaccountdialog);
+		AlertDialog dialogHandle = builder.create();
+		return dialogHandle;
+	}
 
 	public void initTextSwitcher(final int textSwitcherId, final Animation inAnimation, final Animation outAnimation) {
 		TextSwitcher hostErrorFrame = (TextSwitcher) getActivity().findViewById(textSwitcherId);
@@ -697,13 +738,46 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
         hostErrorFrame.setOutAnimation(outAnimation);
 	}
 	
-	
+	@Override
+	public void onResume() {
+        
+        super.onResume();
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		if(zbxAccountDialogGlobalHandle!=null && zbxAccountDialogGlobalHandle.isShowing()) {
+			//note that zbx account dialog is being shown so we can put it up again post orientation change
+			outState.putBoolean(CsAccountFragment.ZBX_ACCOUNT_DIALOG_VISIBLE, true);
+		}
+		
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
+	public void onPause() {
+		
+		super.onPause();
+	}
+
 	@Override
 	public void onDestroy() {
+		if(zbxAccountDialogGlobalHandle!=null) {
+			//In general, we will leave the zbx account fragment around after it is created
+			//as it is more robust in terms of transitioning between active and paused states.
+			//We explicitly check for existence and manually clean it up here b/c the app
+			//may be killed unexpected by android; not doing this here seems to leave some sort
+			//of dangling reference that causes the app to choke due to duplicated ids next
+			//time it tries to create the zbx account fragment anew.
+			if(zbxAccountDialogGlobalHandle.isShowing()) {
+				zbxAccountDialogGlobalHandle.dismiss();
+			}
+			zbxAccountDialogGlobalHandle = null;
+		}
 		
 		if(provisionTaskHandle!=null) {
 			provisionTaskHandle.cancel(false);
-			removePreferenceSetting(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);  //mark login as no longer in progress so we don't have a never-ending progress circle once we return. If the provision call does complete, we can always re-do it anyways
+			removePreferenceSetting(CloudStackAndroidClient.SHARED_PREFERENCES.LOGIN_INPROGRESS);  //mark LOGIN as no longer in progress so we don't have a never-ending progress circle once we return. If the provision call does complete, we can always re-do it anyways
 		}
 		
 		super.onDestroy();
@@ -894,6 +968,13 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 	
 	private void resetAccount() {
 		final FragmentActivity activity = getActivity();
+		
+		//give any existing zbx account dialog the chance to clean up after itself
+		//(this will cause any logged-in zbx account dialogs to flip back to the
+		// login screen the next time the dialog is opened (assuming it is not
+		// destroyed in the meantime)
+		ZbxAccountFragment zbxaccountfragment = (ZbxAccountFragment)getFragmentManager().findFragmentById(R.id.zbxaccountfragment);
+		if(zbxaccountfragment!=null) { zbxaccountfragment.resetAccount(); };
 
 		//delete all saved prefs
 		SharedPreferences preferences = activity.getSharedPreferences(CloudStackAndroidClient.SHARED_PREFERENCES.PREFERENCES_NAME, Context.MODE_PRIVATE);
@@ -901,8 +982,9 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		preferencesEditor.clear();
 		preferencesEditor.commit();
 		
-		//delete all existing data
+		//delete all existing data (both cs and zabbix data since the cs-account reset wipes the whole app)
 		CsRestContentProvider.deleteAllData(activity);
+		ZbxRestContentProvider.deleteAllData(activity);  //need to explicitly wipe zabbix dbs here as the zbxaccountfragment.resetAccount() call above doesn't do it for some reason
 		
 		//just to be safe in case there has been scrolling, move scrollview back to beginning so user sees top of view after we flip
 		ScrollView detailscrollview = (ScrollView)activity.findViewById(R.id.detailscrollview);
@@ -916,6 +998,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		setTextViewValue(R.id.csdomainfield, "");
 		setTextViewValue(R.id.usernamefield, "");
 		setTextViewValue(R.id.passwordfield, "");
+		
 	}
 
 	public void flipBetweenLoginAndKeysScreens(final int screenToFlipTo) {
@@ -936,7 +1019,7 @@ public class CsAccountFragment extends Fragment implements ViewSwitcher.ViewFact
 		ViewSwitcher loginprogressswitcher = (ViewSwitcher)getActivity().findViewById(R.id.loginprogressswitcher);
 		if(loginprogressswitcher!=null) {
 			loginprogressswitcher.showNext();
-			loginprogressswitcher.getCurrentView().setClickable(true);  //always set whatever child is in front to clickable; we want to make the login button re-clickable after it was made unclickable when pressed + we don't care if the progress circle is clickable
+			loginprogressswitcher.getCurrentView().setClickable(true);  //always set whatever child is in front to clickable; we want to make the LOGIN button re-clickable after it was made unclickable when pressed + we don't care if the progress circle is clickable
 		}
 	}
 

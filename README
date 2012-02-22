@@ -4,22 +4,32 @@ Cumulus (CloudStackAndroidclient) is an Android app for accessing your CloudStac
 
 We are in the early stages of this project, with only a small number of possible operations implemented at this point.  Further functionality is planned to be implemented after assessing user needs and reaction.  Some candidates for future functionality include creation-related operations, monitoring functionality, and alerts/alarms.
 
+Version 1.2:
+If you have registered CloudStack VMs as monitored hosts on a Zabbix server, Cumulus 1.2 allows you to connect to your Zabbix server with your credentials and download recent monitored data of your VMs displayed as a graph.
 
-What are the pre-requisites?
+
+What do I need to use the app?
 ----------------------------
 - CloudStack URL (+optional domain)
 - CloudStack username & password
-- api/secret keys have been generated for user
+- api/secret keys generated for user
 
 You will need a valid CloudStack URL and user login credentials to provision the client.  The provisioning process will login with your credentials against the specified CloudStack instance, then fetch the api/secret keys for your user.  Cumulus then throws away your password and uses just these keys for further connections to the CloudStack, so your user must have api/secret keys generated before you can provision. (If you do not have administrator-level rights, please ask your administrator to generate the keys for your user with the "Actions->Generate Keys" command in the Accounts>* Accounts>{some account}>Users tab).  Please note that if your api/secret keys are changed on the CloudStack, you will need to re-provision your account on the client for it to continue to work.
 
 Currently, the client does not provide functionality to create accounts or data, so you must have this data already on the CloudStack before you will be able to see them on Cumulus.
 
+Version 1.2:
+To use the Zabbix integration portion of Cumulus 1.2, you will also need:
+- Zabbix server url
+- Zabbix login name & password
+Please note that since integration is via the Zabbix API, Zabbix server version 1.8 or above is required.
+
 
 How can I install it?
 ---------------------
 The quickest way to just get a working app is to download the pre-built CloudStackAndroidClient.apk file and install it directly on your Android device.  Note that to install apps directly from the APK file, your ÅgSettings->Application Settings->Unknown SourcesÅh setting must be enabled.  You can transfer the APK file via an SD card, using a service like Dropbox to transfer it wirelessly, or even email it to yourself.
-The lastest pre-built APK is version 1.1 (131).
+The lastest pre-built APK is version 1.2 (140).
+
 
 What Android phones can I use it on?
 ------------------------------------
@@ -31,16 +41,29 @@ Usage and testing on other devices are definitely welcome!
 
 What if I want to build the source?
 -----------------------------------
-The Cumulus code is being developed on Eclipse using, obviously, the Android SDK.  Other libraries like Android Compatibility Library v4 and various other open source libraries are also used by the Cumulus code, but these are all included in this source already.
+The Cumulus code is being developed on Eclipse using, obviously, the Android SDK.  The Android Compatibility Library v4 JAR (android-support-v4.jar; please download separately), Jackson Java JSON Processor lib JARs (jackson-mapper-asl-1.9.0.jar & jackson-core-asl-1.9.0.jar required; please download separately), and AChartEngine JAR (achartengine-0.7.0.jar required; included in repository) will need to be manually linked to the project for it to build.  All other libraries or code (see credits below) used by Cumulus are already embedded into the source.
 
 Besides the actual Cumulus source in the CloudStackAndroidClient folder, there is also a CloudStackAndroidClientTest folder which contains JUnit tests for the client.  Currently there is just a small battery of tests, though we would like to create more and more test coverage.
 
 There is a Python script (generateRevision.py) currently in the source that is an artifact of an automatic version-increment system for Bazaar.  You are free to ignore this script as it does not directly affect the functioning of the app, though the revision information for the app will not be automatically updated in this case.
 
+
 How is it licensed?
 -------------------
 Released under the Apache License, v2.0.
 The LICENSE file can be found in the CloudStackAndroidClient folder.
+
+
+How does the Zabbix integration work?
+-------------------------------------
+Cumulus (1.2) will look for registered hosts on the specified Zabbix server that have the same hostname as your monitored CloudStack VM id.  The agent residing in the monitored VM sends a "Hostname" value to its Zabbix server (this should default to the CloudStack's i-**-**-VM format id if no specific Hostname value is specified in the agent's configuration file, though it may differ depending on your specific OS and agent).  Cumulus links this to the id of the VM (not the user-editable name) it gets from the CloudStack, downloading and showing monitoring data for the host with the same id/hostname.
+
+Host/agent setup on the Zabbix side must be complete for Cumulus to work.  If no host with the same id/hostname can be found for a VM, Cumulus will show an error when attemping to view Zabbix graphs for that VM.
+
+Zabbix integration is done via the Zabbix API, so Zabbix server 1.8 or above is required.  In addition, the Zabbix credentials used must have API access rights.  In contrast to the CloudStack, Zabbix does not offer separate api/secret keys just for authenticating via the API.  To avoid having to repeatedly ask the user to re-enter their password, Zabbix saves the user's credentials locally and automatically re-logins for them as necessary.  The user's credentials are saved to the app's preferences, which is separated and guarded from access by other parties by the Android platform.  The user's locally-saved credentials can be wiped by using the "uplug & clear zabbix data" command on the Zabbix integration screen.
+
+Monitoring data for a host is extremely large, so only the last 3 hours of data will be downloaded to keep waiting time tolerable.  To further trim the storage requirements, the downloaded data is filtered before being saved locally.
+In the future, the ability to have server-side filtering would be a great improvement to the experience.
 
 
 
@@ -71,6 +94,15 @@ Special thanks to the following people/parties, whose work is used in the implem
 - Alvin J. Alexander (DevDaily.com) for the helpful ClientWithResponseHandler example
   [http://www.devdaily.com/java/jwarehouse/commons-httpclient-4.0.3/httpclient/src/examples/org/apache/http/examples/client/ClientWithResponseHandler.java.shtml]
   Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
+- The Jackson team for the speedy Jackson Java JSON Processor
+  [http://jackson.codehaus.org/]
+  Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
+  Current version used: 1.9.0 (core & mapper modules required)
+- The AChartEngine team and project for their awesome charting library
+  [http://code.google.com/p/achartengine/]
+  Apache License, v2.0 [http://www.apache.org/licenses/LICENSE-2.0]
+  Current version used: 0.7.0
+
 
 Credits
 -------

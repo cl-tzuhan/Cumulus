@@ -20,6 +20,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Typeface;
@@ -47,14 +48,14 @@ import android.widget.ViewSwitcher;
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
 import com.creationline.cloudstack.engine.db.Errors;
-import com.creationline.cloudstack.util.ClLog;
-import com.creationline.cloudstack.util.DateTimeParser;
+import com.creationline.cloudstack.utils.DateTimeParser;
+import com.creationline.common.utils.ClLog;
 
 public class CsErrorListFragment extends CsListFragmentBase implements LoaderManager.LoaderCallbacks<Cursor>, ViewSwitcher.ViewFactory {
 	public static String ONDISPLAY_ERROR = "com.creationline.cloudstack.ui.CurrentPageListener.ONDISPLAY_ERROR";
 	
 	private static final int CSERROR_LIST_LOADER = 0x03;
-    private CsErrorListAdapter adapter = null;  //backer for this list
+    private ResourceCursorAdapter adapter = null;  //backer for this list
 	private ContentObserver errorsContentObserver = null;  //used to receive notifs from CsRestContentProvider upon updates to db
     private boolean isProvisioned = false;  //whether we currently have api/secret key or not
 
@@ -164,15 +165,18 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     }
 	
 	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		adapter = setupListAdapter(CSERROR_LIST_LOADER);
+	}
+	
+	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 
 		//add the summary footer to the list
 		addAndInitFooter(savedInstanceState, R.layout.cserrorlistsummaryfooter, R.id.cserrorlistsummaryfooterviewswitcher);
 		
-        //set-up the loader & adapter for populating this list
-        getLoaderManager().initLoader(CSERROR_LIST_LOADER, null, this);
-        adapter = new CsErrorListAdapter(getActivity().getApplicationContext(), R.layout.cserrorlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-        setListAdapter(adapter);
+		adapter = setupListAdapter(CSERROR_LIST_LOADER);
         
         //make the list not visually respond (i.e. highlight) to any clicks on individual items
         getListView().setSelector(android.R.color.transparent);
@@ -258,7 +262,28 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 		
 		unregisterFromDbUpdate(errorsContentObserver);
 		
+		releaseListAdapter();
+		
 		super.onDestroy();
+	}
+
+	public void releaseListAdapter() {
+		//zero-out list adapter-related references so gc can work
+		getLoaderManager().destroyLoader(CSERROR_LIST_LOADER);
+		setListAdapter(null);
+		adapter = null;
+	}
+	
+	public ResourceCursorAdapter setupListAdapter(final int listLoaderId) {
+		//if we have previous, existing adapter (say, from orientation change), just use it instead of creating new one to prevent mem leak
+		ResourceCursorAdapter listAdapter = (ResourceCursorAdapter)getListAdapter();
+		if(listAdapter==null) {
+			//set-up the loader & adapter for populating this list
+			getLoaderManager().initLoader(listLoaderId, null, this);
+			listAdapter = new CsErrorListAdapter(getActivity().getApplicationContext(), R.layout.cserrorlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+			setListAdapter(listAdapter);
+		}
+		return listAdapter;
 	}
 	
     private void registerForErrorsDbUpdate(ContentObserver contentObserver) {
@@ -284,6 +309,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     			};
     			Cursor errorLog = getActivity().getContentResolver().query(Errors.META_DATA.CONTENT_URI, columns, null, null, Errors._ID+" DESC");
     			if(errorLog==null || errorLog.getCount()<=0) {
+    				if(errorLog!=null) { errorLog.close(); };
     				ClLog.i(TAG, "Returned errorLog was null or 0 results.");
     				return;
     			}
@@ -309,7 +335,7 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
     			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
     		}
     	};
-    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now get updated when db is changed
+    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, contentObserver);  //activity will now GET updated when db is changed
     }
     
 	public void unregisterFromDbUpdate(ContentObserver contentObserver) {
@@ -383,12 +409,16 @@ public class CsErrorListFragment extends CsListFragmentBase implements LoaderMan
 
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-		adapter.swapCursor(cursor);
+		if(adapter!=null) {
+			adapter.swapCursor(cursor);
+		}
 	}
 
 	@Override
 	public void onLoaderReset(Loader<Cursor> loader) {
-		adapter.swapCursor(null);
+		if(adapter!=null) {
+			adapter.swapCursor(null);
+		}
 	}
 	
 	@Override

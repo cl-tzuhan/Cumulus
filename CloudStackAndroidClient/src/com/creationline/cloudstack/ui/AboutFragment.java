@@ -23,8 +23,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.util.Revision;
-import com.creationline.cloudstack.util.Version;
+import com.creationline.cloudstack.utils.Revision;
+import com.creationline.cloudstack.utils.Version;
 
 public class AboutFragment extends Fragment {
 	

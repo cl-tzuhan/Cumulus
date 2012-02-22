@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2011 Creationline,Inc.
+ * Copyright 2011-2012 Creationline,Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package com.creationline.cloudstack.util;
+package com.creationline.cloudstack.utils;
 ///This Version class is just for display purposes, when you want to present a "nice" version number
 ///to the user that is easier to understand than the revno/revid combo.  The major/minor version
 ///has no specific link to the state of the repository.  The revision information in the
@@ -23,7 +23,7 @@ package com.creationline.cloudstack.util;
 public class Version {
 	// MAJOR_VER and MINOR_VER can be edited by hand.
 	public static final int MAJOR_VER = 1;
-	public static final int MINOR_VER = 1;
+	public static final int MINOR_VER = 2;
 	
     @Override
 	public String toString() {

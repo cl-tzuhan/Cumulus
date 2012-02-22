@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.util.QuickActionUtils;
+import com.creationline.cloudstack.utils.QuickActionUtils;
 
 /**
  * QuickAction dialog, shows action list as icon and text like the one in Gallery3D app. Currently supports vertical 

@@ -27,7 +27,7 @@ import android.widget.TextView;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
 import com.creationline.cloudstack.R;
-import com.creationline.cloudstack.util.QuickActionUtils;
+import com.creationline.cloudstack.utils.QuickActionUtils;
 import com.viewpagerindicator.TitlePageIndicator;
 
 public class MultiListUi extends FragmentActivity {
@@ -82,6 +82,7 @@ public class MultiListUi extends FragmentActivity {
 		} else {
 			vp.setCurrentItem(ViewPageAdapter.ACCOUNT_PAGE);
 		}
+		
     }
 
 	@Override

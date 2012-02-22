@@ -41,9 +41,9 @@ import com.creationline.cloudstack.engine.CsApiConstants;
 import com.creationline.cloudstack.engine.CsRestService;
 import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
-import com.creationline.cloudstack.util.ClLog;
-import com.creationline.cloudstack.util.DateTimeParser;
-import com.creationline.cloudstack.util.QuickActionUtils;
+import com.creationline.cloudstack.utils.DateTimeParser;
+import com.creationline.cloudstack.utils.QuickActionUtils;
+import com.creationline.common.utils.ClLog;
 
 public class CsSnapshotDetailsFragment extends Fragment {
 	
@@ -83,7 +83,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
         		}
         	}
         };
-        getActivity().registerReceiver(snapshotDetailsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now get intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
+        getActivity().registerReceiver(snapshotDetailsCallbackReceiver, new IntentFilter(CsSnapshotListFragment.INTENT_ACTION.CALLBACK_DELETESNAPSHOT));  //activity will now GET intents broadcast by CsRestService (filtered by CALLBACK_DELETESNAPSHOT action)
         
 	}
 
@@ -157,6 +157,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
 		if(c==null || c.getCount()<=0) {
 			//Null check to guard against cases when CsSnapshotDetailsFragment is called with outdated snapshotId.
 			//Since we can't do anything with this view w/out snapshot data, just refuse to start in this case.
+			if(c!=null) { c.close(); };
 			ClLog.e(TAG, "aborted start of snapshop details view, because data does not exist for snapshotId="+selectedSnapshotId);
 			getActivity().finish();
 			return;
@@ -307,7 +308,7 @@ public class CsSnapshotDetailsFragment extends Fragment {
     			handler.post(updatedUiWithResults);  //off-loading work to runnable b/c this bg thread can't update ui directly
     		}
     	};
-    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, snapshotsContentObserver);  //activity will now get updated when db is changed
+    	getActivity().getContentResolver().registerContentObserver(contentUriToObserve, true, snapshotsContentObserver);  //activity will now GET updated when db is changed
     }
     
 	public void unregisterSnapshotsDbUpdate() {

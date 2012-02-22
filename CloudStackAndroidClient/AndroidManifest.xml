@@ -26,12 +26,26 @@
         
         <activity android:name=".ui.AboutFragmentActivity"
                   android:label="About" />
+
+        <activity android:name="com.creationline.zabbix.chart.CpuLoadGraphFragmentActivity"
+                  android:label="Cpu Loads graph" />
+        <activity android:name="com.creationline.zabbix.chart.CpuUtilizationGraphFragmentActivity"
+                  android:label="Cpu Utilization graph" />
+        <activity android:name="com.creationline.zabbix.chart.DiskUsageGraphFragmentActivity"
+                  android:label="Disk Usage graph" />
+        <activity android:name="com.creationline.zabbix.chart.NetworkUtilizationGraphFragmentActivity"
+                  android:label="Network Utilization graph" />
                   
         <service android:name=".engine.CsRestService" />
 		<receiver android:name=".engine.CheckAsyncJobProgress" />
-
-	    <provider android:name=".engine.CsRestContentProvider" android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
+	    <provider android:name=".engine.CsRestContentProvider"
+	        	  android:authorities="com.creationline.cloudstack.engine.csrestcontentprovider" />
     
+	    <service android:name="com.creationline.zabbix.engine.ZbxRestService" />
+	   	<provider android:name="com.creationline.zabbix.engine.ZbxRestContentProvider"
+	   	    	  android:authorities="com.creationline.zabbix.engine.zbxrestcontentprovider" />
+	    
+	    
     </application>
     
     

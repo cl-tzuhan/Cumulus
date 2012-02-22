@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2011-2012 Creationline,Inc.
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+    http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<RelativeLayout android:id="@+id/networkutilizationgraphfragment"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content"
+	android:layoutAnimation="@anim/slide_righttoleft_layoutanim" >
+	<LinearLayout android:id="@+id/logotitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true" >
+		<TextView android:id="@+id/apptitle_pt1"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="#39caff"
+			android:text="Cloud" />
+		<TextView android:id="@+id/apptitle_pt2"
+			android:layout_width="wrap_content" android:layout_height="8sp"
+			android:layout_marginLeft="-28sp"
+			android:textSize="10dp" android:textColor="#1e8eee"
+			android:text="Cloud" />
+		<TextView
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textSize="10dp" android:textColor="@color/supplementaryinfo_color_selector"
+			android:text="Stack" />
+	</LinearLayout>
+	
+	<LinearLayout android:id="@+id/graph"
+	    android:layout_below="@id/logotitle"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+	    android:orientation="horizontal"
+		android:layout_weight="1" >
+	</LinearLayout>
+	
+	<TextView android:id="@+id/hostname"
+	    android:layout_alignTop="@id/graph" android:layout_alignRight="@id/graph"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:paddingRight="5dp"
+		android:textSize="10dp" android:textColor="@color/grey_a5"
+		android:text="" />
+	<TextView android:id="@+id/graphtitle"
+	    android:layout_alignRight="@id/graph" android:layout_below="@id/hostname"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:paddingRight="4dp"
+		android:layout_marginTop="-7dp"
+		android:textSize="20dp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="Network Utilization" />
+	<TextView android:id="@+id/selectedvaluedisplayarea"
+	    android:layout_alignRight="@id/graph" android:layout_below="@id/graphtitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_marginTop="-5dp"
+		android:paddingRight="4dp"
+		android:textSize="10dp" android:textColor="@color/grey_a5"
+		android:text="" />
+	
+	<TextView android:id="@+id/updatingdatalabel"
+	    android:layout_alignLeft="@id/graph" android:layout_alignBaseline="@id/graphtitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_marginTop="-10dp"
+		android:paddingLeft="44dp"
+		android:textSize="16dp" android:textColor="@color/grey_a5"
+		android:visibility="invisible"
+		android:text="Updating..." />
+	<view
+	    class="com.creationline.zabbix.chart.AChartEngineGraphFragmentBase$GraphViewAwareProgressBar"
+	    style="?android:attr/progressBarStyleSmall"
+	    android:id="@+id/graphprogresscircle"
+	    android:layout_toRightOf="@id/updatingdatalabel" android:layout_alignTop="@id/graph"
+	    android:layout_width="wrap_content" android:layout_height="wrap_content"
+	    android:layout_marginLeft="2dp" android:layout_marginTop="13dp"
+	    android:visibility="invisible" />
+
+</RelativeLayout>

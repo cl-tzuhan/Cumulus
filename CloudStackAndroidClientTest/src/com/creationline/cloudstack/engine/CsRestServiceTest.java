@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2011-2012 Creationline,Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package com.creationline.cloudstack.engine;
 
 import java.io.IOException;
@@ -23,6 +38,7 @@ import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.mock.CsacMockApplication;
+import com.creationline.common.engine.RestServiceBase;
 
 @SuppressWarnings("deprecation")
 public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
@@ -46,8 +62,8 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	private CsRestService startCsRestService() {
 		Bundle payload = new Bundle();
 		Bundle emptyBundle = new Bundle();
-        payload.putString(CsRestService.ACTION_ID, CsRestService.TEST_CALL);
-        payload.putBundle(CsRestService.API_CMD, emptyBundle);  //sending an empty bundle causes CsRestService to start-up and do nothing
+        payload.putString(RestServiceBase.PAYLOAD_FIELDS.ACTION_ID, CsRestService.TEST_CALL);
+        payload.putBundle(RestServiceBase.PAYLOAD_FIELDS.API_CMD, emptyBundle);  //sending an empty bundle causes CsRestService to start-up and do nothing
         
         Intent startCsRestServiceIntent = new Intent(getSystemContext(), CsRestService.class);
         startCsRestServiceIntent.putExtras(payload);
@@ -57,12 +73,6 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 	}
 	
 	protected void deleteAllData() {
-//		//Completely remove the db if it exists
-//		if (getContext().databaseList().length<=0) {
-//			return; //do nothing if there is no db to start with
-//		}
-//		assertTrue(getContext().deleteDatabase(CsRestContentProvider.DB_NAME));
-		
 		//erase all data from each table
 		getContext().getContentResolver().delete(Transactions.META_DATA.CONTENT_URI, null, null);
 		getContext().getContentResolver().delete(Vms.META_DATA.CONTENT_URI, null, null);
@@ -234,7 +244,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 			e.printStackTrace();
 		}
 		
-		//grab the expected virtualmachine list inside listvirtualmachinesresponse; we will parse these VM objects, checking their values
+		//grab the expected virtualmachine list inside listvirtualmachinesresponse; we will parse these vm objects, checking their values
 		Iterator<JsonNode> listItr = rootNode.findValue("virtualmachine").getElements();
 		
 		int numVms = 0;
@@ -248,7 +258,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 				final String retrievedValue = c.getString(c.getColumnIndex(columnName));
 				assertEquals(trimDoubleQuotes(expectedValue), trimDoubleQuotes(retrievedValue));
 			}
-			c.moveToNext();  //get next VM object read from db to check
+			c.moveToNext();  //get next vm object read from db to check
 		}
 		
 		assertEquals("Number of VM objects in db does not match expected number", numVms, c.getCount());
@@ -657,7 +667,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(sampleRequest, c.getString(c.getColumnIndex(Transactions.REQUEST)));  //should have no change
 		assertEquals(sampleUpdatedStatus, c.getString(c.getColumnIndex(Transactions.STATUS)));  //should have been changed
 		assertEquals(sampleReplyBodyJson, c.getString(c.getColumnIndex(Transactions.REPLY)));  //should have been added
-		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't get the exact timestamp that's added automatically by CsRestService, so will just check that it exists
+		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't gets the exact timestamp that's added automatically by CsRestService, so will just check that it exists
 		c.close();
 	}
 	
@@ -690,7 +700,7 @@ public class CsRestServiceTest extends ServiceTestCase<CsRestService> {
 		assertEquals(sampleRequest, c.getString(c.getColumnIndex(Transactions.REQUEST)));  //should have no change
 		assertEquals(Transactions.STATUS_VALUES.ABORTED, c.getString(c.getColumnIndex(Transactions.STATUS)));  //should have been changed
 		assertNull("Reply field should remain empty after a call abort", c.getString(c.getColumnIndex(Transactions.REPLY)));  //should have no change
-		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't get the exact timestamp that's added automatically by CsRestService, so will just check that it exists
+		assertNotNull("reply_datetime was not added automatically when it should have been!", c.getString(c.getColumnIndex(Transactions.REPLY_DATETIME)));  //can't GET the exact timestamp that's added automatically by CsRestService, so will just check that it exists
 		c.close();
 	}
 	

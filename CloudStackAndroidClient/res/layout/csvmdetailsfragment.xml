@@ -232,9 +232,66 @@
 				android:text="network write" />
 			</LinearLayout>
 		
+			<TextView android:id="@+id/zbxbuttonsectiontitle"
+			android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/usagelabelsline"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:layout_marginTop="23dp"
+			android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+			android:text="zabbix graphs" />
+			<LinearLayout android:id="@+id/zbxbuttonline1"
+			android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/zbxbuttonsectiontitle"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:gravity="center_horizontal" >
+				<Button android:id="@+id/cpuloadbutton"
+				android:layout_width="120dp" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/oscilloscope_selector"
+				android:drawablePadding="-6dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:enabled="false"
+				android:text="CPU Loads" />
+				<Button android:id="@+id/cpuutilizationbutton"
+				android:layout_width="120dp" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/oscilloscope_selector"
+				android:drawablePadding="-6dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:enabled="false"
+				android:text="CPU Utilization" />
+			</LinearLayout>
+			<LinearLayout android:id="@+id/zbxbuttonline2"
+			android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/zbxbuttonline1"
+			android:layout_height="wrap_content" android:layout_width="match_parent"
+			android:layout_marginTop="5dp"
+			android:gravity="center_horizontal" >
+				<Button android:id="@+id/diskusagebutton"
+				android:layout_width="120dp" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/oscilloscope_selector"
+				android:drawablePadding="-6dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:enabled="false"
+				android:text="Disk Usage" />
+				<Button android:id="@+id/networkutilizationbutton"
+				android:layout_width="120dp" android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:background="@drawable/action_item_btn"
+				android:drawableTop="@drawable/oscilloscope_selector"
+				android:drawablePadding="-6dp"
+				android:padding="5dp"
+				android:textColor="@color/primaryinfo_color_selector"
+				android:enabled="false"
+				android:text="N/W Utilization" />
+			</LinearLayout>
 		
 			<TextView android:id="@+id/basicinformationsectiontitle"
-				android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/usagelabelsline"
+				android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/zbxbuttonline2"
 				android:layout_height="wrap_content" android:layout_width="match_parent"
 				android:layout_marginTop="23dp"
 				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
@@ -287,9 +344,21 @@
 				android:textSize="16sp" android:textColor="@color/label"
 				android:text="domain" />
 				
+			<TextView android:id="@+id/ipaddress"
+				android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/domain"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:hint="no" android:text="" />
+			<TextView android:id="@+id/ipaddresslabel"
+				android:layout_toRightOf="@id/ipaddress"
+				android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@id/ipaddress"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="ip address" />
+				
 				
 			<TextView android:id="@+id/configurationsectiontitle"
-				android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/domain"
+				android:layout_alignLeft="@id/vmiconframe" android:layout_below="@id/ipaddress"
 				android:layout_height="wrap_content" android:layout_width="match_parent"
 				android:layout_marginTop="23dp"
 				android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"

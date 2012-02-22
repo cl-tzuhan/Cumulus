@@ -1,6 +1,8 @@
-package com.creationline.cloudstack.util;
+package com.creationline.cloudstack.utils;
 
 import android.test.AndroidTestCase;
+
+import com.creationline.cloudstack.utils.Revision;
 
 public class RevisionTest extends AndroidTestCase {
 

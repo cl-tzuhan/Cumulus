@@ -13,9 +13,10 @@
    
    <color name="primary">#eeeeee</color>
    <color name="supplementary">#959595</color>
-   
 
    <color name="viewPagerIndicator_unselectedColor">#333333</color>
    <color name="viewPagerIndicator_selectedColor">#888888</color>
+
+   <color name="zbxlogin_background">#000000</color>
 
 </resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2011-2012 Creationline,Inc.
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+    http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<RelativeLayout android:id="@+id/errordialog_zbxloginincorrect_view"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content"
+	android:layoutAnimation="@anim/slide_righttoleft_layoutanim"
+	android:minHeight="?android:attr/listPreferredItemHeight">
+
+	<LinearLayout android:id="@+id/iconframe"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layoutAnimation="@anim/fadein_layoutanim">
+		<ImageView android:id="@+id/dialogicon" android:src="@drawable/shieldbang_w_alpha20"
+			android:layout_alignParentLeft="true" android:layout_centerVertical="true"
+			android:layout_height="wrap_content" android:layout_width="wrap_content"
+			android:layout_marginLeft="0dp" android:layout_marginRight="3dp"
+			android:background="@android:color/transparent" />
+	</LinearLayout>
+	<TextView android:id="@+id/dialogtitle"
+		android:layout_toRightOf="@id/iconframe" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:text="Zabbix login failed" />
+	<TextView android:id="@+id/dialogmessage"
+		android:layout_alignLeft="@id/dialogtitle" android:layout_below="@id/dialogtitle"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+		android:text="Re-login with your correct Zabbix credentials in the Account screen to access graphs again." />
+	<TextView android:id="@+id/dialogmessagedetail"
+		android:layout_alignLeft="@id/dialogtitle" android:layout_below="@id/dialogmessage"
+		android:layout_height="wrap_content" android:layout_width="wrap_content"
+		android:textSize="14sp" android:textColor="@color/label"
+		android:text="(perhaps your login name and/or password have changed?)" />
+
+</RelativeLayout>

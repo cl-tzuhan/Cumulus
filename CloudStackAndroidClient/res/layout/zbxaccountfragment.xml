@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2011-2012 Creationline,Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+   http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<ScrollView android:id="@+id/zbxdetailscrollview"
+   	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+    android:layout_height="match_parent" android:layout_width="match_parent" >
+    
+	<ViewSwitcher android:id="@+id/zbxloginaccountswitcher"
+	    android:layout_height="wrap_content" android:layout_width="match_parent" >
+			
+			<!-- view0 of zbxloginaccountswitcher viewswitcher (login screen) -->
+		<RelativeLayout android:id="@+id/zbxloginaccountswitcher_view0"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:paddingLeft="6dp" android:paddingRight="8dp" android:paddingBottom="25dp"
+			>
+			
+		    <RelativeLayout android:id="@+id/zbxhostframe"
+			   	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
+				
+		        <TextView android:id="@+id/zbxdescription"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="5dp" android:layout_marginLeft="2dp"
+					android:textSize="12sp" android:textColor="@color/supplementary"
+					android:text="If you use Zabbix to monitor your virtual machines, logging in with your Zabbix account here will allow Cumulus to fetch and display up-to-date monitoring data from your Zabbix server." />
+	 			<TextView android:id="@+id/zbxhostfieldtitle"
+					android:layout_alignLeft="@id/zbxdescription" android:layout_below="@id/zbxdescription"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="10sp"
+					android:textSize="16sp" android:textColor="@color/primaryinfo_color_selector"
+					android:text="I want to use this Zabbix server" />
+	 			<TextView android:id="@+id/zbxhostfieldtitlesupplement"
+					android:layout_alignLeft="@id/zbxdescription" android:layout_below="@id/zbxhostfieldtitle"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="-5dp" android:layout_marginLeft="2dp"
+					android:textSize="10sp" android:textColor="@color/supplementary"
+					android:text="(Zabbix server version 1.8 or above required)" />
+					
+	 		   	<EditText android:id="@+id/zbxhostfield" 
+	 		   		android:layout_alignParentLeft="true" android:layout_below="@id/zbxhostfieldtitlesupplement"
+	 		   		android:layout_height="40sp" android:layout_width="match_parent"
+	 		   		android:textSize="16sp" android:textColor="@color/active"
+	 		   		android:inputType="textUri"
+			    	android:maxLines="1"
+	 		   		android:hint="Zabbix URL[:port]" >
+	    		</EditText>
+	    		
+	    		<TextSwitcher android:id="@+id/zbxhosterrorframe"
+	 		   		android:layout_alignLeft="@id/zbxhostfieldtitle" android:layout_below="@id/zbxhostfield"
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					android:layout_marginTop="-7sp"
+					android:paddingLeft="4sp"
+					/>
+
+				
+	 			<TextView android:id="@+id/zbxlogintitle"
+	 		   		android:layout_alignLeft="@id/zbxhosterrorframe" android:layout_below="@id/zbxhosterrorframe"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginLeft="2dp"
+					android:textSize="16sp" android:textColor="@color/primaryinfo_color_selector"
+					android:text="with the following credentials" />
+					
+	 		   	<EditText android:id="@+id/zbxusernamefield" 
+	 		   		android:layout_alignParentLeft="true" android:layout_below="@id/zbxlogintitle"
+	 		   		android:layout_height="45sp" android:layout_width="match_parent"
+	 		   		android:layout_marginTop="0dp" android:layout_marginLeft="0dp"
+	 		   		android:textSize="21sp" android:textColor="@color/active"
+			    	android:inputType="textEmailAddress"
+			    	android:maxLines="1"
+	 		   		android:hint="zabbix login name" >
+	    		</EditText>
+			
+			    <EditText android:id="@+id/zbxpasswordfield" 
+	 		   		android:layout_alignParentLeft="true" android:layout_below="@id/zbxusernamefield"
+			    	android:layout_height="45sp" android:layout_width="match_parent"
+			    	android:inputType="textPassword" android:textColor="@color/active"
+	 		   		android:textSize="19sp"
+			    	android:maxLines="1"
+			    	android:hint="zabbix password" >
+			    </EditText>
+			    
+			    <TextSwitcher android:id="@+id/zbxusernamepassworderrorframe"
+	 		   		android:layout_alignLeft="@id/zbxusernamefield" android:layout_below="@id/zbxpasswordfield"
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					android:layout_marginTop="-7sp"
+					android:paddingLeft="4sp"
+					/>
+			    
+			    <ViewSwitcher android:id="@+id/zbxloginprogressswitcher"
+			    	android:layout_alignLeft="@id/zbxusernamefield" android:layout_below="@id/zbxusernamepassworderrorframe"
+			    	android:layout_width="wrap_content" android:layout_height="wrap_content"
+			    	android:layout_marginTop="5dp"
+			    	android:inAnimation="@anim/fadein_decelerate" android:outAnimation="@anim/fadeout_decelerate" >
+					<Button android:id="@+id/zbxloginbutton"
+						android:layout_width="wrap_content" android:layout_height="wrap_content"
+						android:background="@drawable/action_item_btn"
+						android:drawableTop="@drawable/plug"
+						android:drawablePadding="-10dp"
+						android:padding="5dp"
+						android:textColor="@color/primaryinfo_color_selector"
+						android:text="Plug in!" />
+					<ProgressBar android:id="@+id/zbxloginprogress"
+					  	android:layout_width="wrap_content"  android:layout_height="wrap_content"
+					  	android:layout_gravity="center_vertical|center_horizontal"
+					  	android:layout_marginTop="-3dp" />
+			    </ViewSwitcher>
+					
+	 			<TextView android:id="@+id/zbxlogindescriptiontext"
+	 		   		android:layout_toRightOf="@id/zbxloginprogressswitcher" android:layout_below="@id/zbxusernamepassworderrorframe"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="10dp" android:layout_marginLeft="5dp"
+					android:textSize="10sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="Cumulus must save your Zabbix credentials locally to automatically authenticate with the server when necessary." />
+			
+				<TextSwitcher android:id="@+id/zbxloginerrorframe"
+	 		   		android:layout_alignLeft="@id/zbxusernamefield" android:layout_below="@id/zbxloginprogressswitcher"
+					android:layout_width="match_parent" android:layout_height="wrap_content"
+					android:layout_marginTop="10sp"
+					android:paddingLeft="4sp"
+					/>
+			</RelativeLayout>
+			
+		</RelativeLayout>
+		
+		<!-- view1 of zbxloginswitcher viewswitcher (account screen (displays credentials)) -->
+		<RelativeLayout android:id="@+id/zbxaccountdetailview"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingLeft="5dp" android:paddingRight="5dp"
+			>
+		
+			<RelativeLayout android:id="@+id/zbxloginaccountswitcher_view1"
+			   	android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+				android:layout_height="wrap_content" android:layout_width="match_parent"
+				android:paddingBottom="50dp"
+				android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
+				
+				<TextView android:id="@+id/zbxaccountintrotext"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="You are connected as " />
+					
+				<TextView android:id="@+id/zbxusername"
+	 		   		android:layout_toRightOf="@id/zbxaccountintrotext" android:layout_alignBaseline="@id/zbxaccountintrotext"
+	 		   		android:layout_height="wrap_content" android:layout_width="wrap_content"
+	 		   		android:textSize="18sp" android:textColor="@color/primaryinfo_color_selector" />
+	 		   		
+	 			<TextView android:id="@+id/zbxhosttext"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+	 		   		android:layout_alignLeft="@id/zbxaccountintrotext" android:layout_below="@id/zbxusername"
+					android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="to this Zabbix server" />
+					
+	 		   	<TextView android:id="@+id/zbxhost" 
+	 		   		android:layout_alignLeft="@id/zbxhosttext" android:layout_below="@id/zbxhosttext"
+	 		   		android:layout_height="wrap_content" android:layout_width="match_parent"
+	 		   		android:layout_margin="8dp"
+	 		   		android:textSize="21sp" android:textColor="@color/primaryinfo_color_selector" />
+	    		
+	    		<TextView android:id="@+id/zbxauthtokentext1"
+	 		   		android:layout_alignLeft="@id/zbxhosttext" android:layout_below="@id/zbxhost"
+					android:layout_height="wrap_content" android:layout_width="match_parent"
+					android:layout_marginTop="8dp" 
+					android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="Your current authentication token is" />
+					
+				<TextView android:id="@+id/zbxauthtoken" 
+	 		   		android:layout_alignLeft="@id/zbxhosttext" android:layout_below="@id/zbxauthtokentext1"
+	 		   		android:layout_height="wrap_content" android:layout_width="wrap_content"
+	 		   		android:layout_margin="8dp"
+	 		   		android:textSize="14sp" android:textColor="@color/primaryinfo_color_selector" />
+	 		   	<TextView android:id="@+id/zbxauthtokenlabel"
+					android:layout_alignLeft="@id/zbxauthtoken" android:layout_below="@id/zbxauthtoken"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_marginTop="-15dp"
+					android:textSize="18sp" android:textColor="@color/label"
+					android:text="authentication token" />
+	 		   		
+				<TextView android:id="@+id/zbxauthtokentext2"
+	 		   		android:layout_alignLeft="@id/zbxaccountintrotext" android:layout_below="@id/zbxauthtokenlabel"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+	 		   		android:layout_marginTop="15dp"
+					android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="though Cumulus will refresh this as needed using your saved login name/password." />
+				
+				<TextView android:id="@+id/zbxaccountendmessage"
+	 		   		android:layout_alignLeft="@id/zbxaccountintrotext" android:layout_below="@id/zbxauthtokentext2"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+	 		   		android:layout_marginTop="15dp"
+					android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
+					android:text="Zabbix-related functionality are now enabled, and can be accessed on your VM details screens!" />
+					
+				<Button android:id="@+id/zbxresetbutton"
+					android:layout_alignParentRight="true" android:layout_below="@id/zbxaccountendmessage"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:layout_marginTop="40sp"
+					android:padding="4dp"
+					android:background="@drawable/action_item_btn"
+					android:textColor="@color/active"
+					android:text="unplug &amp; clear zabbix data" />
+					
+			
+			</RelativeLayout>
+			
+		</RelativeLayout>
+	
+	</ViewSwitcher>
+</ScrollView>

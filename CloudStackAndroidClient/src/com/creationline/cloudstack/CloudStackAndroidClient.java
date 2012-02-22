@@ -23,24 +23,32 @@ import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 
-import com.creationline.cloudstack.util.ClLog;
+import com.creationline.common.utils.ClLog;
 
 public class CloudStackAndroidClient extends FragmentActivity {
 	
 	public static class SHARED_PREFERENCES {
-		//SharedPreference-related constants
 		public static String PREFERENCES_NAME = "CloudStackAndroidClientAccountPreferences";
 		
+		//CloudStack-related prefs
 		public static String CLOUDSTACK_HOST_SETTING = "CloudStackUrl";
 		public static String CLOUDSTACK_DOMAIN_SETTING = "CloudStackDomain";
 		public static String USERNAME_SETTING = "LoginName";
 		public static String APIKEY_SETTING = "ApiKey";
 		public static String SECRETKEY_SETTING = "SecretKey";
 		
+		
+		//Cumulus-related prefs
 		public static String LOGIN_INPROGRESS = "LoginInProgress";  //actual stored value is a boolean
 		public static String LOGINERROR_CACHE = "LoginErrorCache";
-		
 		public static String ERRORLOG_ONDISPLAYERROR = "ErrorLog_onDisplayError";
+		
+		
+		//Zabbix-related prefs
+		public static String ZABBIX_HOST_SETTING = "ZabbixHostUrl";
+		public static String ZABBIX_USERNAME_SETTING = "ZabbixUsername";
+		public static String ZABBIX_PASSWORD_SETTING = "ZabbixPassword";
+		public static String ZABBIX_AUTH_TOKEN = "ZabbixAuthToken";
 	}
 	
 	private Thread startMultiListUiThread = null;

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package com.creationline.cloudstack.util;
+package com.creationline.cloudstack.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import com.creationline.common.utils.ClLog;
 
 import android.text.format.Time;
 import android.util.TimeFormatException;
@@ -34,8 +36,8 @@ public class DateTimeParser {
 	 * Format of datetimeStr is assumed to be fixed.
 	 * In the case datetimeStr cannot be successfully parsed/formated,
 	 * the date textview will be set with the unparsed datetimeStr
-	 * @param dateText the textview which will get the parsed datestamp set as text
-	 * @param timeText the textview which will get the parsed timestamp set as text
+	 * @param dateText the textview which will GET the parsed datestamp set as text
+	 * @param timeText the textview which will GET the parsed timestamp set as text
 	 * @param datetimeStr string in pre-determined format of the datetime to parse
 	 */
 	public static void setParsedDateTime(TextView dateText, TextView timeText, String datetimeStr) {
@@ -63,8 +65,8 @@ public class DateTimeParser {
 	 * Format of datetimeStr is assumed to be in RFC 3339 format.
 	 * In the case datetimeStr cannot be successfully parsed/formated,
 	 * the date textview will be set with the unparsed datetimeStr
-	 * @param dateText the textview which will get the parsed datestamp set as text
-	 * @param timeText the textview which will get the parsed timestamp set as text
+	 * @param dateText the textview which will GET the parsed datestamp set as text
+	 * @param timeText the textview which will GET the parsed timestamp set as text
 	 * @param datetimeStr string in pre-determined format of the datetime to parse
 	 */
 	public static void setParsedDateTime3999(TextView dateText, TextView timeText, String datetimeStr) {

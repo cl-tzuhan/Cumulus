@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2011 Creationline,Inc.
+  Copyright 2011-2012 Creationline,Inc.
   
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -243,6 +243,28 @@
 				android:layout_marginLeft="5dp"
 				android:textSize="16sp" android:textColor="@color/label"
 				android:text="ClientWithResponseHandler example" />
+			<TextView android:id="@+id/jacksonjavajsonprocessorcreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/clientwithresponderhandlerexamplecreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="Jackson" />
+			<TextView android:id="@+id/jacksonjavajsonprocessorcreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/jacksonjavajsonprocessorcreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="Jackson Java JSON Processor" />
+			<TextView android:id="@+id/achartenginecreator"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/jacksonjavajsonprocessorcreatorlabel"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:textSize="13sp" android:textColor="@color/primaryinfo_color_selector"
+				android:text="AChartEngine" />
+			<TextView android:id="@+id/achartenginecreatorlabel"
+				android:layout_alignLeft="@id/iconframe" android:layout_below="@id/achartenginecreator"
+				android:layout_height="wrap_content" android:layout_width="wrap_content"
+				android:layout_marginLeft="5dp"
+				android:textSize="16sp" android:textColor="@color/label"
+				android:text="AChartEngine charting library" />
 
 		</RelativeLayout>
 

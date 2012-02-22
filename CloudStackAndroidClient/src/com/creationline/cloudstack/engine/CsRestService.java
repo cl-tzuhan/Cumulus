@@ -15,10 +15,7 @@
  ******************************************************************************/
 package com.creationline.cloudstack.engine;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
@@ -34,13 +31,10 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
@@ -52,7 +46,6 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
@@ -61,7 +54,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.format.Time;
 import android.util.Base64;
 
 import com.creationline.cloudstack.CloudStackAndroidClient;
@@ -70,15 +62,10 @@ import com.creationline.cloudstack.engine.db.Snapshots;
 import com.creationline.cloudstack.engine.db.Transactions;
 import com.creationline.cloudstack.engine.db.Vms;
 import com.creationline.cloudstack.ui.CsSnapshotListFragment;
-import com.creationline.cloudstack.util.ClLog;
+import com.creationline.common.engine.RestServiceBase;
+import com.creationline.common.utils.ClLog;
 
-public class CsRestService extends IntentService {
-	
-	//Intent msg-related constants
-	public static final String ACTION_ID = "com.creationline.cloudstack.engine.ACTION_ID";
-	public static final String API_CMD = "com.creationline.cloudstack.engine.API_CMD";
-	public static final String RESPONSE = "com.creationline.cloudstack.engine.RESPONSE";
-	public static final String UPDATED_URI = "com.creationline.cloudstack.engine.UPDATED_URI";
+public class CsRestService extends RestServiceBase {
 	
 	public static final String TEST_CALL = "com.creationline.cloudstack.engine.TEST_CALL";
 	
@@ -98,11 +85,6 @@ public class CsRestService extends IntentService {
 	private static final int ASYNCJOB_STILLINPROGRESS = 0;
 	private static final int ASYNCJOB_COMPLETED = 1;
 	private static final int ASYNCJOB_FAILEDTOCOMPLETE = 2;
-	
-	private static List<Uri> inProgressTransactionList = new ArrayList<Uri>();
-	private static Time time = null;
-	private HttpClient httpclient = null;  //one httpclient for use by multiple requests as suggested by android
-
 	
 	public class JsonNameNodePair {
 		private String responseName;
@@ -132,14 +114,14 @@ public class CsRestService extends IntentService {
 	
 	public CsRestService() {
 		super("CsRestService");
-		time = new Time();  //use default timezone
+//		time = new Time();  //use default timezone
 	}
 	
 	public static Intent createCsRestServiceIntent(Context context, String action, Bundle apiCmd) {
 		
 		Bundle payload = new Bundle();
-        payload.putString(CsRestService.ACTION_ID, action);  //action stored under this key
-        payload.putBundle(CsRestService.API_CMD, apiCmd);  //main part of REST request stored under this key
+        payload.putString(RestServiceBase.PAYLOAD_FIELDS.ACTION_ID, action);  //action stored under this key
+        payload.putBundle(RestServiceBase.PAYLOAD_FIELDS.API_CMD, apiCmd);  //main part of REST request stored under this key
         
         Intent startCsRestServiceIntent = new Intent(context, CsRestService.class);
         startCsRestServiceIntent.putExtras(payload);
@@ -152,27 +134,12 @@ public class CsRestService extends IntentService {
 		//This is already running on a non-UI thread
 		
 		Bundle payload = intent.getExtras(); 
-		Bundle apiCmd = payload.getBundle(CsRestService.API_CMD);
+		Bundle apiCmd = payload.getBundle(RestServiceBase.PAYLOAD_FIELDS.API_CMD);
 		
 		performRestRequest(apiCmd);
 		
 	}
 	
-	@Override
-	public void onDestroy() {
-		// When HttpClient instance is no longer needed,
-        // shut down the connection manager to ensure
-        // immediate deallocation of all system resources
-		if(httpclient!=null) {
-			ClientConnectionManager connectionManager = httpclient.getConnectionManager();
-			if(connectionManager!=null) {
-				connectionManager.shutdown();
-			}
-		}
-		
-		super.onDestroy();
-	}
-
 	private void performRestRequest(Bundle apiCmd) {
 		
 		Uri inProgressTransaction = null;
@@ -252,15 +219,6 @@ public class CsRestService extends IntentService {
 		return newUri;
 	}
 
-	public String getCurrentTimeAsString() {
-		time.setToNow();
-		return time.format3339(false);
-		///To change this str back into a Time object, use the following:
-		//    Time readTime = new Time();
-		//    readTime.parse3339(timeStr);  //str was saved out using RFC3339 format, so needs to be read in as such
-		//    readTime.switchTimezone("Asia/Tokyo");  //parse3339() automatically converts read in times to UTC.  We need to change it back to the default timezone of the handset (JST in this example)
-	}
-	
 	/**
 	 * Builds the encoded and signed url that can be directly used to make a call to a cs server.
 	 * The returned url should work when directly typed into a web browser.
@@ -286,7 +244,7 @@ public class CsRestService extends IntentService {
 				throw new InvalidParameterException();
 			}
 			
-			//make sure we get reply in json 
+			//make sure we GET reply in json 
 			apiCmd.putString("response", "json");  //will not check whether apiCmd already has response=json param for speed purposes, but having 2 of these params will cause call to fail
 
 			ClLog.d(TAG, "constructing API call to host='" + csHostUrl + " and apiUrl='" + apiCmd + "' using apiKey='" + apiKey + "' and secretKey='" + secretKey + "'");
@@ -442,38 +400,6 @@ public class CsRestService extends IntentService {
 		return getContentResolver().insert(Errors.META_DATA.CONTENT_URI, cv);
 	}
 	
-	public static StringBuilder getReplyBody(final HttpResponse reply) throws IOException {
-		final String TAG = "CsRestService.getReplyBody()";
-		
-		if(reply==null) {
-			return null;
-		}
-
-		final int statusCode = reply.getStatusLine().getStatusCode();
-		final HttpEntity entity = reply.getEntity();
-		
-		InputStream replyBodyObject = null;
-		try {
-			replyBodyObject = entity.getContent();
-		} catch (IllegalStateException e) {
-			ClLog.e(TAG, "got IllegalStateException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		} catch (IOException e) {
-			ClLog.e(TAG, "got IOException! [" + e.toString() +"]");
-			ClLog.e(TAG, e);
-		}
-		
-		StringBuilder replyBody;
-		try {
-			replyBody = inputStreamToString(replyBodyObject);
-		} catch (IOException e) {
-			ClLog.e(TAG, "failure occurred trying to read replyBody so aborting.  replyBodyObject="+replyBodyObject);
-			throw e;
-		}
-		ClLog.d(TAG, "parsed reply: statusCode="+statusCode+"  body="+replyBody);
-		return replyBody;
-	}
-	
 	public void saveReplyToDb(final Uri uriToUpdate, final HttpResponse reply, final StringBuilder replyBody) {
 		final String TAG = "CsRestService.saveReplyToDb()";
 
@@ -591,7 +517,7 @@ public class CsRestService extends IntentService {
 		
 		Intent broadcastIntent = new Intent(callbackIntentFilter);
 		Bundle bundle = new Bundle();
-		bundle.putString(CsRestService.UPDATED_URI, uriToUpdate.toString());
+		bundle.putString(RestServiceBase.PAYLOAD_FIELDS.UPDATED_URI, uriToUpdate.toString());
 		bundle.putInt(CsRestService.CALL_STATUS, successOrFailure);
 		broadcastIntent.putExtras(bundle);
 		sendBroadcast(broadcastIntent);
@@ -634,35 +560,6 @@ public class CsRestService extends IntentService {
 //		informCallerFragmentOfCallFailure(uriToUpdate);
 	}
 
-	/**
-	 * Copied with slight modification from:
-	 *   http://www.androidsnippets.com/get-the-content-from-a-httpresponse-or-any-inputstream-as-a-string
-	 *   
-	 * @param is InputStream with data to read out
-	 * @return all the data in specified InputStream
-	 */
-	public static StringBuilder inputStreamToString(final InputStream is) throws IOException {
-
-	    String line = "";
-	    StringBuilder total = new StringBuilder();
-	    
-	    // Wrap a BufferedReader around the InputStream
-	    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-
-	    // Read response until the end
-	    try {
-			while ((line = rd.readLine()) != null) { 
-			    total.append(line); 
-			}
-		} catch (IOException e) {
-			ClLog.e("inputStreamToString", e);
-			throw e;
-		}
-	    
-	    // Return full string
-	    return total;
-	}
-	
 	public void processAndSaveJsonReplyData(final Uri uriToUpdate, final String replyBodyText) {
 		final String TAG = "CsRestService.processAndSaveJsonReplyData()";
 	
@@ -844,7 +741,7 @@ public class CsRestService extends IntentService {
 			case ASYNCJOB_FAILEDTOCOMPLETE:
 				{
 					//read and show error
-					ClLog.d(TAG, "async jobid="+jobid+"returned as failure ;_;");
+					ClLog.d(TAG, "async jobid="+jobid+" returned as failure ;_;");
 					
 			        endCheckAsyncJobProgress(jobid);
 			        

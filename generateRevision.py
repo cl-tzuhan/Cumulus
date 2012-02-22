@@ -27,7 +27,7 @@ except IndexError, err:
     sys.exit(2)
 
 #path of Revision.java file
-revisionFilePath = "CloudStackAndroidClient/src/com/creationline/cloudstack/util/Revision.java"
+revisionFilePath = "CloudStackAndroidClient/src/com/creationline/cloudstack/utils/Revision.java"
 
 #create new revision no/id declarations with latest revision info
 updatedRevnoLine = "	public static final int REVISION_NO = "+str(revno)+";\n"

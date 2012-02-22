@@ -161,19 +161,19 @@
 					android:paddingBottom="100dp"
 					android:layoutAnimation="@anim/slide_lefttoright_layoutanim" >
 					
-					<TextView android:id="@+id/accountintrotext1"
+					<TextView android:id="@+id/accountintrotext"
 						android:layout_height="wrap_content" android:layout_width="wrap_content"
 						android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
 						android:text="You are logged in as " />
 						
 					<TextView android:id="@+id/username" 
 		 		   		android:layout_height="wrap_content" android:layout_width="wrap_content"
-		 		   		android:layout_toRightOf="@id/accountintrotext1" android:layout_alignBaseline="@id/accountintrotext1"
+		 		   		android:layout_toRightOf="@id/accountintrotext" android:layout_alignBaseline="@id/accountintrotext"
 		 		   		android:textSize="18sp" android:textColor="@color/primaryinfo_color_selector" />
 		 		   		
 		 			<TextView android:id="@+id/cshosttitle"
 						android:layout_height="wrap_content" android:layout_width="match_parent"
-		 		   		android:layout_alignLeft="@id/accountintrotext1" android:layout_below="@id/username"
+		 		   		android:layout_alignLeft="@id/accountintrotext" android:layout_below="@id/username"
 						android:textSize="16sp" android:textColor="@color/supplementaryinfo_color_selector"
 						android:text="and connected to this CloudStack" />
 						
@@ -215,32 +215,45 @@
 						android:textSize="18sp" android:textColor="@color/label"
 						android:text="secret key" />
 						
-					<TextView android:id="@+id/accountintrotext2"
-		 		   		android:layout_alignLeft="@id/accountintrotext1" android:layout_below="@id/secretkeylabel"
+					<TextView android:id="@+id/accountoutrotext"
+		 		   		android:layout_alignLeft="@id/accountintrotext" android:layout_below="@id/secretkeylabel"
 						android:layout_height="wrap_content" android:layout_width="wrap_content"
 		 		   		android:layout_marginTop="15dp"
 						android:textSize="14sp" android:textColor="@color/supplementaryinfo_color_selector"
 						android:text="See your virtual machines and other CloudStack data on the screens to the right!" />
+
+					<!-- zabbix-related ui -->
+					<Button android:id="@+id/zbxaccountbutton"
+						android:layout_alignLeft="@id/accountintrotext" android:layout_below="@id/accountoutrotext"
+						android:layout_width="wrap_content" android:layout_height="wrap_content"
+		 		   		android:layout_marginTop="35dp"
+						android:background="@drawable/action_item_btn"
+						android:drawableLeft="@drawable/plug_36x36"
+						android:drawablePadding="2dp"
+						android:paddingRight="4dp"
+						android:textColor="@color/active"
+						android:text="+ zabbix integration" />
+					<!-- end zabbix-related ui -->
 						
 					<Button android:id="@+id/aboutbutton_keysscreen"
-						android:layout_alignParentLeft="true" android:layout_below="@id/accountintrotext2"
+						android:layout_alignParentLeft="true" android:layout_below="@id/zbxaccountbutton"
 						android:layout_width="wrap_content" android:layout_height="wrap_content"
-						android:layout_marginTop="35sp"
+						android:layout_marginTop="55sp"
 						android:background="@drawable/action_item_btn"
 						android:drawableTop="@drawable/information_frame_36x36"
 						android:drawablePadding="-25dp"
 						android:padding="4dp" />
 						
 					<Button android:id="@+id/resetbutton"
-						android:layout_alignParentRight="true" android:layout_below="@id/accountintrotext2"
+						android:layout_alignParentRight="true" android:layout_below="@id/zbxaccountbutton"
 						android:layout_width="wrap_content" android:layout_height="wrap_content"
-						android:layout_marginTop="40sp"
+						android:layout_marginTop="64sp"
 						android:padding="4dp"
 						android:background="@drawable/action_item_btn"
 						android:textColor="@color/active"
-						android:text="clear data &amp; reset app" />
+						android:text="clear all data &amp; reset app" />
 						
-				
+					
 				</RelativeLayout>
 				
 			</RelativeLayout>
