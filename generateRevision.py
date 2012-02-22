@@ -34,7 +34,7 @@ updatedRevnoLine = "	public static final int REVISION_NO = "+str(revno)+";\n"
 updatedRevidLine = "    public static final String REVISION_ID = \""+str(revid)+"\";\n"
 
 #static template of Version class this script will generate
-revisionClassTemplate_1stHalf = ('package com.creationline.cloudstack.util;\n'
+revisionClassTemplate_1stHalf = ('package com.creationline.cloudstack.utils;\n'
                                  '///This Revision.java files is not checked into Bazaar.\n'
                                  '///It is preferable to have this class in source control as well,\n'
                                  '///but currently there does not seem to be a way update\n'

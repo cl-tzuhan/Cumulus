@@ -28,7 +28,7 @@ Please note that since integration is via the Zabbix API, Zabbix server version 
 How can I install it?
 ---------------------
 The quickest way to just get a working app is to download the pre-built CloudStackAndroidClient.apk file and install it directly on your Android device.  Note that to install apps directly from the APK file, your ÅgSettings->Application Settings->Unknown SourcesÅh setting must be enabled.  You can transfer the APK file via an SD card, using a service like Dropbox to transfer it wirelessly, or even email it to yourself.
-The lastest pre-built APK is version 1.2 (140).
+The lastest pre-built APK is version 1.2 (141).
 
 
 What Android phones can I use it on?

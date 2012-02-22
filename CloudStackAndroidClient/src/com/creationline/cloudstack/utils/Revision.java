@@ -27,8 +27,8 @@ package com.creationline.cloudstack.utils;
 ///hand for end-user display purposes.  This file is sync-ed to bzr.
 
 public class Revision {
-	public static final int REVISION_NO = 139;
-    public static final String REVISION_ID = "tzuhan@creationline.com-20111219090835-nysr3kih3kf9ksqf";
+	public static final int REVISION_NO = 140;
+    public static final String REVISION_ID = "tzuhan@creationline.com-20120222071513-wbb653173p2r7j6q";
 
     @Override
 	public String toString() {
