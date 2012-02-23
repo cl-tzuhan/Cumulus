@@ -327,8 +327,17 @@ public class CsSnapshotListFragment extends CsListFragmentBase implements Loader
 			//set-up the loader & adapter for populating this list
 			getLoaderManager().initLoader(listLoaderId, null, this);
 			listAdapter = new CsSnapshotListAdapter(getActivity().getApplicationContext(), R.layout.cssnapshotlistitem, null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-			setListAdapter(listAdapter);
 		}
+		//we want to null-and-set the listAdapter explicitly regardless of whether we are
+		//creating from scratch or re-setting an existing adapter b/c if we don't do this,
+		//the list seems to lose track of the display of the footers (the list seems to
+		//recognize the footers as existing, the footer ids exist in the layout, but are
+		//not shown on screen after the list view is reloaded after being swiped too
+		//far off-screen (current guess is that being swiped off the multi-list screen
+		//results in a state that is not quite paused (destroys ui-level elements),
+		//but not quite destroyed either (adapter, non-ui part of footer, layout)))
+		setListAdapter(null);
+		setListAdapter(listAdapter);
 		return listAdapter;
 	}
 	
